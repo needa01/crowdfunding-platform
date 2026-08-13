@@ -1,0 +1,1064 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>NGO Verification</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        background: #f4f6fb;
+        color: #333;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 35px auto;
+        padding: 0 15px;
+      }
+
+      h1 {
+        color: #1e3a8a;
+        margin-bottom: 25px;
+      }
+
+      .card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 22px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      }
+
+      .section-title {
+        font-size: 22px;
+        font-weight: 600;
+        color: #1e3a8a;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #ececec;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .field label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #555;
+        margin-bottom: 6px;
+      }
+
+      .field input {
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: #fafafa;
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+
+      .profile-section {
+        display: flex;
+        gap: 30px;
+        align-items: flex-start;
+        margin-bottom: 25px;
+      }
+
+      .profile-image {
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #eee;
+      }
+
+      .status {
+        padding: 6px 14px;
+        border-radius: 25px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .pending {
+        background: #f59e0b;
+      }
+
+      .verified {
+        background: #16a34a;
+      }
+
+      .rejected {
+        background: #dc2626;
+      }
+
+      .bank-layout {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 25px;
+        align-items: start;
+      }
+
+      .doc-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 18px;
+        background: #fafafa;
+      }
+
+      .doc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .doc-header h3 {
+        font-size: 18px;
+        color: #1e3a8a;
+      }
+
+      .document-preview {
+        text-align: center;
+        margin-bottom: 15px;
+      }
+
+      .document-preview img {
+        width: 100%;
+        max-width: 250px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+
+      button {
+        border: none;
+        border-radius: 6px;
+        padding: 8px 14px;
+        color: #fff;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .view-btn {
+        background: #2563eb;
+      }
+
+      .accept-btn {
+        background: #16a34a;
+      }
+
+      .reject-btn {
+        background: #dc2626;
+      }
+
+      .remarks-box label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 55px;
+        resize: vertical;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 10px;
+        font-size: 13px;
+      }
+
+      @media (max-width: 900px) {
+        .profile-section {
+          flex-direction: column;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .bank-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .documents-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+
+      .doc-card.compact {
+        background: #fafafa;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 16px;
+        height: 100%;
+      }
+
+      .doc-card.compact .document-preview {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin: 15px 0;
+        flex-wrap: wrap;
+      }
+
+      .doc-card.compact .document-preview img {
+        width: 170px;
+        height: 110px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid #ddd;
+      }
+
+      .doc-card.compact textarea {
+        min-height: 55px;
+      }
+
+      .verification-footer {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+      }
+
+      .profile-approve-btn {
+        background: #15803d;
+        font-size: 15px;
+        padding: 11px 22px;
+      }
+
+      .profile-reject-btn {
+        background: #b91c1c;
+        font-size: 15px;
+        padding: 11px 22px;
+      }
+
+      .disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      @media (max-width: 900px) {
+        .documents-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>NGO Verification</h1>
+
+      <!-- ================= Applicant ================= -->
+
+      <div class="card">
+        <div class="section-title">Applicant Information</div>
+
+        <div class="profile-section">
+          <img
+            id="profile-picture"
+            src="https://placehold.co/140x140"
+            class="profile-image"
+          />
+
+          <div style="flex: 1">
+            <div class="grid">
+              <div class="field">
+                <label>NGO Name</label>
+                <input id="ngo-name" readonly />
+              </div>
+
+              <div class="field">
+                <label>Email</label>
+                <input id="email" readonly />
+              </div>
+
+              <div class="field">
+                <label>Mobile Number</label>
+                <input id="mobile" readonly />
+              </div>
+
+              <div class="field">
+                <label>Contact Person</label>
+                <input id="contact-person" readonly />
+              </div>
+
+              <div class="field">
+                <label>Contact Person Designation</label>
+                <input id="designation" readonly />
+              </div>
+
+              <div class="field">
+                <label>Address</label>
+                <input id="address" readonly />
+              </div>
+
+              <div class="field">
+                <label>City</label>
+                <input id="city" readonly />
+              </div>
+
+              <div class="field">
+                <label>State</label>
+                <input id="state" readonly />
+              </div>
+
+              <div class="field">
+                <label>Pincode</label>
+                <input id="pincode" readonly />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= Bank ================= -->
+
+      <div class="card">
+        <div class="section-title">Bank Details</div>
+
+        <div class="bank-layout">
+          <!-- Left -->
+
+          <div>
+            <div class="grid">
+              <div class="field">
+                <label>Account Holder</label>
+                <input id="account-holder" readonly />
+              </div>
+
+              <div class="field">
+                <label>Bank Name</label>
+                <input id="bank-name" readonly />
+              </div>
+
+              <div class="field">
+                <label>Account Number</label>
+                <input id="account-number" readonly />
+              </div>
+
+              <div class="field">
+                <label>IFSC Code</label>
+                <input id="ifsc-code" readonly />
+              </div>
+
+              <div class="field">
+                <label>Branch</label>
+                <input id="branch-name" readonly />
+              </div>
+
+              <div class="field">
+                <label>Account Type</label>
+                <input id="account-type" readonly />
+              </div>
+            </div>
+          </div>
+
+          <!-- Right -->
+
+          <div>
+            <div class="doc-card">
+              <div class="doc-header">
+                <h3>Cancelled Cheque</h3>
+
+                <span id="cheque-status" class="status pending"> Pending </span>
+              </div>
+
+              <div class="field">
+                <label>Uploaded Document</label>
+
+                <a id="cheque-link" href="#" target="_blank" class="view-link">
+                  👁 View Document
+                </a>
+              </div>
+
+              <br />
+
+              <div class="remarks-box">
+                <label>Verification Remarks</label>
+
+                <textarea id="cheque-remarks"></textarea>
+              </div>
+
+              <div class="btn-group">
+                <button
+                  id="accept-cheque"
+                  class="accept-btn"
+                  onclick="verifyBankAccount('Approved')"
+                >
+                  Accept
+                </button>
+
+                <button
+                  id="reject-cheque"
+                  class="reject-btn"
+                  onclick="verifyBankAccount('Rejected')"
+                >
+                  Reject
+                </button>
+              </div>
+
+              <div id="cheque-message" class="doc-message"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= Documents Section Starts Here ================= -->
+
+      <div class="card">
+        <div class="section-title">Documents</div>
+
+        <div class="documents-grid" id="documents-container"></div>
+      </div>
+
+      <!-- ================= FINAL PROFILE VERIFICATION ================= -->
+
+      <div class="card">
+        <div class="section-title">Final Profile Verification</div>
+
+        <div class="field">
+          <label>Overall Verification Remarks</label>
+
+          <textarea id="verification-remarks"></textarea>
+        </div>
+
+        <br />
+
+        <div class="grid">
+          <div class="field">
+            <label>Profile Status</label>
+
+            <input id="profile-status" readonly />
+          </div>
+
+          <div class="field">
+            <label>Verification Status</label>
+
+            <input id="verification-status" readonly />
+          </div>
+
+          <div class="field" id="ai-score-field">
+            <label>AI Score</label>
+
+            <input id="ai-score" readonly />
+          </div>
+
+          <div class="field" id="reviewed-by-field">
+            <label>Reviewed By</label>
+
+            <input id="reviewed-by" readonly />
+          </div>
+
+          <div class="field" id="reviewed-at-field">
+            <label>Reviewed At</label>
+
+            <input id="reviewed-at" readonly />
+          </div>
+        </div>
+
+        <div class="verification-footer">
+          <button id="approve-profile-btn" class="profile-approve-btn">
+            Approve Profile
+          </button>
+
+          <button id="reject-profile-btn" class="profile-reject-btn">
+            Reject Profile
+          </button>
+        </div>
+
+        <br />
+
+        <small style="color: #666; line-height: 1.7">
+          <strong>Note:</strong> The <b>Approve Profile</b> button should only
+          be enabled after the <b>PAN Card</b>, <b>Aadhaar Card</b>, and
+          <b>Cancelled Cheque</b> have all been individually verified. The
+          profile may still be rejected after adding an overall verification
+          remark.
+        </small>
+      </div>
+    </div>
+    <script>
+      const API_BASE = "/api";
+      const token = sessionStorage.getItem("access_token");
+
+      // -------------------------------
+      // Get UUID from URL
+      // /admin/ngo/<uuid>
+      // -------------------------------
+
+      const pathParts = window.location.pathname.split("/");
+      const ngoUUID = pathParts[pathParts.length - 1];
+      let bankAccountUUID = null;
+      console.log("ngouuid", ngoUUID);
+      // -------------------------------
+      // Helpers
+      // -------------------------------
+
+      function setValue(id, value) {
+        const element = document.getElementById(id);
+
+        if (!element) return;
+
+        element.value = value ?? "";
+      }
+
+      function setImage(id, src) {
+        const img = document.getElementById(id);
+
+        if (!img) return;
+
+        img.src = src || "https://placehold.co/140x140";
+      }
+
+      function formatDate(date) {
+        if (!date) return "";
+
+        return new Date(date).toLocaleString();
+      }
+
+      function updateStatusBadge(element, status) {
+        if (!element) return;
+
+        element.textContent = status || "Pending";
+
+        element.classList.remove("pending", "verified", "rejected");
+
+        switch ((status || "").toLowerCase()) {
+          case "approved":
+            element.classList.add("verified");
+            break;
+
+          case "verified":
+            element.classList.add("verified");
+            break;
+
+          case "rejected":
+            element.classList.add("rejected");
+            break;
+
+          default:
+            element.classList.add("pending");
+        }
+      }
+
+      // -------------------------------
+      // Applicant
+      // -------------------------------
+
+      function populateApplicant(data) {
+        setImage("profile-picture", data.user.profile_picture);
+
+        setValue("ngo-name", data.profile?.ngo_name);
+
+        setValue("email", data.user.email);
+
+        setValue("mobile", data.user.mobile);
+
+        setValue("contact-person", data.profile?.contact_person_name);
+
+        setValue("designation", data.profile?.contact_person_designation);
+
+        setValue("address", data.profile?.address);
+
+        setValue("city", data.profile?.city);
+
+        setValue("state", data.profile?.state);
+
+        setValue("pincode", data.profile?.pincode);
+      }
+
+      // -------------------------------
+      // Bank
+      // -------------------------------
+
+      function populateBank(data) {
+        if (!data.bank) return;
+
+        bankAccountUUID = data.bank.uuid;
+
+        setValue("account-holder", data.bank.account_holder_name);
+        setValue("bank-name", data.bank.bank_name);
+        setValue("account-number", data.bank.account_number);
+        setValue("ifsc-code", data.bank.ifsc_code);
+        setValue("branch-name", data.bank.branch_name);
+        setValue("account-type", data.bank.account_type);
+      }
+
+      //Verify Bank Account
+      async function verifyBankAccount(action) {
+        const remarks = document.getElementById("cheque-remarks").value.trim();
+
+        const acceptBtn = document.getElementById("accept-cheque");
+        const rejectBtn = document.getElementById("reject-cheque");
+        console.log("rem", remarks);
+        console.log("action", action);
+
+        acceptBtn.disabled = true;
+        rejectBtn.disabled = true;
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/verification/bankaccount/verify`,
+            {
+              method: "POST", // change to POST if your API uses POST
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                user_id: ngoUUID,
+                verification_status: action,
+                verification_remarks: remarks,
+              }),
+            },
+          );
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            showMessage(
+              "bank",
+              result.message || "Unable to verify document.",
+              "error",
+            );
+
+            return;
+          }
+
+          showMessage(
+            "bank",
+            result.message || "Bank account verified successfully.",
+            "success",
+          );
+
+          setTimeout(loadNGO, 1000);
+        } catch (err) {
+          console.error(err);
+
+          showMessage("bank", "Something went wrong.", "error");
+        } finally {
+          acceptBtn.disabled = false;
+          rejectBtn.disabled = false;
+        }
+      }
+
+      // -------------------------------------
+      // Cancelled Cheque
+      // -------------------------------------
+
+      function renderCancelledCheque(bank) {
+        if (!bank) return;
+
+        const cheque = bank.cancelled_cheque;
+        if (!cheque) return;
+
+        document.getElementById("cheque-link").href = cheque || "#";
+
+        updateStatusBadge(
+          document.getElementById("cheque-status"),
+          bank.verification_status,
+        );
+
+        document.getElementById("cheque-remarks").value =
+          bank.verification_remarks || "";
+      }
+
+      // -------------------------------------
+      // Documents
+      // -------------------------------------
+
+      function renderDocuments(documents) {
+        const container = document.getElementById("documents-container");
+
+        container.innerHTML = "";
+
+        // Don't render Cancelled Cheque here
+        const filteredDocuments = documents.filter(
+          (doc) => doc.document_type.toLowerCase() !== "cancelled cheque",
+        );
+
+        filteredDocuments.forEach((doc) => {
+          const div = document.createElement("div");
+
+          div.className = "doc-card compact";
+
+          div.innerHTML = `
+            <div class="doc-header">
+              <h3>${doc.document_type}</h3>
+
+              <span class="status" id="status-${doc.uuid}">
+                ${doc.verification_status}
+              </span>
+            </div>
+
+            <div class="grid">
+              <div class="field">
+                <label>Name As In Document</label>
+                <input readonly value="${doc.document_holder_name || ""}">
+              </div>
+
+              <div class="field">
+                <label>Document Number</label>
+                <input readonly value="${doc.document_number || ""}">
+              </div>
+            </div>
+
+            <br>
+
+            <div class="field">
+              <label>Uploaded Document</label>
+
+              <a href="${doc.file}" target="_blank" class="view-link">
+                👁 View Document
+              </a>
+            </div>
+
+            <br>
+
+            <div class="remarks-box">
+              <label>Verification Remarks</label>
+
+              <textarea id="remarks-${doc.uuid}">${doc.verification_remarks || ""}</textarea>
+            </div>
+
+            <br>
+
+            <div class="grid">
+              <div class="field">
+                <label>Reviewed By</label>
+                <input readonly value="${doc.reviewed_by || ""}">
+              </div>
+
+              <div class="field">
+                <label>Reviewed At</label>
+                <input readonly value="${formatDate(doc.reviewed_at)}">
+              </div>
+            </div>
+
+            <br>
+
+            <div class="btn-group">
+              <button
+                class="accept-btn"
+                onclick="verifyDocument('${doc.uuid}','Approved')">
+                Accept
+              </button>
+
+              <button
+                class="reject-btn"
+                onclick="verifyDocument('${doc.uuid}','Rejected')">
+                Reject
+              </button>
+            </div>
+            <div id="message-${doc.uuid}" class="doc-message"></div>
+          `;
+
+          container.appendChild(div);
+
+          updateStatusBadge(
+            document.getElementById(`status-${doc.uuid}`),
+            doc.verification_status,
+          );
+        });
+      }
+
+      // -------------------------------------
+      // Verify Document
+      // -------------------------------------
+
+      async function verifyDocument(uuid, status) {
+        const remarksElement =
+          document.getElementById(`remarks-${uuid}`) ||
+          document.getElementById("cheque-remarks");
+
+        const remarks = remarksElement ? remarksElement.value : "";
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/verification/documents/${uuid}/verify`,
+            {
+              method: "PATCH",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                verification_status: status,
+                verification_remarks: remarks,
+              }),
+            },
+          );
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            showMessage(
+              uuid,
+              result.message || "Unable to verify document.",
+              "error",
+            );
+            return;
+          }
+
+          showMessage(
+            uuid,
+            result.message || "Document verified successfully.",
+            "success",
+          );
+
+          setTimeout(() => {
+            loadNGO();
+          }, 1000);
+        } catch (error) {
+          console.error(error);
+          showMessage(uuid, "Something went wrong. Please try again.", "error");
+        }
+      }
+
+      // ------------------------------------
+      // Render Verification Request
+      // ------------------------------------
+
+      function renderVerification(user, verification) {
+        if (!verification) return;
+        document.getElementById("profile-status").value = user.status || "";
+        document.getElementById("verification-status").value =
+          verification.status || "";
+
+        document.getElementById("ai-score").value = verification.ai_score ?? "";
+
+        document.getElementById("verification-remarks").value =
+          verification.remarks || "";
+
+        document.getElementById("reviewed-by").value =
+          verification.reviewed_by || "";
+
+        document.getElementById("reviewed-at").value = formatDate(
+          verification.reviewed_at,
+        );
+      }
+
+      // ------------------------------------
+      // Check if profile can be approved
+      // ------------------------------------
+
+      function canApproveProfile(data) {
+        if (!data.bank) return false;
+
+        const chequeApproved =
+          data.bank.cancelled_cheque &&
+          data.bank.cancelled_cheque.verification_status === "Approved";
+
+        const documentsApproved = data.documents.every(
+          (doc) => doc.verification_status === "Approved",
+        );
+
+        return chequeApproved && documentsApproved;
+      }
+
+      // ------------------------------------
+      // Enable / Disable Approve Button
+      // ------------------------------------
+
+      function updateApproveButton(data) {
+        const approveBtn = document.getElementById("approve-profile-btn");
+        const rejectBtn = document.getElementById("reject-profile-btn");
+
+        approveBtn.disabled = false;
+        rejectBtn.disabled = false;
+
+        approveBtn.classList.remove("disabled");
+        rejectBtn.classList.remove("disabled");
+      }
+
+      async function verifyProfile(action) {
+        const remarks = document
+          .getElementById("verification-remarks")
+          .value.trim();
+
+        if (!remarks) {
+          alert("Please enter verification remarks.");
+          document.getElementById("verification-remarks").focus();
+          return;
+        }
+
+        const approveBtn = document.getElementById("approve-profile-btn");
+        const rejectBtn = document.getElementById("reject-profile-btn");
+
+        approveBtn.disabled = true;
+        rejectBtn.disabled = true;
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/verification/profile/verify`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                user_id: ngoUUID,
+                action: action,
+                remarks: remarks,
+              }),
+            },
+          );
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            alert(result.message || "Unable to verify profile.");
+            return;
+          }
+
+          alert(result.message);
+
+          // Reload latest verification status
+          loadNGO();
+        } catch (error) {
+          console.error(error);
+          alert("Something went wrong.");
+        } finally {
+          approveBtn.disabled = false;
+          rejectBtn.disabled = false;
+        }
+      }
+
+      // ------------------------------------
+      // Approve Profile
+      // ------------------------------------
+
+      async function approveProfile() {
+        await verifyProfile("approve");
+      }
+
+      // ------------------------------------
+      // Reject Profile
+      // ------------------------------------
+
+      async function rejectProfile() {
+        await verifyProfile("reject");
+      }
+
+      // ------------------------------------
+      // Load Everything
+      // ------------------------------------
+
+      async function loadNGO() {
+        try {
+          const response = await fetch(
+            `${API_BASE}/admin/ngo/${ngoUUID}`,
+
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            console.error(result.message);
+
+            return;
+          }
+
+          const data = result.data;
+
+          populateApplicant(data);
+
+          populateBank(data);
+
+          renderCancelledCheque(data.bank);
+
+          renderDocuments(data.documents);
+
+          renderVerification(data.user, data.verification_request);
+
+          updateApproveButton(data);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      //show Message function
+      function showMessage(id, message, type = "success") {
+        let container;
+
+        if (id === "bank") {
+          container = document.getElementById("cheque-message");
+        } else {
+          container = document.getElementById(`message-${id}`);
+        }
+
+        if (!container) {
+          console.log("Container not found:", id);
+          return;
+        }
+
+        container.textContent = message;
+        container.style.marginTop = "8px";
+        container.style.fontSize = "13px";
+        container.style.fontWeight = "600";
+        container.style.color = type === "error" ? "#dc2626" : "#16a34a";
+
+        setTimeout(() => {
+          container.textContent = "";
+        }, 1500);
+      }
+      // ------------------------------------
+      // Events
+      // ------------------------------------
+
+      document
+        .getElementById("approve-profile-btn")
+        .addEventListener("click", approveProfile);
+
+      document
+        .getElementById("reject-profile-btn")
+        .addEventListener("click", rejectProfile);
+
+      // ------------------------------------
+      // Init
+      // ------------------------------------
+
+      loadNGO();
+    </script>
+  </body>
+</html>

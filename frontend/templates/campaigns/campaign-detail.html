@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
+
+    <title>Campaign Details</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+          rel="stylesheet">
+
+    <style>
+
+        body{
+            background:#f5f7fb;
+            font-family:Inter,sans-serif;
+        }
+
+        a{
+            text-decoration:none;
+        }
+
+        .hero-image{
+            width:100%;
+            height:500px;
+            object-fit:cover;
+            border-radius:18px;
+        }
+
+        .card{
+            border:none;
+            border-radius:18px;
+            box-shadow:0 10px 30px rgba(0,0,0,.08);
+        }
+
+        .campaign-title{
+            font-size:2rem;
+            font-weight:700;
+        }
+
+        .campaign-meta{
+            color:#6c757d;
+            font-size:.95rem;
+        }
+
+        .progress{
+            height:12px;
+            border-radius:20px;
+        }
+
+        .progress-bar{
+            background:#00b074;
+        }
+
+        .raised-amount{
+            font-size:2rem;
+            font-weight:700;
+            color:#00b074;
+        }
+
+        .goal{
+            color:#666;
+        }
+
+        .section-title{
+            font-weight:700;
+            margin-bottom:20px;
+        }
+
+        .info-item{
+            margin-bottom:15px;
+        }
+
+        .info-item strong{
+            display:block;
+            color:#666;
+            font-size:.85rem;
+        }
+
+        .info-item span{
+            font-size:1rem;
+            font-weight:600;
+        }
+
+        .sticky-card{
+            position:sticky;
+            top:30px;
+        }
+
+        .donate-btn{
+            background:#00b074;
+            color:white;
+            border:none;
+            width:100%;
+            padding:14px;
+            border-radius:12px;
+            font-weight:600;
+        }
+
+        .donate-btn:hover{
+            background:#009765;
+        }
+
+        .share-btn{
+
+            width:45px;
+            height:45px;
+            border-radius:50%;
+            border:none;
+            background:#f1f3f6;
+        }
+
+        .share-btn:hover{
+            background:#00b074;
+            color:white;
+        }
+
+        .stat-card{
+            text-align:center;
+            padding:20px;
+        }
+
+        .stat-card h4{
+            font-weight:700;
+            color:#00b074;
+        }
+
+        .loader{
+
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:300px;
+        }
+
+        .spinner-border{
+            width:4rem;
+            height:4rem;
+        }
+
+        #campaignContent{
+            display:none;
+        }
+
+        .ngo-card{
+            background:#eef8ff;
+        }
+
+        .medical-card{
+            background:#fff8ef;
+        }
+
+        .beneficiary-card{
+            background:#f7fff5;
+        }
+
+        .campaign-description{
+            line-height:1.9;
+            font-size:1.05rem;
+        }
+
+        .badge-status{
+
+            font-size:.9rem;
+            padding:8px 14px;
+            border-radius:30px;
+        }
+
+        .cover-overlay{
+
+            position:absolute;
+            left:0;
+            top:0;
+            right:0;
+            bottom:0;
+
+            border-radius:18px;
+
+            background:linear-gradient(
+                    rgba(0,0,0,.05),
+                    rgba(0,0,0,.45)
+            );
+
+        }
+
+        .hero-wrapper{
+            position:relative;
+        }
+
+        .cover-bottom{
+
+            position:absolute;
+            bottom:20px;
+            left:20px;
+            color:white;
+        }
+
+        .cover-bottom h2{
+            font-weight:700;
+        }
+
+        .small-muted{
+            color:#777;
+            font-size:.9rem;
+        }
+
+        @media(max-width:991px){
+
+            .hero-image{
+                height:300px;
+            }
+
+            .sticky-card{
+                position:relative;
+                top:0;
+            }
+
+        }
+
+        .donation-item{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:flex-start;
+
+    padding:18px 0;
+
+    border-bottom:1px solid #eee;
+
+}
+
+.donation-item:last-child{
+
+    border-bottom:none;
+
+}
+
+.donor-name{
+
+    font-weight:600;
+
+    font-size:1rem;
+
+}
+
+.donation-message{
+
+    color:#666;
+
+    margin-top:5px;
+
+    font-size:.95rem;
+
+}
+
+.donation-date{
+
+    color:#999;
+
+    font-size:.85rem;
+
+}
+
+.donation-amount{
+
+    color:#00b074;
+
+    font-size:1.2rem;
+
+    font-weight:bold;
+
+}
+    </style>
+
+</head>
+
+<body>
+
+<div class="container py-5">
+
+    <div id="loader" class="loader">
+
+        <div class="spinner-border text-success"></div>
+
+    </div>
+
+    <div id="campaignContent">
+
+        <div class="row">
+
+            <!-- LEFT COLUMN -->
+
+            <div class="col-lg-8">
+
+                <!-- HERO -->
+
+                <div class="hero-wrapper mb-4">
+
+                    <img id="coverPhoto"
+                         class="hero-image"
+                         src="">
+
+                    <div class="cover-overlay"></div>
+
+                    <div class="cover-bottom">
+
+                        <span
+                            id="campaignStatus"
+                            class="badge bg-success badge-status">
+                        </span>
+
+                        <h2
+                            class="mt-3"
+                            id="campaignName">
+                        </h2>
+
+                        <div class="mt-2">
+
+                            <span id="campaignCause"></span>
+
+                            •
+
+                            <span id="campaignType"></span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- DESCRIPTION -->
+
+                <div class="card p-4 mb-4">
+
+                    <h4 class="section-title">
+
+                        Campaign Story
+
+                    </h4>
+
+                    <div
+                        id="campaignDescription"
+                        class="campaign-description">
+
+                    </div>
+
+                </div>
+
+                <!-- BENEFICIARY -->
+
+                <div
+                    class="card beneficiary-card p-4 mb-4">
+
+                    <h4 class="section-title">
+
+                        Beneficiary Information
+
+                    </h4>
+
+                    <div class="row">
+
+                        <div class="col-md-6">
+
+                            <div class="info-item">
+
+                                <strong>Name</strong>
+
+                                <span id="beneficiaryName"></span>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <div class="info-item">
+
+                                <strong>Type</strong>
+
+                                <span id="beneficiaryType"></span>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <div class="info-item">
+
+                                <strong>Group Type</strong>
+
+                                <span id="beneficiaryGroup"></span>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <div class="info-item">
+
+                                <strong>Members</strong>
+
+                                <span id="memberCount"></span>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <div class="info-item">
+
+                                <strong>Location</strong>
+
+                                <span id="beneficiaryLocation"></span>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <div class="info-item">
+
+                                <strong>Age</strong>
+
+                                <span id="beneficiaryAge"></span>
+
+                            </div>
+
+                        </div>
+
+                        <!-- Relative Only -->
+
+                        <div
+                            id="relationDiv"
+                            class="col-md-6">
+
+                            <div class="info-item">
+
+                                <strong>Relation</strong>
+
+                                <span id="beneficiaryRelation"></span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- MEDICAL SECTION -->
+                <!-- Hidden unless cause == MEDICAL -->
+
+                <div
+                    id="medicalSection"
+                    class="card medical-card p-4 mb-4"
+                    style="display:none">
+
+                    <h4 class="section-title">
+
+                        Medical Details
+
+                    </h4>
+
+                    <div class="row">
+
+                        <div class="col-md-6">
+
+                            <div class="info-item">
+
+                                <strong>Hospital</strong>
+
+                                <span id="hospitalName"></span>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <div class="info-item">
+
+                                <strong>Location</strong>
+
+                                <span id="hospitalLocation"></span>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-12">
+
+                            <div class="info-item">
+
+                                <strong>Ailment</strong>
+
+                                <span id="ailment"></span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+                                <!-- NGO INFORMATION -->
+                <div id="ngoSection"
+                     class="card ngo-card p-4 mb-4"
+                     style="display:none;">
+
+                    <h4 class="section-title">
+                        NGO Information
+                    </h4>
+
+                    <div class="row">
+
+                        <div class="col-md-6">
+
+                            <div class="info-item">
+                                <strong>NGO Name</strong>
+                                <span id="ngoName">-</span>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <div class="info-item">
+                                <strong>Registration No.</strong>
+                                <span id="ngoRegistration">-</span>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <div class="info-item">
+                                <strong>Email</strong>
+                                <span id="ngoEmail">-</span>
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <div class="info-item">
+                                <strong>Phone</strong>
+                                <span id="ngoPhone">-</span>
+                            </div>
+
+                        </div>
+
+                        <div class="col-12">
+
+                            <div class="info-item">
+                                <strong>Address</strong>
+                                <span id="ngoAddress">-</span>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- CAMPAIGN STATISTICS -->
+
+                <div class="card p-4 mb-4">
+
+                    <h4 class="section-title">
+                        Campaign Statistics
+                    </h4>
+
+                    <div class="row text-center">
+
+                        <div class="col-md-3 col-6 mb-3">
+
+                            <div class="stat-card">
+
+                                <h4 id="totalDonors">0</h4>
+
+                                <div class="small-muted">
+                                    Donors
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-3 col-6 mb-3">
+
+                            <div class="stat-card">
+
+                                <h4 id="totalViews">0</h4>
+
+                                <div class="small-muted">
+                                    Views
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-3 col-6 mb-3">
+
+                            <div class="stat-card">
+
+                                <h4 id="availableBalance">
+                                    ₹0
+                                </h4>
+
+                                <div class="small-muted">
+                                    Wallet Balance
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-3 col-6 mb-3">
+
+                            <div class="stat-card">
+
+                                <h4 id="withdrawnAmount">
+                                    ₹0
+                                </h4>
+
+                                <div class="small-muted">
+                                    Withdrawn
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- TIMELINE -->
+
+                <div class="card p-4 mb-5">
+
+                    <h4 class="section-title">
+                        Campaign Timeline
+                    </h4>
+
+                    <div class="row">
+
+                        <div class="col-md-6">
+
+                            <div class="info-item">
+
+                                <strong>Started On</strong>
+
+                                <span id="startDate">-</span>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <div class="info-item">
+
+                                <strong>Ends On</strong>
+
+                                <span id="endDate">-</span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- RIGHT SIDEBAR -->
+
+            <div class="col-lg-4">
+
+                <div class="sticky-card">
+
+                    <!-- Donation Card -->
+
+                    <div class="card p-4 mb-4">
+
+                        <div class="raised-amount"
+                             id="raisedAmount">
+
+                            ₹0
+
+                        </div>
+
+                        <div class="goal mb-3">
+
+                            Raised of
+                            <strong id="goalAmount">
+                                ₹0
+                            </strong>
+
+                        </div>
+
+
+                        <div class="progress mb-3">
+
+                            <div
+                                id="progressBar"
+                                class="progress-bar"
+                                style="width:0%">
+
+                            </div>
+
+                        </div>
+
+                        <div class="d-flex
+                                    justify-content-between
+                                    mb-4">
+
+                            <small>
+
+                                <span id="progressPercent">
+                                    0%
+                                </span>
+
+                                Funded
+
+                            </small>
+
+                            <small>
+
+                                <span id="remainingDays">
+                                    --
+                                </span>
+
+                                Days Left
+
+                            </small>
+
+                        </div>
+
+
+                        <button
+                            class="donate-btn mb-3"
+                            id="donateBtn">
+
+                            <i class="fa-solid fa-heart"></i>
+
+                            Donate Now
+
+                        </button>
+
+
+                        <button
+                            class="btn btn-outline-success w-100"
+                            id="shareBtn">
+
+                            <i class="fa-solid fa-share-nodes"></i>
+
+                            Share Campaign
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- Campaign Creator -->
+
+                    <div class="card p-4 mb-4">
+
+                        <h5 class="mb-3">
+
+                            Campaign Creator
+
+                        </h5>
+
+                        <div class="d-flex align-items-center">
+
+                            <img
+                                id="creatorPhoto"
+                                src="https://ui-avatars.com/api/?background=0D8ABC&color=fff"
+                                class="rounded-circle me-3"
+                                width="60"
+                                height="60">
+
+                            <div>
+
+                                <h6
+                                    id="creatorName"
+                                    class="mb-1">
+
+                                    -
+
+                                </h6>
+
+                                <small
+                                    id="creatorType"
+                                    class="text-muted">
+
+                                    -
+
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Share -->
+
+                    <div class="card p-4">
+
+                        <h5 class="mb-3">
+
+                            Share
+
+                        </h5>
+
+                        <div class="d-flex gap-3">
+
+                            <button
+                                class="share-btn"
+                                id="facebookBtn">
+
+                                <i class="fab fa-facebook-f"></i>
+
+                            </button>
+
+                            <button
+                                class="share-btn"
+                                id="twitterBtn">
+
+                                <i class="fab fa-x-twitter"></i>
+
+                            </button>
+
+                            <button
+                                class="share-btn"
+                                id="whatsappBtn">
+
+                                <i class="fab fa-whatsapp"></i>
+
+                            </button>
+
+                            <button
+                                class="share-btn"
+                                id="copyBtn">
+
+                                <i class="fa fa-link"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RECENT DONATIONS -->
+
+        <div class="card p-4 mt-5 mb-4">
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+
+                <h4 class="section-title mb-0">
+
+                    Recent Donations
+
+                </h4>
+
+                <span
+                    id="donationCount"
+                    class="badge bg-success">
+
+                    0 Donations
+
+                </span>
+
+            </div>
+
+            <div id="recentDonations">
+
+                <div class="text-center text-muted">
+
+                    No donations yet.
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- SIMILAR CAMPAIGNS -->
+
+        <div class="mt-5">
+
+            <h3 class="mb-4">
+
+                Similar Campaigns
+
+            </h3>
+
+            <div
+                id="similarCampaigns"
+                class="row">
+
+            </div>
+
+        </div>
+
+    </div>
+<script>
+const API_BASE = "http://127.0.0.1:8000/api/campaigns/campaign";
+
+// -----------------------------------------
+// Get campaign slug from URL
+// Example:
+// campaign-details.html?campaign_slug=save-child-123
+// -----------------------------------------
+
+const campaignSlug = "{{ campaign_slug }}";
+console.log("campaignSlug", campaignSlug);
+const DONATION_API =`http://127.0.0.1:8000/api/campaigns/${campaignSlug}/donations`;
+
+if (!campaignSlug) {
+
+    {% comment %} alert("Campaign slug not found."); {% endcomment %}
+
+    throw new Error("campaign_slug missing");
+
+}
+
+loadCampaign();
+
+async function loadCampaign(){
+
+    try{
+
+        console.log(campaignSlug);
+
+        const response = await fetch(`${API_BASE}/${campaignSlug}`);
+
+        if(!response.ok){
+
+            throw new Error("Unable to load campaign.");
+
+        }
+
+        const campaign = await response.json();
+
+        renderCampaign(campaign.data);
+
+        loadDonations();
+
+    }
+
+    catch(error){
+
+        console.error(error);
+
+        document.getElementById("loader").style.display="none";
+
+        document.getElementById("campaignContent").innerHTML=
+
+        `
+        <div class="alert alert-danger">
+
+            Unable to load campaign.
+
+        </div>
+        `;
+
+        document.getElementById("campaignContent").style.display="block";
+
+    }
+
+}
+
+function renderCampaign(c){
+
+    document.getElementById("loader").style.display="none";
+
+    document.getElementById("campaignContent").style.display="block";
+
+    // Hero
+
+    document.getElementById("campaignName").textContent=c.campaign_name;
+
+    document.getElementById("campaignDescription").innerHTML=c.campaign_desc;
+
+    document.getElementById("campaignStatus").textContent=c.campaign_status;
+
+    document.getElementById("campaignCause").textContent=c.cause;
+
+    document.getElementById("campaignType").textContent=c.campaign_type;
+
+    // Cover Photo
+    console.log("c", c);
+    document.getElementById("coverPhoto").src= c.cover_photo;
+
+    document.getElementById("coverPhoto").onerror=function(){
+
+        this.src="https://placehold.co/1200x700";
+
+    };
+
+    // Beneficiary
+
+    document.getElementById("beneficiaryName").textContent=
+        c.beneficiary_name || "-";
+
+    document.getElementById("beneficiaryType").textContent=
+        c.beneficiary_type || "-";
+
+    document.getElementById("beneficiaryGroup").textContent=
+        c.beneficiary_group_type || "-";
+
+    document.getElementById("memberCount").textContent=
+        c.beneficiary_member_count || "-";
+
+    document.getElementById("beneficiaryLocation").textContent=
+        c.beneficiary_location || "-";
+
+    document.getElementById("beneficiaryAge").textContent=
+        c.beneficiary_age || "-";
+
+    if(c.beneficiary_relation){
+
+        document.getElementById("relationDiv").style.display="block";
+
+        document.getElementById("beneficiaryRelation").textContent=
+            c.beneficiary_relation;
+
+    }
+
+    else{
+
+        document.getElementById("relationDiv").style.display="none";
+
+    }
+
+    // Medical Section
+
+    if(c.cause==="MEDICAL"){
+
+        document.getElementById("medicalSection").style.display="block";
+
+        document.getElementById("hospitalName").textContent=
+            c.hospital_name;
+
+        document.getElementById("hospitalLocation").textContent=
+            c.hospital_location;
+
+        document.getElementById("ailment").textContent=
+            c.ailment;
+
+    }
+
+    else{
+
+        document.getElementById("medicalSection").style.display="none";
+
+    }
+
+    // NGO
+
+    if(c.ngo){
+
+        document.getElementById("ngoSection").style.display="block";
+
+        document.getElementById("ngoName").textContent=
+            c.ngo.name || "-";
+
+        document.getElementById("ngoRegistration").textContent=
+            c.ngo.registration_number || "-";
+
+        document.getElementById("ngoEmail").textContent=
+            c.ngo.email || "-";
+
+        document.getElementById("ngoPhone").textContent=
+            c.ngo.phone || "-";
+
+        document.getElementById("ngoAddress").textContent=
+            c.ngo.address || "-";
+
+    }
+
+    else{
+
+        document.getElementById("ngoSection").style.display="none";
+
+    }
+
+    // Progress
+
+    const raised=parseFloat(c.raised_amount);
+
+    const goal=parseFloat(c.goal_amount);
+
+    const percent=Math.min((raised/goal)*100,100);
+
+    document.getElementById("raisedAmount").textContent=
+        formatCurrency(raised);
+
+    document.getElementById("goalAmount").textContent=
+        formatCurrency(goal);
+
+    document.getElementById("progressBar").style.width=
+        percent+"%";
+
+    document.getElementById("progressPercent").textContent=
+        percent.toFixed(1)+"%";
+
+    // Stats
+
+    document.getElementById("totalDonors").textContent=
+        c.total_donors;
+
+    document.getElementById("totalViews").textContent=
+        c.total_views;
+
+    document.getElementById("availableBalance").textContent=
+        formatCurrency(c.wallet_balance);
+
+    document.getElementById("withdrawnAmount").textContent=
+        formatCurrency(c.amount_withdrawn);
+
+    // Timeline
+
+    document.getElementById("startDate").textContent=
+        formatDate(c.start_date);
+
+    document.getElementById("endDate").textContent=
+        formatDate(c.end_date);
+
+    document.getElementById("remainingDays").textContent=
+        calculateDays(c.end_date);
+
+    // Creator
+
+    document.getElementById("creatorName").textContent=
+        c.created_by?.fullname || "-";
+
+    document.getElementById("creatorType").textContent=
+        c.created_by?.user_type || "";
+
+    if(c.created_by?.profile_picture){
+
+        document.getElementById("creatorPhoto").src=
+            c.created_by.profile_picture;
+
+    }
+
+}
+
+async function loadDonations(){
+
+    try{
+
+        const response =
+            await fetch(DONATION_API);
+
+        const result =
+            await response.json();
+
+        if(!result.success){
+
+            return;
+
+        }
+
+        document.getElementById("donationCount").innerHTML =
+            `${result.count} Donations`;
+
+        const container =
+            document.getElementById("recentDonations");
+
+        container.innerHTML="";
+
+        if(result.count===0){
+
+            container.innerHTML=`
+
+                <div class="text-center text-muted">
+
+                    Be the first person to donate ❤️
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+        result.data.forEach(d=>{
+
+            container.innerHTML+=`
+
+            <div class="donation-item">
+
+                <div>
+
+                    <div class="donor-name">
+
+                        ${d.donor_name}
+
+                    </div>
+
+                    ${
+                        d.message
+                        ?
+
+                        `<div class="donation-message">
+
+                            "${d.message}"
+
+                        </div>`
+
+                        :
+
+                        ""
+
+                    }
+
+                    <div class="donation-date">
+
+                        ${formatDate(d.donated_at)}
+
+                    </div>
+
+                </div>
+
+                <div class="donation-amount">
+
+                    ₹${Number(d.amount).toLocaleString("en-IN")}
+
+                </div>
+
+            </div>
+
+            `;
+
+        });
+
+    }
+
+    catch(err){
+
+        console.log(err);
+
+    }
+
+}
+
+
+function formatCurrency(amount){
+
+    return "₹"+Number(amount).toLocaleString("en-IN",{
+
+        minimumFractionDigits:2
+
+    });
+
+}
+
+function formatDate(date){
+
+    if(!date) return "-";
+
+    return new Date(date).toLocaleDateString("en-IN",{
+
+        day:"numeric",
+
+        month:"long",
+
+        year:"numeric"
+
+    });
+
+}
+
+function calculateDays(endDate){
+
+    if(!endDate) return "--";
+
+    const end=new Date(endDate);
+
+    const now=new Date();
+
+    const diff=end-now;
+
+    return Math.max(Math.ceil(diff/(1000*60*60*24)),0);
+
+}
+
+document.getElementById("copyBtn").onclick=function(){
+
+    navigator.clipboard.writeText(window.location.href);
+
+    alert("Campaign link copied.");
+
+};
+
+document.getElementById("facebookBtn").onclick=function(){
+
+    window.open(
+
+        "https://www.facebook.com/sharer/sharer.php?u="+
+        encodeURIComponent(window.location.href)
+
+    );
+
+};
+
+document.getElementById("twitterBtn").onclick=function(){
+
+    window.open(
+
+        "https://twitter.com/intent/tweet?url="+
+        encodeURIComponent(window.location.href)
+
+    );
+
+};
+
+document.getElementById("whatsappBtn").onclick=function(){
+
+    window.open(
+
+        "https://wa.me/?text="+
+        encodeURIComponent(window.location.href)
+
+    );
+
+};
+
+document.getElementById("shareBtn").onclick=function(){
+
+    if(navigator.share){
+
+        navigator.share({
+
+            title:document.getElementById("campaignName").innerText,
+
+            url:window.location.href
+
+        });
+
+    }
+
+    else{
+
+        navigator.clipboard.writeText(window.location.href);
+
+        alert("Campaign URL copied.");
+
+    }
+
+};
+
+document.getElementById("donateBtn").onclick=function(){
+
+    window.location.href=
+        "/frontend/campaign/"+campaignSlug+"/donate";
+
+};
+
+</script>
+
+</body>
+
+</html>

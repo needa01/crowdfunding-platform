@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Create Admin</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f5f6fa;
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            margin-bottom: 25px;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            color: #222;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            color: #777;
+            font-size: 14px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #d8d8d8;
+            border-radius: 7px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #4f46e5;
+        }
+
+        .required {
+            color: red;
+        }
+
+        .error {
+            color: #dc2626;
+            font-size: 13px;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .success-message {
+            background: #ecfdf5;
+            color: #047857;
+            padding: 12px;
+            border-radius: 7px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message {
+            background: #fef2f2;
+            color: #b91c1c;
+            padding: 12px;
+            border-radius: 7px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 7px;
+            padding: 12px 22px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn-cancel {
+            background: #e5e7eb;
+            color: #333;
+        }
+
+        .btn-create {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .btn-create:hover {
+            background: #4338ca;
+        }
+
+        .btn-create:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-wrapper input {
+            padding-right: 70px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: none;
+            color: #4f46e5;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 20px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="page-header">
+        <h1>Create Admin</h1>
+        <p>Create a new platform administrator.</p>
+    </div>
+
+    <div class="card">
+
+        <div id="successMessage" class="success-message"></div>
+        <div id="errorMessage" class="error-message"></div>
+
+        <form id="createAdminForm">
+
+            <!-- Full Name -->
+            <div class="form-group">
+
+                <label for="fullname">
+                    Full Name <span class="required">*</span>
+                </label>
+
+                <input
+                    type="text"
+                    id="fullname"
+                    name="fullname"
+                    placeholder="Enter admin full name"
+                    required
+                >
+
+                <div
+                    id="fullnameError"
+                    class="error"
+                ></div>
+
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+
+                <label for="email">
+                    Email <span class="required">*</span>
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Enter admin email"
+                    required
+                >
+
+                <div
+                    id="emailError"
+                    class="error"
+                ></div>
+
+            </div>
+
+            <!-- Mobile -->
+            <div class="form-group">
+
+                <label for="mobile">
+                    Mobile <span class="required">*</span>
+                </label>
+
+                <input
+                    type="tel"
+                    id="mobile"
+                    name="mobile"
+                    placeholder="Enter mobile number"
+                    maxlength="10"
+                    required
+                >
+
+                <div
+                    id="mobileError"
+                    class="error"
+                ></div>
+
+            </div>
+
+            <!-- Password -->
+            <div class="form-group">
+
+                <label for="password">
+                    Password <span class="required">*</span>
+                </label>
+
+                <div class="password-wrapper">
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Enter password"
+                        minlength="8"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        class="toggle-password"
+                        onclick="togglePassword()"
+                    >
+                        Show
+                    </button>
+
+                </div>
+
+                <div
+                    id="passwordError"
+                    class="error"
+                ></div>
+
+            </div>
+
+            <!-- Buttons -->
+            <div class="buttons">
+
+                <button
+                    type="button"
+                    class="btn btn-cancel"
+                    onclick="window.history.back()"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    id="createButton"
+                    class="btn btn-create"
+                >
+                    Create Admin
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    const form = document.getElementById("createAdminForm");
+    const createButton = document.getElementById("createButton");
+    const token = sessionStorage.getItem("access_token");
+    const successMessage =
+        document.getElementById("successMessage");
+
+    const errorMessage =
+        document.getElementById("errorMessage");
+
+
+    function togglePassword() {
+
+        const password =
+            document.getElementById("password");
+
+        const button =
+            document.querySelector(".toggle-password");
+
+        if (password.type === "password") {
+
+            password.type = "text";
+            button.textContent = "Hide";
+
+        } else {
+
+            password.type = "password";
+            button.textContent = "Show";
+
+        }
+    }
+
+
+    function getCSRFToken() {
+
+        const cookieValue =
+            document.cookie
+                .split("; ")
+                .find(row => row.startsWith("csrftoken="));
+
+        return cookieValue
+            ? decodeURIComponent(cookieValue.split("=")[1])
+            : null;
+    }
+
+
+    function clearMessages() {
+
+        successMessage.style.display = "none";
+        errorMessage.style.display = "none";
+
+        document
+            .querySelectorAll(".error")
+            .forEach(element => {
+                element.style.display = "none";
+                element.textContent = "";
+            });
+    }
+
+
+    function showFieldErrors(errors) {
+
+        Object.keys(errors).forEach(field => {
+
+            const errorElement =
+                document.getElementById(field + "Error");
+
+            if (!errorElement) return;
+
+            const messages = errors[field];
+
+            errorElement.textContent =
+                Array.isArray(messages)
+                    ? messages.join(" ")
+                    : messages;
+
+            errorElement.style.display = "block";
+
+        });
+    }
+
+
+    form.addEventListener("submit", async function (event) {
+
+        event.preventDefault();
+
+        clearMessages();
+
+        createButton.disabled = true;
+        createButton.textContent = "Creating...";
+
+
+        const payload = {
+
+            fullname:
+                document.getElementById("fullname").value.trim(),
+
+            email:
+                document.getElementById("email").value.trim(),
+
+            mobile:
+                document.getElementById("mobile").value.trim(),
+
+            password:
+                document.getElementById("password").value
+
+        };
+
+
+        try {
+
+            const response = await fetch(
+                "/api/admin/create",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + token
+                    },
+
+                    credentials: "include",
+
+                    body: JSON.stringify(payload)
+                }
+            );
+
+
+            const result = await response.json();
+
+
+            if (response.ok && result.success) {
+
+                successMessage.textContent =
+                    result.message || "Admin created successfully.";
+
+                successMessage.style.display = "block";
+
+                form.reset();
+
+                setTimeout(() => {
+
+                    window.location.href =
+                        "/frontend/admin/admin-management";
+
+                }, 1500);
+
+                return;
+            }
+
+
+            /*
+             * Serializer validation errors
+             *
+             * Example:
+             *
+             * {
+             *     "success": false,
+             *     "errors": {
+             *         "email": ["Admin with this email already exists."]
+             *     }
+             * }
+             */
+
+            if (result.errors) {
+
+                showFieldErrors(result.errors);
+
+            } else {
+
+                errorMessage.textContent =
+                    result.message ||
+                    "Unable to create admin.";
+
+                errorMessage.style.display = "block";
+            }
+
+
+        } catch (error) {
+
+            console.error("Create admin error:", error);
+
+            errorMessage.textContent =
+                "Something went wrong. Please try again.";
+
+            errorMessage.style.display = "block";
+
+        } finally {
+
+            createButton.disabled = false;
+            createButton.textContent = "Create Admin";
+
+        }
+
+    });
+
+</script>
+
+</body>
+</html>

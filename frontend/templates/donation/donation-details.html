@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Donation Details</title>
+
+    <link rel="stylesheet" href="/static/css/style.css" />
+
+    <style>
+      body {
+        background: #f5f6fa;
+        font-family: Arial, sans-serif;
+      }
+
+      .container {
+        width: 900px;
+        margin: 40px auto;
+      }
+
+      .card {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+
+      h2 {
+        margin-top: 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      td {
+        padding: 12px 8px;
+        border-bottom: 1px solid #eee;
+      }
+
+      td:first-child {
+        width: 220px;
+        color: #666;
+        font-weight: bold;
+      }
+
+      .success {
+        color: green;
+        font-weight: bold;
+      }
+
+      .failed {
+        color: red;
+        font-weight: bold;
+      }
+
+      .pending {
+        color: orange;
+        font-weight: bold;
+      }
+
+      .btn {
+        padding: 12px 18px;
+        background: #1c7ed6;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        display: inline-block;
+        margin-top: 15px;
+      }
+
+      .campaign-title {
+        font-size: 22px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="card">
+        <h2>Donation Details</h2>
+
+        <table>
+          <tr>
+            <td>Donation Number</td>
+            <td id="donation-number"></td>
+          </tr>
+
+          <tr>
+            <td>Status</td>
+            <td id="status"></td>
+          </tr>
+
+          <tr>
+            <td>Amount</td>
+            <td id="amount"></td>
+          </tr>
+
+          <tr>
+            <td>Currency</td>
+            <td id="currency"></td>
+          </tr>
+
+          <tr>
+            <td>Donated On</td>
+            <td id="donated-at"></td>
+          </tr>
+
+          <tr>
+            <td>Anonymous</td>
+            <td id="anonymous"></td>
+          </tr>
+
+          <tr>
+            <td>Your Message</td>
+            <td id="message"></td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>Campaign</h2>
+
+        <div class="campaign-title" id="campaign-title"></div>
+
+        <br />
+
+        <a id="campaign-link" class="btn"> View Campaign </a>
+      </div>
+
+      <div class="card">
+        <h2>Receipt</h2>
+
+        <table>
+          <tr>
+            <td>Receipt Number</td>
+            <td id="receipt-number"></td>
+          </tr>
+        </table>
+
+        <a
+          id="download-receipt"
+          class="btn"
+          target="_blank"
+          style="display: none"
+        >
+          Download Receipt
+        </a>
+      </div>
+
+      <div class="card">
+        <h2>Payment Information</h2>
+
+        <table>
+          <tr>
+            <td>Gateway</td>
+            <td id="gateway"></td>
+          </tr>
+
+          <tr>
+            <td>Payment Method</td>
+            <td id="payment-method"></td>
+          </tr>
+
+          <tr>
+            <td>Transaction Status</td>
+            <td id="payment-status"></td>
+          </tr>
+
+          <tr>
+            <td>Gateway Payment ID</td>
+            <td id="payment-id"></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      const donationUUID = window.location.pathname
+        .split("/")
+        .filter(Boolean)
+        .pop();
+
+      async function loadDonation() {
+        const token = sessionStorage.getItem("access_token");
+
+        const response = await fetch(`/api/donations/${donationUUID}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+          alert(result.message);
+          return;
+        }
+
+        const d = result.data;
+
+        document.getElementById("donation-number").innerText =
+          d.donation_number;
+
+        document.getElementById("amount").innerText = "₹" + d.amount;
+
+        document.getElementById("currency").innerText = d.currency;
+
+        document.getElementById("anonymous").innerText = d.is_anonymous
+          ? "Yes"
+          : "No";
+
+        document.getElementById("message").innerText = d.message || "-";
+
+        document.getElementById("campaign-title").innerText = d.campaign.campaign_name;
+
+        document.getElementById("campaign-link").href =
+          `/frontend/campaign/${d.campaign.campaign_slug}`;
+
+        document.getElementById("donated-at").innerText = d.donated_at || "-";
+
+        let statusHTML = "";
+
+        if (d.status === "Success") {
+          statusHTML = `<span class="success">${d.status}</span>`;
+        } else if (d.status === "Pending") {
+          statusHTML = `<span class="pending">${d.status}</span>`;
+        } else {
+          statusHTML = `<span class="failed">${d.status}</span>`;
+        }
+
+        document.getElementById("status").innerHTML = statusHTML;
+
+        document.getElementById("gateway").innerText = d.payment.gateway || "-";
+
+        document.getElementById("payment-method").innerText =
+          d.payment.payment_method || "-";
+
+        document.getElementById("payment-status").innerText =
+          d.payment.transaction_status || "-";
+
+        document.getElementById("payment-id").innerText =
+          d.payment.gateway_payment_id || "-";
+
+        if (d.receipt.available) {
+          document.getElementById("receipt-number").innerText =
+            d.receipt.receipt_number;
+
+          const btn = document.getElementById("download-receipt");
+
+          btn.href = d.receipt.receipt_url;
+
+          btn.style.display = "inline-block";
+        } else {
+          document.getElementById("receipt-number").innerText = "Not Generated";
+        }
+      }
+
+      loadDonation();
+    </script>
+  </body>
+</html>

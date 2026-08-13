@@ -1,0 +1,1234 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Campaign Verification</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        background: #f4f6fb;
+        color: #333;
+      }
+
+      .container {
+        max-width: 1300px;
+        margin: 35px auto;
+        padding: 0 15px;
+      }
+
+      h1 {
+        color: #1e3a8a;
+        margin-bottom: 25px;
+      }
+
+      .card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 22px;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      }
+
+      .section-title {
+        font-size: 22px;
+        font-weight: 600;
+        color: #1e3a8a;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #ececec;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+      }
+
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .field label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #555;
+        margin-bottom: 6px;
+      }
+
+      .field input,
+      .field textarea {
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: #fafafa;
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 90px;
+      }
+
+      .cover-layout {
+        display: flex;
+        gap: 25px;
+        align-items: flex-start;
+      }
+
+      .cover-image {
+        width: 260px;
+        height: 180px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 1px solid #ddd;
+      }
+
+      .profile-section {
+        display: flex;
+        gap: 25px;
+        align-items: flex-start;
+      }
+
+      .profile-image {
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #eee;
+      }
+
+      .status {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 20px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .pending {
+        background: #f59e0b;
+      }
+
+      .approved,
+      .verified {
+        background: #16a34a;
+      }
+
+      .rejected {
+        background: #dc2626;
+      }
+
+      .documents-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+
+      .doc-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 18px;
+        background: #fafafa;
+      }
+
+      .doc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+
+      .doc-header h3 {
+        font-size: 18px;
+        color: #1e3a8a;
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 15px;
+      }
+
+      button {
+        border: none;
+        padding: 9px 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        color: #fff;
+        font-weight: 600;
+      }
+
+      .accept-btn {
+        background: #16a34a;
+      }
+
+      .reject-btn {
+        background: #dc2626;
+      }
+
+      .view-btn {
+        background: #2563eb;
+      }
+
+      .verification-footer {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+      }
+
+      .profile-approve-btn {
+        background: #15803d;
+        font-size: 15px;
+        padding: 12px 25px;
+      }
+
+      .profile-reject-btn {
+        background: #b91c1c;
+        font-size: 15px;
+        padding: 12px 25px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      @media (max-width: 992px) {
+        .grid,
+        .grid-3,
+        .documents-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .cover-layout,
+        .profile-section {
+          flex-direction: column;
+        }
+
+        .cover-image {
+          width: 100%;
+          height: 240px;
+        }
+      }
+
+      .remarks-box {
+        margin-top: 15px;
+      }
+
+      .remarks-box label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #555;
+      }
+
+      .remarks-box textarea {
+        width: 100%;
+        min-height: 80px;
+        resize: vertical;
+        padding: 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        background: #fff;
+        font-size: 14px;
+        color: #333;
+        outline: none;
+        transition:
+          border-color 0.2s ease,
+          box-shadow 0.2s ease;
+        line-height: 1.5;
+      }
+
+      .remarks-box textarea:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Campaign Verification</h1>
+
+      <!-- ========================================================= -->
+      <!-- Campaign Information -->
+      <!-- ========================================================= -->
+
+      <div class="card">
+        <div class="section-title">Campaign Information</div>
+
+        <div class="cover-layout">
+          <img
+            id="cover-photo"
+            class="cover-image"
+            src="https://placehold.co/700x450"
+          />
+
+          <div style="flex: 1">
+            <div class="grid">
+              <div class="field">
+                <label>Campaign Name</label>
+                <input id="campaign-name" readonly />
+              </div>
+
+              <div class="field">
+                <label>Campaign Type</label>
+                <input id="campaign-type" readonly />
+              </div>
+
+              <div class="field">
+                <label>Cause</label>
+                <input id="campaign-cause" readonly />
+              </div>
+
+              <div class="field">
+                <label>Status</label>
+                <input id="campaign-status" readonly />
+              </div>
+
+              <div class="field">
+                <label>Goal Amount</label>
+                <input id="goal-amount" readonly />
+              </div>
+
+              <div class="field">
+                <label>Raised Amount</label>
+                <input id="raised-amount" readonly />
+              </div>
+
+              <div class="field">
+                <label>Total Donors</label>
+                <input id="total-donors" readonly />
+              </div>
+
+              <div class="field">
+                <label>Total Views</label>
+                <input id="total-views" readonly />
+              </div>
+
+              <div class="field">
+                <label>Start Date</label>
+                <input id="start-date" readonly />
+              </div>
+
+              <div class="field">
+                <label>End Date</label>
+                <input id="end-date" readonly />
+              </div>
+            </div>
+
+            <br />
+
+            <div class="field">
+              <label>Description</label>
+
+              <textarea id="campaign-description" readonly></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- Creator Information -->
+      <!-- (Continues in Part 2) -->
+      <!-- ========================================================= -->
+
+      <!-- ========================================================= -->
+      <!-- Creator Information -->
+      <!-- ========================================================= -->
+
+      <div class="card">
+        <div class="section-title">Campaign Creator</div>
+
+        <div class="profile-section">
+          <img
+            id="profile-picture"
+            class="profile-image"
+            src="https://placehold.co/140x140"
+          />
+
+          <div style="flex: 1">
+            <div class="grid">
+              <div class="field">
+                <label>Full Name</label>
+                <input id="creator-name" readonly />
+              </div>
+
+              <div class="field">
+                <label>Email</label>
+                <input id="creator-email" readonly />
+              </div>
+
+              <div class="field">
+                <label>Mobile</label>
+                <input id="creator-mobile" readonly />
+              </div>
+
+              <div class="field">
+                <label>User Type</label>
+                <input id="creator-user-type" readonly />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- Individual Profile -->
+      <!-- ========================================================= -->
+
+      <div class="card hidden" id="individual-card">
+        <div class="section-title">Individual Profile</div>
+
+        <div class="grid">
+          <div class="field">
+            <label>Occupation</label>
+            <input id="occupation" readonly />
+          </div>
+
+          <div class="field">
+            <label>Address</label>
+            <input id="individual-address" readonly />
+          </div>
+
+          <div class="field">
+            <label>City</label>
+            <input id="individual-city" readonly />
+          </div>
+
+          <div class="field">
+            <label>State</label>
+            <input id="individual-state" readonly />
+          </div>
+
+          <div class="field">
+            <label>Country</label>
+            <input id="individual-country" readonly />
+          </div>
+
+          <div class="field">
+            <label>Pincode</label>
+            <input id="individual-pincode" readonly />
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- NGO Profile -->
+      <!-- ========================================================= -->
+
+      <div class="card hidden" id="ngo-card">
+        <div class="section-title">NGO Profile</div>
+
+        <div class="grid">
+          <div class="field">
+            <label>NGO Name</label>
+            <input id="ngo-name" readonly />
+          </div>
+
+          <div class="field">
+            <label>NGO Type</label>
+            <input id="ngo-type" readonly />
+          </div>
+
+          <div class="field">
+            <label>Registration Number</label>
+            <input id="ngo-registration" readonly />
+          </div>
+
+          <div class="field">
+            <label>Contact Person</label>
+            <input id="contact-person" readonly />
+          </div>
+
+          <div class="field">
+            <label>Designation</label>
+            <input id="contact-designation" readonly />
+          </div>
+
+          <div class="field">
+            <label>Website</label>
+            <input id="ngo-website" readonly />
+          </div>
+
+          <div class="field">
+            <label>Address</label>
+            <input id="ngo-address" readonly />
+          </div>
+
+          <div class="field">
+            <label>City</label>
+            <input id="ngo-city" readonly />
+          </div>
+
+          <div class="field">
+            <label>State</label>
+            <input id="ngo-state" readonly />
+          </div>
+
+          <div class="field">
+            <label>Country</label>
+            <input id="ngo-country" readonly />
+          </div>
+
+          <div class="field">
+            <label>Pincode</label>
+            <input id="ngo-pincode" readonly />
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- Beneficiary -->
+      <!-- ========================================================= -->
+
+      <div class="card">
+        <div class="section-title">Beneficiary Information</div>
+
+        <div class="grid">
+          <div class="field">
+            <label>Beneficiary Type</label>
+            <input id="beneficiary-type" readonly />
+          </div>
+
+          <div class="field">
+            <label>Group Type</label>
+            <input id="beneficiary-group" readonly />
+          </div>
+
+          <div class="field">
+            <label>Name</label>
+            <input id="beneficiary-name" readonly />
+          </div>
+
+          <div class="field">
+            <label>Relation</label>
+            <input id="beneficiary-relation" readonly />
+          </div>
+
+          <div class="field">
+            <label>Mobile</label>
+            <input id="beneficiary-mobile" readonly />
+          </div>
+
+          <div class="field">
+            <label>Location</label>
+            <input id="beneficiary-location" readonly />
+          </div>
+
+          <div class="field">
+            <label>Age</label>
+            <input id="beneficiary-age" readonly />
+          </div>
+
+          <div class="field">
+            <label>Member Count</label>
+            <input id="beneficiary-members" readonly />
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- Medical Details -->
+      <!-- (Shown only for Medical campaigns) -->
+      <!-- Continues in Part 3 -->
+      <!-- ========================================================= -->
+
+      <!-- ========================================================= -->
+      <!-- Medical Details -->
+      <!-- ========================================================= -->
+
+      <div class="card hidden" id="medical-card">
+        <div class="section-title">Medical Details</div>
+
+        <div class="grid">
+          <div class="field">
+            <label>Hospital Name</label>
+            <input id="hospital-name" readonly />
+          </div>
+
+          <div class="field">
+            <label>Hospital Location</label>
+            <input id="hospital-location" readonly />
+          </div>
+        </div>
+
+        <br />
+
+        <div class="field">
+          <label>Ailment</label>
+
+          <textarea id="ailment" readonly></textarea>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- Financial Information -->
+      <!-- ========================================================= -->
+
+      <div class="card">
+        <div class="section-title">Financial Information</div>
+
+        <div class="grid">
+          <div class="field">
+            <label>Goal Amount</label>
+            <input id="financial-goal" readonly />
+          </div>
+
+          <div class="field">
+            <label>Raised Amount</label>
+            <input id="financial-raised" readonly />
+          </div>
+
+          <div class="field">
+            <label>Total Charges</label>
+            <input id="financial-charges" readonly />
+          </div>
+
+          <div class="field">
+            <label>Amount Withdrawn</label>
+            <input id="financial-withdrawn" readonly />
+          </div>
+
+          <div class="field">
+            <label>Wallet Balance</label>
+            <input id="financial-wallet" readonly />
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- Campaign Documents -->
+      <!-- ========================================================= -->
+
+      <div class="card">
+        <div class="section-title">Campaign Documents</div>
+
+        <div id="documents-container" class="documents-grid">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- Final Verification -->
+      <!-- ========================================================= -->
+
+      <div class="card">
+        <div class="section-title">Campaign Verification</div>
+
+        <div class="field">
+          <label> Overall Verification Remarks </label>
+
+          <textarea id="verification-remarks"></textarea>
+        </div>
+
+        <br />
+
+        <div class="grid">
+          <div class="field">
+            <label> Verification Status </label>
+
+            <input id="verification-status" readonly />
+          </div>
+
+          <div class="field">
+            <label> AI Score </label>
+
+            <input id="ai-score" readonly />
+          </div>
+
+          <div class="field">
+            <label> Reviewed By </label>
+
+            <input id="reviewed-by" readonly />
+          </div>
+
+          <div class="field">
+            <label> Reviewed At </label>
+
+            <input id="reviewed-at" readonly />
+          </div>
+
+          <div class="field">
+            <label> Submitted At </label>
+
+            <input id="submitted-at" readonly />
+          </div>
+        </div>
+
+        <div class="verification-footer">
+          <button id="approve-campaign-btn" class="profile-approve-btn">
+            Approve Campaign
+          </button>
+
+          <button id="reject-campaign-btn" class="profile-reject-btn">
+            Reject Campaign
+          </button>
+        </div>
+
+        <br />
+
+        <small style="color: #666; line-height: 1.7">
+          <strong>Note:</strong>
+
+          Every campaign document should be individually verified before
+          approving the campaign. You may reject the campaign at any time by
+          providing verification remarks.
+        </small>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- JavaScript -->
+    <!-- ========================================================= -->
+
+    <script>
+      const API_BASE = "/api";
+
+      const token = sessionStorage.getItem("access_token");
+
+      const pathParts = window.location.pathname.split("/");
+
+      const campaign_slug = pathParts[pathParts.length - 1];
+
+      function setValue(id, value) {
+        const el = document.getElementById(id);
+
+        if (!el) return;
+
+        el.value = value ?? "";
+      }
+
+      function setImage(id, url) {
+        const img = document.getElementById(id);
+
+        if (!img) return;
+
+        img.src = url || "https://placehold.co/700x450";
+      }
+
+      function formatDate(date) {
+        if (!date) return "";
+
+        return new Date(date).toLocaleString();
+      }
+
+      function updateStatusBadge(el, status) {
+        if (!el) return;
+
+        el.innerHTML = status || "Pending";
+
+        el.classList.remove("pending", "approved", "verified", "rejected");
+
+        switch ((status || "").toLowerCase()) {
+          case "approved":
+
+          case "verified":
+            el.classList.add("approved");
+
+            break;
+
+          case "rejected":
+            el.classList.add("rejected");
+
+            break;
+
+          default:
+            el.classList.add("pending");
+        }
+      }
+      // ==========================================================
+      // Campaign
+      // ==========================================================
+
+      function populateCampaign(data) {
+        const campaign = data.campaign;
+
+        setImage("cover-photo", campaign.cover_photo);
+
+        setValue("campaign-name", campaign.campaign_name);
+
+        setValue("campaign-type", campaign.campaign_type);
+
+        setValue("campaign-cause", campaign.cause);
+
+        setValue("campaign-description", campaign.campaign_description);
+
+        setValue("campaign-status", campaign.campaign_status);
+
+        setValue("goal-amount", campaign.goal_amount);
+
+        setValue("raised-amount", campaign.raised_amount);
+
+        setValue("total-donors", campaign.total_donors);
+
+        setValue("total-views", campaign.total_views);
+
+        setValue("start-date", campaign.start_date);
+
+        setValue("end-date", campaign.end_date);
+      }
+
+      // ==========================================================
+      // Creator
+      // ==========================================================
+
+      function populateCreator(data) {
+        const creator = data.creator;
+
+        setImage("profile-picture", creator.profile_picture);
+
+        setValue("creator-name", creator.fullname);
+
+        setValue("creator-email", creator.email);
+
+        setValue("creator-mobile", creator.mobile);
+
+        setValue("creator-user-type", creator.user_type);
+
+        // -----------------------------
+        // Individual Profile
+        // -----------------------------
+
+        if (creator.individual_profile) {
+          document.getElementById("individual-card").classList.remove("hidden");
+
+          const p = creator.individual_profile;
+
+          setValue("occupation", p.occupation);
+
+          setValue("individual-address", p.address);
+
+          setValue("individual-city", p.city);
+
+          setValue("individual-state", p.state);
+
+          setValue("individual-country", p.country);
+
+          setValue("individual-pincode", p.pincode);
+        }
+
+        // -----------------------------
+        // NGO Profile
+        // -----------------------------
+
+        if (creator.ngo_profile) {
+          document.getElementById("ngo-card").classList.remove("hidden");
+
+          const ngo = creator.ngo_profile;
+
+          setValue("ngo-name", ngo.ngo_name);
+
+          setValue("ngo-type", ngo.ngo_type);
+
+          setValue("ngo-registration", ngo.registration_number);
+
+          setValue("contact-person", ngo.contact_person_name);
+
+          setValue("contact-designation", ngo.contact_person_designation);
+
+          setValue("ngo-address", ngo.address);
+
+          setValue("ngo-city", ngo.city);
+
+          setValue("ngo-state", ngo.state);
+
+          setValue("ngo-country", ngo.country);
+
+          setValue("ngo-pincode", ngo.pincode);
+
+          setValue("ngo-website", ngo.website);
+        }
+      }
+
+      // ==========================================================
+      // Beneficiary
+      // ==========================================================
+
+      function populateBeneficiary(data) {
+        const b = data.beneficiary;
+
+        if (!b) return;
+
+        setValue("beneficiary-type", b.beneficiary_type);
+
+        setValue("beneficiary-group", b.beneficiary_group_type);
+
+        setValue("beneficiary-name", b.beneficiary_name);
+
+        setValue("beneficiary-relation", b.beneficiary_relation);
+
+        setValue("beneficiary-mobile", b.beneficiary_mobile);
+
+        setValue("beneficiary-location", b.beneficiary_location);
+
+        setValue("beneficiary-age", b.beneficiary_age);
+
+        setValue("beneficiary-members", b.beneficiary_member_count);
+      }
+
+      // ==========================================================
+      // Medical Details
+      // ==========================================================
+
+      function populateMedical(data) {
+        if (!data.medical_details) return;
+
+        document.getElementById("medical-card").classList.remove("hidden");
+
+        setValue("hospital-name", data.medical_details.hospital_name);
+
+        setValue("hospital-location", data.medical_details.hospital_location);
+
+        setValue("ailment", data.medical_details.ailment);
+      }
+
+      // ==========================================================
+      // Financials
+      // ==========================================================
+
+      function populateFinancials(data) {
+        const f = data.financials;
+
+        if (!f) return;
+
+        setValue("financial-goal", f.goal_amount);
+
+        setValue("financial-raised", f.raised_amount);
+
+        setValue("financial-charges", f.total_charges);
+
+        setValue("financial-withdrawn", f.amount_withdrawn);
+
+        setValue("financial-wallet", f.available_wallet_balance);
+      }
+
+      // ==========================================
+      // Render Campaign Documents
+      // ==========================================
+
+      function renderDocuments(documents) {
+        const container = document.getElementById("documents-container");
+
+        container.innerHTML = "";
+
+        if (!documents || documents.length === 0) {
+          container.innerHTML =
+            "<p style='color:#777'>No campaign documents uploaded.</p>";
+          return;
+        }
+
+        documents.forEach((doc) => {
+          const div = document.createElement("div");
+
+          div.className = "doc-card compact";
+
+          div.innerHTML = `
+              <div class="doc-header">
+                  <h3>${doc.document_type}</h3>
+
+                  <span class="status" id="status-${doc.uuid}">
+                      ${doc.verification_status}
+                  </span>
+              </div>
+
+              <div class="grid">
+                  <div class="field">
+                      <label>Document Holder</label>
+                      <input readonly value="${doc.document_holder_name || ""}">
+                  </div>
+
+                  <div class="field">
+                      <label>Document Number</label>
+                      <input readonly value="${doc.document_number || ""}">
+                  </div>
+              </div>
+
+              <br>
+
+              <div class="field">
+                  <label>Uploaded File</label>
+
+                  <a href="${doc.file}"
+                     target="_blank">
+                      👁 View Document
+                  </a>
+              </div>
+
+              <br>
+
+              <div class="remarks-box">
+    <label>Verification Remarks</label>
+
+    <textarea id="remarks-${doc.uuid}" placeholder="Enter verification remarks...">${doc.verification_remarks || ""}</textarea>
+</div>
+
+              <br>
+
+              <div class="grid">
+
+                  <div class="field">
+                      <label>Reviewed By</label>
+
+                      <input readonly
+                             value="${doc.reviewed_by || ""}">
+                  </div>
+
+                  <div class="field">
+                      <label>Reviewed At</label>
+
+                      <input readonly
+                             value="${formatDate(doc.reviewed_at)}">
+                  </div>
+
+              </div>
+
+              <br>
+
+              <div class="btn-group">
+
+                  <button
+                      class="accept-btn"
+                      onclick="verifyDocument('${doc.uuid}','Approved')">
+
+                      Approve
+
+                  </button>
+
+                  <button
+                      class="reject-btn"
+                      onclick="verifyDocument('${doc.uuid}','Rejected')">
+
+                      Reject
+
+                  </button>
+
+              </div>
+
+              <div id="message-${doc.uuid}"></div>
+            `;
+
+          container.appendChild(div);
+
+          updateStatusBadge(
+            document.getElementById(`status-${doc.uuid}`),
+            doc.verification_status,
+          );
+        });
+      }
+
+      // ==========================================
+      // Verify Document
+      // ==========================================
+
+      async function verifyDocument(uuid, status) {
+        const remarks = document.getElementById(`remarks-${uuid}`).value.trim();
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/verification/documents/${uuid}/verify`,
+            {
+              method: "PATCH",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                verification_status: status,
+                verification_remarks: remarks,
+              }),
+            },
+          );
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            showMessage(
+              uuid,
+              result.message || "Unable to verify document.",
+              "error",
+            );
+            return;
+          }
+
+          showMessage(
+            uuid,
+            result.message || "Document verified successfully.",
+          );
+
+          setTimeout(loadCampaign, 1000);
+        } catch (err) {
+          console.error(err);
+
+          showMessage(uuid, "Something went wrong.", "error");
+        }
+      }
+
+      // ==========================================
+      // Verification Request
+      // ==========================================
+
+      function renderVerification(v) {
+        if (!v) return;
+
+        setValue("verification-status", v.status);
+
+        setValue("ai-score", v.ai_score);
+
+        setValue("reviewed-by", v.reviewed_by);
+
+        setValue("reviewed-at", formatDate(v.reviewed_at));
+        setValue("submitted-at", formatDate(v.created_at));
+
+
+        document.getElementById("verification-remarks").value = v.remarks || "";
+      }
+
+      // ==========================================
+      // Verify Campaign
+      // ==========================================
+
+      async function verifyCampaign(action) {
+        const remarks = document
+          .getElementById("verification-remarks")
+          .value.trim();
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/verification/campaign/verify`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                campaign_slug,
+                action,
+                remarks,
+              }),
+            },
+          );
+
+          const result = await response.json();
+
+          alert(result.message);
+
+          if (response.ok) loadCampaign();
+        } catch (err) {
+          console.error(err);
+
+          alert("Something went wrong.");
+        }
+      }
+
+      // ==========================================
+      // Load Campaign
+      // ==========================================
+
+      async function loadCampaign() {
+        try {
+          const response = await fetch(
+            `${API_BASE}/admin/campaign/${campaign_slug}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            alert(result.message);
+            return;
+          }
+
+          const data = result.data;
+
+          populateCreator(data);
+
+          populateCampaign(data);
+
+          populateBeneficiary(data);
+
+          populateMedical(data);
+
+          populateFinancials(data);
+
+          renderDocuments(data.documents);
+
+          renderVerification(data.verification_request);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      // ==========================================
+      // Helper
+      // ==========================================
+
+      function showMessage(id, message, type = "success") {
+        const div = document.getElementById(`message-${id}`);
+
+        if (!div) return;
+
+        div.innerHTML = message;
+
+        div.style.color = type === "error" ? "#dc2626" : "#16a34a";
+
+        div.style.fontWeight = "600";
+
+        setTimeout(() => {
+          div.innerHTML = "";
+        }, 1500);
+      }
+
+      // ==========================================
+      // Buttons
+      // ==========================================
+
+      document
+        .getElementById("approve-campaign-btn")
+        .addEventListener("click", () => {
+          verifyCampaign("approve");
+        });
+
+      document
+        .getElementById("reject-campaign-btn")
+        .addEventListener("click", () => {
+          verifyCampaign("reject");
+        });
+
+      // ==========================================
+      // Init
+      // ==========================================
+
+      loadCampaign();
+    </script>
+  </body>
+</html>

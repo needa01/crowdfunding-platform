@@ -1,0 +1,1706 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>My Profile</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        background: #f5f7fb;
+        min-height: 100vh;
+        padding: 40px;
+      }
+
+      .profile-container {
+        max-width: 700px;
+        margin: auto;
+        background: white;
+        padding: 35px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      }
+
+      h2 {
+        text-align: center;
+        margin-bottom: 25px;
+      }
+
+      #message {
+        text-align: center;
+        margin-bottom: 15px;
+      }
+
+      .success {
+        color: green;
+      }
+
+      .error {
+        color: red;
+      }
+
+      /* Tabs */
+
+      .profile-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 25px;
+      }
+
+      .profile-tabs button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        background: #2563eb;
+        color: white;
+      }
+
+      .section {
+        display: none;
+      }
+
+      #personal-section {
+        display: block;
+      }
+
+      label {
+        display: block;
+        margin-top: 15px;
+        font-weight: 600;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 12px;
+        margin-top: 5px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+
+      textarea {
+        min-height: 100px;
+      }
+
+      input[readonly] {
+        background: #f3f4f6;
+      }
+
+      .profile-image {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      .profile-image img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      button.submit-btn {
+        width: 100%;
+        margin-top: 25px;
+        padding: 14px;
+        background: #16a34a;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      .card {
+        border: 1px solid #ddd;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 15px;
+      }
+
+      .card button {
+        margin-top: 10px;
+        padding: 10px 15px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 8px;
+      }
+
+      .message-box {
+        display: none;
+        margin-top: 20px;
+        margin-bottom: 12px;
+        padding: 12px 15px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.5;
+      }
+
+      .message-box.success {
+        display: block;
+        background: #ecfdf5;
+        color: #166534;
+        border: 1px solid #22c55e;
+      }
+
+      .message-box.error {
+        display: block;
+        background: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #ef4444;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="profile-container">
+      <h2>My Profile</h2>
+
+      <!-- Tabs -->
+
+      <div class="profile-tabs">
+        <button onclick="showSection('personal')">Personal Information</button>
+
+        <button id="bank-tab" onclick="showSection('bank')">
+          Bank Details
+        </button>
+        <button id="documents-tab" onclick="showSection('documents')">
+          Documents
+        </button>
+      </div>
+
+      <!-- =========================
+     PERSONAL SECTION
+========================= -->
+
+      <div id="personal-section" class="section">
+        <form id="ngo-profile-form">
+          <div class="profile-image">
+            <img id="profile-preview" src="" />
+
+            <br /><br />
+
+            <input type="file" id="profile_picture" accept="image/*" />
+          </div>
+
+          <label>NGO Name</label>
+          <input type="text" id="ngo_name" />
+
+          <label>NGO Type</label>
+          <input type="text" id="ngo_type" readonly />
+
+          <label>Registration Number</label>
+          <input type="text" id="registration_number" readonly />
+
+          <label>Contact Person Name</label>
+          <input type="text" id="contact_person_name" />
+
+          <label>Contact Person Designation</label>
+          <input type="text" id="contact_person_designation" />
+
+          <label> Email </label>
+          <input type="email" id="email" readonly />
+
+          <label> Mobile </label>
+          <input type="text" id="mobile" readonly />
+
+          <label>Website</label>
+          <input type="url" id="website" />
+
+          <label> Address </label>
+          <textarea id="address"></textarea>
+
+          <label> City </label>
+          <input type="text" id="city" />
+
+          <label> State </label>
+          <input type="text" id="state" />
+
+          <label> Country </label>
+          <input type="text" id="country" />
+
+          <label> Pincode </label>
+          <input type="text" id="pincode" />
+
+          <div id="profile-message" class="message-box"></div>
+
+          <button class="submit-btn">Update Profile</button>
+        </form>
+      </div>
+
+      <!-- =========================
+     BANK SECTION
+========================= -->
+
+      <!-- =========================
+     BANK SECTION
+========================= -->
+
+      <div id="bank-section" class="section">
+        <h3>Bank Details</h3>
+        <p style="margin-top: 8px; color: #666; font-size: 14px">
+          Upload a cancelled cheque for bank account verification.
+        </p>
+
+        <div class="card">
+          <label> Account Holder Name </label>
+
+          <input type="text" id="account_holder_name" />
+
+          <label> Bank Name </label>
+
+          <input type="text" id="bank_name" />
+
+          <label> Account Number </label>
+
+          <input type="text" id="account_number" />
+
+          <label> IFSC Code </label>
+
+          <input type="text" id="ifsc_code" />
+
+          <label> Branch Name </label>
+
+          <input type="text" id="branch_name" />
+
+          <label>Cancelled Cheque</label>
+
+          <div
+            id="cancelled-cheque-status"
+            style="display: flex; align-items: center; gap: 10px"
+          ></div>
+
+          <input
+            type="file"
+            id="cancelled_cheque"
+            accept=".pdf,.jpg,.jpeg,.png"
+          />
+          <div id="bank-message" class="message-box"></div>
+          <button type="button" class="submit-btn" onclick="saveBankAccount()">
+            Save Bank Details
+          </button>
+        </div>
+      </div>
+      <!-- =========================
+     DOCUMENT SECTION
+========================= -->
+
+      <div id="documents-section" class="section">
+        <h3>Upload Documents for Profile Verification</h3>
+
+        <p style="margin-top: 8px; color: #666; font-size: 14px">
+          Upload the mandatory documents below. You may also upload optional
+          certificates such as 12A, 80G, CSR-1 and FCRA.
+        </p>
+
+        <!-- ===================================================== -->
+        <!-- NGO REGISTRATION CERTIFICATE -->
+        <!-- ===================================================== -->
+
+        <div class="card">
+          <h4>
+            NGO Registration Certificate <span style="color: red">*</span>
+          </h4>
+
+          <p id="registration-certificate-status">Not Uploaded</p>
+
+          <label>Document Holder Name</label>
+
+          <input type="text" id="registration_certificate_holder_name" />
+
+          <label>Registration Number</label>
+
+          <input type="text" id="registration_certificate_number" />
+
+          <label>Select Document</label>
+
+          <input
+            type="file"
+            id="registration_certificate_file"
+            accept=".pdf,.jpg,.jpeg,.png"
+          />
+
+          <div id="registration-certificate-message" class="message-box"></div>
+
+          <button
+            type="button"
+            onclick="
+              uploadRequiredDocument('03eea6ef-43ac-4597-9038-60febd723779')
+            "
+          >
+            Upload Registration Certificate
+          </button>
+        </div>
+
+        <br />
+
+        <!-- ===================================================== -->
+        <!-- NGO PAN -->
+        <!-- ===================================================== -->
+
+        <div class="card">
+          <h4>NGO PAN Card <span style="color: red">*</span></h4>
+
+          <p id="ngo-pan-status">Not Uploaded</p>
+
+          <label>Name on PAN</label>
+
+          <input type="text" id="ngo_pan_holder_name" />
+
+          <label>PAN Number</label>
+
+          <input type="text" id="ngo_pan_number" />
+
+          <label>Select PAN Card</label>
+
+          <input type="file" id="ngo_pan_file" accept=".pdf,.jpg,.jpeg,.png" />
+
+          <div id="ngo-pan-message" class="message-box"></div>
+
+          <button
+            type="button"
+            onclick="
+              uploadRequiredDocument('8d9e1e6f-4570-4966-b06e-d005a74f8b3d')
+            "
+          >
+            Upload NGO PAN
+          </button>
+        </div>
+
+        <br />
+
+        <!-- ===================================================== -->
+        <!-- AUTHORIZED PERSON PAN -->
+        <!-- ===================================================== -->
+
+        <div class="card">
+          <h4>Authorized Person PAN Card <span style="color: red">*</span></h4>
+
+          <p id="authorized-pan-status">Not Uploaded</p>
+
+          <label>Holder Name</label>
+
+          <input type="text" id="authorized_pan_holder_name" />
+
+          <label>PAN Number</label>
+
+          <input type="text" id="authorized_pan_number" />
+
+          <label>Select PAN Card</label>
+
+          <input
+            type="file"
+            id="authorized_pan_file"
+            accept=".pdf,.jpg,.jpeg,.png"
+          />
+
+          <div id="authorized-pan-message" class="message-box"></div>
+
+          <button
+            type="button"
+            onclick="
+              uploadRequiredDocument('d5cb9692-5d4a-4ff8-8f12-a969b34b153c')
+            "
+          >
+            Upload PAN Card
+          </button>
+        </div>
+
+        <br />
+
+        <!-- ===================================================== -->
+        <!-- AUTHORIZED PERSON AADHAAR -->
+        <!-- ===================================================== -->
+
+        <div class="card">
+          <h4>
+            Authorized Person Aadhaar Card <span style="color: red">*</span>
+          </h4>
+
+          <p id="authorized-aadhaar-status">Not Uploaded</p>
+
+          <label>Holder Name</label>
+
+          <input type="text" id="authorized_aadhaar_holder_name" />
+
+          <label>Aadhaar Number</label>
+
+          <input type="text" id="authorized_aadhaar_number" />
+
+          <label>Select Aadhaar</label>
+
+          <input
+            type="file"
+            id="authorized_aadhaar_file"
+            accept=".pdf,.jpg,.jpeg,.png"
+          />
+
+          <div id="authorized-aadhaar-message" class="message-box"></div>
+
+          <button
+            type="button"
+            onclick="
+              uploadRequiredDocument('a94ac9b7-7551-4af2-a103-99daffd2e614')
+            "
+          >
+            Upload Aadhaar Card
+          </button>
+        </div>
+
+        <br />
+
+        <!-- ===================================================== -->
+        <!-- CANCELLED CHEQUE -->
+        <!-- ===================================================== -->
+
+        <div class="card">
+          <h4>Cancelled Cheque <span style="color: red">*</span></h4>
+
+          <p id="cancelled-cheque-doc-status">Not Uploaded</p>
+
+          <label>Account Holder Name</label>
+
+          <input type="text" id="cancelled_cheque_holder_name" />
+
+          <label>Cheque Number (Optional)</label>
+
+          <input type="text" id="cancelled_cheque_number" />
+
+          <label>Select Cheque</label>
+
+          <input
+            type="file"
+            id="cancelled_cheque_doc_file"
+            accept=".pdf,.jpg,.jpeg,.png"
+          />
+
+          <div id="cancelled-cheque-doc-message" class="message-box"></div>
+
+          <button
+            type="button"
+            onclick="
+              uploadRequiredDocument('193cc404-e4b5-4ed1-b856-f114e55c2b2a')
+            "
+          >
+            Upload Cancelled Cheque
+          </button>
+        </div>
+
+        <br />
+
+        <!-- ===================================================== -->
+        <!-- ADDRESS PROOF -->
+        <!-- ===================================================== -->
+
+        <div class="card">
+          <h4>Address Proof <span style="color: red">*</span></h4>
+
+          <p id="address-proof-status">Not Uploaded</p>
+
+          <label>Holder Name</label>
+
+          <input type="text" id="address_proof_holder_name" />
+
+          <label>Document Number (Optional)</label>
+
+          <input type="text" id="address_proof_number" />
+
+          <label>Select Document</label>
+
+          <input
+            type="file"
+            id="address_proof_file"
+            accept=".pdf,.jpg,.jpeg,.png"
+          />
+
+          <div id="address-proof-message" class="message-box"></div>
+
+          <button
+            type="button"
+            onclick="
+              uploadRequiredDocument('c99de86c-460a-4a08-b80e-b9160996b332')
+            "
+          >
+            Upload Address Proof
+          </button>
+        </div>
+
+        <br />
+
+        <!-- ===================================================== -->
+        <!-- OPTIONAL DOCUMENTS -->
+        <!-- ===================================================== -->
+
+        <div class="card">
+          <h4>Additional Documents (Optional)</h4>
+
+          <div class="row">
+            <div class="col-6">
+              <label>Document Type</label>
+
+              <select id="optional_document_type">
+                <option value="">Select Document</option>
+              </select>
+            </div>
+
+            <div class="col-6">
+              <label>Holder Name</label>
+
+              <input type="text" id="optional_holder_name" />
+            </div>
+
+            <div class="col-6">
+              <label>Document Number</label>
+
+              <input type="text" id="optional_document_number" />
+            </div>
+
+            <div class="col-6">
+              <label>Document</label>
+
+              <input type="file" id="optional_document_file" />
+            </div>
+          </div>
+
+          <br />
+
+          <button type="button" class="submit-btn" id="addOptionalDocumentBtn">
+            + Add Document
+          </button>
+
+          <br /><br />
+
+          <table
+            width="100%"
+            border="1"
+            cellspacing="0"
+            cellpadding="10"
+            id="optionalDocumentTable"
+          >
+            <thead>
+              <tr>
+                <th>Document</th>
+
+                <th>Holder</th>
+
+                <th>Status</th>
+
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <br />
+
+        <!-- ===================================================== -->
+        <!-- SUBMIT -->
+        <!-- ===================================================== -->
+
+        <div class="card">
+          <h4>Submit Profile for Verification</h4>
+
+          <p
+            id="profile-verification-status"
+            style="font-weight: 600; margin-top: 20px"
+          ></p>
+
+          <label
+            style="
+              display: flex;
+              align-items: flex-start;
+              margin-top: 18px;
+              font-weight: normal;
+            "
+          >
+            <input
+              type="checkbox"
+              id="verification-consent"
+              style="width: auto; margin-right: 10px; margin-top: 4px"
+            />
+
+            <span>
+              I confirm that all information and uploaded documents are correct.
+              I understand that I cannot modify them after submission until
+              verification is completed.
+            </span>
+          </label>
+
+          <div id="verification-message" class="message-box"></div>
+
+          <button
+            type="button"
+            class="submit-btn"
+            onclick="submitProfileVerification()"
+          >
+            Submit Profile for Verification
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const token = sessionStorage.getItem("access_token");
+
+      const GET_URL = "/api/organizations/ngo-profile";
+
+      const UPDATE_URL = "/api/organizations/ngo-profile/update";
+
+      const BANK_GET_URL = "/api/accounts/bankaccount";
+
+      const BANK_UPDATE_URL = "/api/accounts/bankaccount/update";
+
+      const DOCUMENTS_GET_URL = "/api/verification/profile/documents";
+
+      const PROFILE_VERIFICATION_URL = "/api/verification/profile/submit";
+      const form = document.getElementById("ngo-profile-form");
+
+      const profileImage = document.getElementById("profile_picture");
+
+      const preview = document.getElementById("profile-preview");
+
+      let profileStatus = "";
+
+      const DOCUMENT_TYPES_URL = "/api/verification/document-types?purpose=NGO";
+
+      let documentTypeMap = {};
+
+      async function deleteDocument(documentUUID) {
+        if (!confirm("Are you sure you want to delete this document?")) {
+          return;
+        }
+        console.log("docId", documentUUID);
+
+        const token = sessionStorage.getItem("access_token");
+
+        if (!token) {
+          alert("Please login first.");
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `/api/verification/documents/${documentUUID}/delete`,
+            {
+              method: "DELETE",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            alert(data.message || "Unable to delete document.");
+            return;
+          }
+
+          document.getElementById(`doc-row-${documentUUID}`)?.remove();
+
+          alert(data.message || "Document deleted successfully.");
+        } catch (err) {
+          console.error(err);
+          alert("Something went wrong.");
+        }
+      }
+
+      window.deleteDocument = deleteDocument;
+
+      async function loadDocumentTypes() {
+        try {
+          const response = await fetch(DOCUMENT_TYPES_URL, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const result = await response.json();
+
+          if (!result.success) return;
+
+          const optionalSelect = document.getElementById(
+            "optional_document_type",
+          );
+
+          optionalSelect.innerHTML = `<option value="">Select Document</option>`;
+
+          result.data.forEach((doc) => {
+            documentTypeMap[doc.uuid] = doc.name;
+
+            if (!doc.is_required) {
+              optionalSelect.innerHTML += `
+            <option value="${doc.name}">
+                ${doc.name}
+            </option>
+        `;
+            }
+          });
+        } catch (err) {
+          console.error(err);
+        }
+      }
+      //Load Bank Account
+      async function loadBankAccount() {
+        try {
+          const response = await fetch(BANK_GET_URL, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const result = await response.json();
+
+          if (!result.success) {
+            return;
+          }
+
+          // No bank account exists yet
+          if (!result.has_bank_account || !result.data) {
+            document.getElementById("account_holder_name").value = "";
+            document.getElementById("bank_name").value = "";
+            document.getElementById("account_number").value = "";
+            document.getElementById("ifsc_code").value = "";
+            document.getElementById("branch_name").value = "";
+            document.getElementById("cancelled-cheque-status").innerHTML = "";
+
+            return;
+          }
+          const data = result.data;
+
+          document.getElementById("account_holder_name").value =
+            data.account_holder_name || "";
+
+          document.getElementById("bank_name").value = data.bank_name || "";
+
+          document.getElementById("account_number").value =
+            data.account_number || "";
+
+          document.getElementById("ifsc_code").value = data.ifsc_code || "";
+
+          document.getElementById("branch_name").value = data.branch_name || "";
+          const chequeStatus = document.getElementById(
+            "cancelled-cheque-status",
+          );
+
+          if (data.cancelled_cheque) {
+            chequeStatus.innerHTML = `
+                    <span>${getFileName(data.cancelled_cheque)}</span>
+
+                    <a
+                        href="${data.cancelled_cheque}"
+                        target="_blank"
+                        title="View Cancelled Cheque"
+                        style="margin-left:8px;"
+                    >
+                        <i class="fa fa-eye"></i>
+                    </a>
+
+                    <br>
+
+                    <small>
+                        Verification Status: ${data.verification_status}
+                    </small>
+                `;
+          } else {
+            chequeStatus.innerHTML = "";
+          }
+        } catch (error) {
+          console.log("Bank load error", error);
+        }
+      }
+
+      //Save/Update Bank Account
+      async function saveBankAccount() {
+        const formData = new FormData();
+
+        formData.append(
+          "account_holder_name",
+          document.getElementById("account_holder_name").value.trim(),
+        );
+
+        formData.append(
+          "bank_name",
+          document.getElementById("bank_name").value.trim(),
+        );
+
+        formData.append(
+          "account_number",
+          document.getElementById("account_number").value.trim(),
+        );
+
+        formData.append(
+          "ifsc_code",
+          document.getElementById("ifsc_code").value.trim(),
+        );
+
+        formData.append(
+          "branch_name",
+          document.getElementById("branch_name").value.trim(),
+        );
+
+        const cheque = document.getElementById("cancelled_cheque").files[0];
+
+        if (cheque) {
+          formData.append("cancelled_cheque", cheque);
+        }
+
+        const response = await fetch(BANK_UPDATE_URL, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showMessage(
+            "bank-message",
+            "Bank details saved successfully",
+            "success",
+          );
+          loadBankAccount();
+        } else if (result.errors) {
+          const messages = Object.values(result.errors).flat().join("<br>");
+
+          showMessage("bank-message", messages, "error");
+        } else {
+          showMessage("bank-message", result.error, "error");
+        }
+      }
+
+      async function loadProfileDocuments() {
+        try {
+          const response = await fetch(DOCUMENTS_GET_URL, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const result = await response.json();
+
+          if (!result.success) {
+            return;
+          }
+
+          // Reset Required Documents
+
+          document.getElementById("registration-certificate-status").innerHTML =
+            "Not Uploaded";
+
+          document.getElementById("ngo-pan-status").innerHTML = "Not Uploaded";
+
+          document.getElementById("authorized-pan-status").innerHTML =
+            "Not Uploaded";
+
+          document.getElementById("authorized-aadhaar-status").innerHTML =
+            "Not Uploaded";
+
+          document.getElementById("cancelled-cheque-doc-status").innerHTML =
+            "Not Uploaded";
+
+          document.getElementById("address-proof-status").innerHTML =
+            "Not Uploaded";
+
+          // Reset Optional Documents Table
+
+          document.querySelector("#optionalDocumentTable tbody").innerHTML = "";
+
+          result.documents.forEach((doc) => {
+            console.log("Document:", doc);
+            const statusHtml = `
+                    <span>${getFileName(doc.file_url)}</span>
+
+                    <a
+                        href="${doc.file_url}"
+                        target="_blank"
+                        style="margin-left:10px"
+                        title="View Document"
+                    >
+                        <i class="fa fa-eye"></i>
+                    </a>
+
+                    <br>
+
+                    <small>
+                        Verification Status :
+                        ${doc.verification_status}
+                    </small>
+                `;
+
+            switch (doc.document_type_id) {
+              // ===================================================
+              // NGO REGISTRATION CERTIFICATE
+              // ===================================================
+
+              case "03eea6ef-43ac-4597-9038-60febd723779":
+                registration_certificate_holder_name.value =
+                  doc.document_holder_name || "";
+
+                registration_certificate_number.value =
+                  doc.document_number || "";
+
+                document.getElementById(
+                  "registration-certificate-status",
+                ).innerHTML = statusHtml;
+
+                break;
+
+              // ===================================================
+              // NGO PAN
+              // ===================================================
+
+              case "8d9e1e6f-4570-4966-b06e-d005a74f8b3d":
+                ngo_pan_holder_name.value = doc.document_holder_name || "";
+
+                ngo_pan_number.value = doc.document_number || "";
+
+                document.getElementById("ngo-pan-status").innerHTML =
+                  statusHtml;
+
+                break;
+
+              // ===================================================
+              // AUTHORIZED PERSON PAN
+              // ===================================================
+
+              case "d5cb9692-5d4a-4ff8-8f12-a969b34b153c":
+                authorized_pan_holder_name.value =
+                  doc.document_holder_name || "";
+
+                authorized_pan_number.value = doc.document_number || "";
+
+                document.getElementById("authorized-pan-status").innerHTML =
+                  statusHtml;
+
+                break;
+
+              // ===================================================
+              // AUTHORIZED PERSON AADHAAR
+              // ===================================================
+
+              case "a94ac9b7-7551-4af2-a103-99daffd2e614":
+                authorized_aadhaar_holder_name.value =
+                  doc.document_holder_name || "";
+
+                authorized_aadhaar_number.value = doc.document_number || "";
+
+                document.getElementById("authorized-aadhaar-status").innerHTML =
+                  statusHtml;
+
+                break;
+
+              // ===================================================
+              // CANCELLED CHEQUE
+              // ===================================================
+
+              case "193cc404-e4b5-4ed1-b856-f114e55c2b2a":
+                cancelled_cheque_holder_name.value =
+                  doc.document_holder_name || "";
+
+                cancelled_cheque_number.value = doc.document_number || "";
+
+                document.getElementById(
+                  "cancelled-cheque-doc-status",
+                ).innerHTML = statusHtml;
+
+                break;
+
+              // ===================================================
+              // ADDRESS PROOF
+              // ===================================================
+
+              case "c99de86c-460a-4a08-b80e-b9160996b332":
+                address_proof_holder_name.value =
+                  doc.document_holder_name || "";
+
+                address_proof_number.value = doc.document_number || "";
+
+                document.getElementById("address-proof-status").innerHTML =
+                  statusHtml;
+
+                break;
+
+              // ===================================================
+              // OPTIONAL DOCUMENTS
+              // ===================================================
+
+              default:
+                document.querySelector(
+                  "#optionalDocumentTable tbody",
+                ).innerHTML += `
+                        <tr id="doc-row-${doc.uuid}">
+
+                            <td>${doc.document_type}</td>
+
+                            <td>${doc.document_holder_name}</td>
+
+                            <td>
+
+                                ${doc.verification_status}
+
+                                <br>
+
+                                <a
+                                    href="${doc.file_url}"
+                                    target="_blank"
+                                >
+                                    View
+                                </a>
+
+                            </td>
+
+                            <td align="center">
+
+                                <button
+                                    type="button"
+                                    onclick="deleteDocument('${doc.uuid}')"
+                                    style="
+                                        border:none;
+                                        background:none;
+                                        cursor:pointer;
+                                        color:red;
+                                        font-size:18px;
+                                    "
+                                >
+
+                                    <i class="fa fa-trash"></i>
+
+                                </button>
+
+                            </td>
+
+                        </tr>
+                    `;
+            }
+          });
+        } catch (error) {
+          console.error("Document load error", error);
+        }
+      }
+
+      // =====================================================
+      // UPLOAD REQUIRED DOCUMENT
+      // =====================================================
+
+      async function uploadRequiredDocument(documentTypeId) {
+        console.log("Uploading document type:", documentTypeId);
+        const token = sessionStorage.getItem("access_token");
+
+        if (!token) {
+          alert("Please login first.");
+          return;
+        }
+
+        let holderInput;
+        let numberInput;
+        let fileInput;
+        let messageId;
+        let statusId;
+
+        switch (documentTypeId) {
+          // NGO Registration Certificate
+          case "03eea6ef-43ac-4597-9038-60febd723779":
+            holderInput = document.getElementById(
+              "registration_certificate_holder_name",
+            );
+
+            numberInput = document.getElementById(
+              "registration_certificate_number",
+            );
+
+            fileInput = document.getElementById(
+              "registration_certificate_file",
+            );
+
+            messageId = "registration-certificate-message";
+
+            statusId = "registration-certificate-status";
+
+            break;
+
+          // NGO PAN
+          case "8d9e1e6f-4570-4966-b06e-d005a74f8b3d":
+            holderInput = document.getElementById("ngo_pan_holder_name");
+
+            numberInput = document.getElementById("ngo_pan_number");
+
+            fileInput = document.getElementById("ngo_pan_file");
+
+            messageId = "ngo-pan-message";
+
+            statusId = "ngo-pan-status";
+
+            break;
+
+          // Authorized Person PAN
+          case "d5cb9692-5d4a-4ff8-8f12-a969b34b153c":
+            holderInput = document.getElementById("authorized_pan_holder_name");
+
+            numberInput = document.getElementById("authorized_pan_number");
+
+            fileInput = document.getElementById("authorized_pan_file");
+
+            messageId = "authorized-pan-message";
+
+            statusId = "authorized-pan-status";
+
+            break;
+
+          // Authorized Person Aadhaar
+          case "a94ac9b7-7551-4af2-a103-99daffd2e614":
+            holderInput = document.getElementById(
+              "authorized_aadhaar_holder_name",
+            );
+
+            numberInput = document.getElementById("authorized_aadhaar_number");
+
+            fileInput = document.getElementById("authorized_aadhaar_file");
+
+            messageId = "authorized-aadhaar-message";
+
+            statusId = "authorized-aadhaar-status";
+
+            break;
+
+          // Cancelled Cheque
+          case "193cc404-e4b5-4ed1-b856-f114e55c2b2a":
+            holderInput = document.getElementById(
+              "cancelled_cheque_holder_name",
+            );
+
+            numberInput = document.getElementById("cancelled_cheque_number");
+
+            fileInput = document.getElementById("cancelled_cheque_doc_file");
+
+            messageId = "cancelled-cheque-doc-message";
+
+            statusId = "cancelled-cheque-doc-status";
+
+            break;
+
+          // Address Proof
+          case "c99de86c-460a-4a08-b80e-b9160996b332":
+            holderInput = document.getElementById("address_proof_holder_name");
+
+            numberInput = document.getElementById("address_proof_number");
+
+            fileInput = document.getElementById("address_proof_file");
+
+            messageId = "address-proof-message";
+
+            statusId = "address-proof-status";
+
+            break;
+
+          default:
+            return;
+        }
+
+        if (!holderInput.value.trim()) {
+          showMessage(messageId, "Please enter document holder name.", "error");
+
+          return;
+        }
+
+        if (fileInput.files.length === 0) {
+          showMessage(messageId, "Please choose a document.", "error");
+
+          return;
+        }
+
+        const fd = new FormData();
+
+        fd.append("purpose", "PROFILE_VERIFICATION");
+
+        fd.append("document_type", documentTypeMap[documentTypeId]);
+
+        fd.append("document_holder_name", holderInput.value.trim());
+
+        if (numberInput.value.trim()) {
+          fd.append("document_number", numberInput.value.trim());
+        }
+
+        fd.append("file_url", fileInput.files[0]);
+        console.log("Uploading document with FormData:", fd);
+        try {
+          const response = await fetch(
+            "/api/verification/profile/document/upload",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: fd,
+            },
+          );
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            if (result.errors) {
+              showMessage(
+                messageId,
+                Object.values(result.errors).flat().join("<br>"),
+                "error",
+              );
+            } else {
+              showMessage(
+                messageId,
+                result.message || result.error || "Upload failed.",
+                "error",
+              );
+            }
+
+            return;
+          }
+
+          showMessage(
+            messageId,
+            result.message || "Document uploaded successfully.",
+            "success",
+          );
+
+          document.getElementById(statusId).innerHTML = `
+                        <span style="color:green;">
+                            Uploaded Successfully
+                        </span>
+                    `;
+
+          fileInput.value = "";
+
+          await loadProfileDocuments();
+        } catch (error) {
+          console.error(error);
+
+          showMessage(
+            messageId,
+            "Something went wrong while uploading.",
+            "error",
+          );
+        }
+      }
+      // =====================================================
+      // OPTIONAL DOCUMENT UPLOAD
+      // =====================================================
+
+      const addOptionalDocumentBtn = document.getElementById(
+        "addOptionalDocumentBtn",
+      );
+
+      addOptionalDocumentBtn.addEventListener("click", async function () {
+        const token = sessionStorage.getItem("access_token");
+
+        if (!token) {
+          alert("Please login first.");
+          return;
+        }
+
+        const type = document.getElementById("optional_document_type");
+
+        const holder = document.getElementById("optional_holder_name");
+
+        const number = document.getElementById("optional_document_number");
+
+        const file = document.getElementById("optional_document_file");
+
+        if (!type.value) {
+          alert("Please select document type.");
+
+          return;
+        }
+
+        if (!holder.value.trim()) {
+          alert("Please enter holder name.");
+
+          return;
+        }
+
+        if (file.files.length === 0) {
+          alert("Please select document.");
+
+          return;
+        }
+
+        const fd = new FormData();
+
+        fd.append("purpose", "PROFILE_VERIFICATION");
+
+        fd.append("document_type", type.value);
+
+        fd.append("document_holder_name", holder.value.trim());
+
+        if (number.value.trim()) {
+          fd.append("document_number", number.value.trim());
+        }
+
+        fd.append("file_url", file.files[0]);
+
+        console.log("Uploading optional document with FormData:", type.value);
+        console.log("Uploading optional document with FormData:", fd);
+        try {
+          const response = await fetch(
+            "/api/verification/profile/document/upload",
+            {
+              method: "POST",
+
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+
+              body: fd,
+            },
+          );
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            if (result.errors) {
+              alert(Object.values(result.errors).flat().join("\n"));
+            } else {
+              alert(result.message || result.error || "Upload failed.");
+            }
+
+            return;
+          }
+
+          await loadProfileDocuments();
+
+          // Remove uploaded document from dropdown
+
+          const uploadedOption = type.options[type.selectedIndex];
+
+          uploadedOption.remove();
+
+          // Reset Fields
+
+          type.selectedIndex = 0;
+
+          holder.value = "";
+
+          number.value = "";
+
+          file.value = "";
+
+          alert(result.message || "Document uploaded successfully.");
+        } catch (error) {
+          console.error(error);
+
+          alert("Something went wrong while uploading.");
+        }
+      });
+      // =========================
+      // Load Profile
+      // =========================
+
+      async function loadProfile() {
+        try {
+          const response = await fetch(GET_URL, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const result = await response.json();
+
+          if (!result.success) {
+            showMessage(
+              "profile-message",
+              result.error || "Unable to load profile.",
+              "error",
+            );
+            return;
+          }
+
+          const data = result.data;
+
+          ngo_name.value = data.ngo_name || "";
+          ngo_type.value = data.ngo_type || "";
+          registration_number.value = data.registration_number || "";
+          contact_person_name.value = data.contact_person_name || "";
+          contact_person_designation.value =
+            data.contact_person_designation || "";
+
+          email.value = data.email || "";
+          mobile.value = data.mobile || "";
+          website.value = data.website || "";
+          address.value = data.address || "";
+          city.value = data.city || "";
+          state.value = data.state || "";
+          country.value = data.country || "";
+          pincode.value = data.pincode || "";
+
+          if (data.profile_picture) {
+            preview.src = data.profile_picture;
+            preview.style.display = "block";
+          } else {
+            preview.removeAttribute("src");
+            preview.style.display = "none";
+          }
+
+          profileStatus = data.profile_status;
+
+          if (
+            profileStatus === "Verification Pending" ||
+            profileStatus === "Verified"
+          ) {
+            document.querySelector("#verification-consent").disabled = true;
+
+            document.querySelector("#verification-consent").checked = true;
+
+            document.querySelector(
+              "#verification-consent",
+            ).parentElement.style.opacity = "0.7";
+
+            document
+              .querySelector("#verification-consent")
+              .closest(".card")
+              .querySelector("button").style.display = "none";
+          }
+          document.getElementById("profile-verification-status").innerHTML =
+            "Current Status : <b>" + profileStatus + "</b>";
+
+          await loadBankAccount();
+          await loadDocumentTypes();
+          await loadProfileDocuments();
+          toggleEditMode(profileStatus);
+        } catch (error) {
+          console.error(error);
+          showMessage("profile-message", "Unable to load profile.", "error");
+        }
+      }
+
+      //submit profile verification
+      async function submitProfileVerification() {
+        if (!document.getElementById("verification-consent").checked) {
+          showMessage(
+            "verification-message",
+            "Please accept the declaration before submitting.",
+            "error",
+          );
+
+          return;
+        }
+
+        try {
+          const response = await fetch(PROFILE_VERIFICATION_URL, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            showMessage("verification-message", result.message, "success");
+
+            loadProfile();
+          } else {
+            if (result.missing_documents) {
+              showMessage(
+                "verification-message",
+                "Missing Documents:<br>" +
+                  result.missing_documents.join("<br>"),
+                "error",
+              );
+            } else {
+              showMessage("verification-message", result.error, "error");
+            }
+          }
+        } catch (error) {
+          showMessage("verification-message", "Something went wrong.", "error");
+        }
+      }
+      //Disable edit after submission
+      function toggleEditMode(status) {
+        const editable =
+          status === "Profile Completed" || status === "Verification Rejected";
+
+        //Personal Information
+        document
+          .querySelectorAll(
+            "#personal-section input:not([readonly]), #personal-section textarea",
+          )
+          .forEach((element) => {
+            element.disabled = !editable;
+          });
+
+        //Bank Details
+        document.querySelectorAll("#bank-section input").forEach((element) => {
+          element.disabled = !editable;
+        });
+
+        //Documents
+        document
+          .querySelectorAll("#documents-section input")
+          .forEach((element) => {
+            element.disabled = !editable;
+          });
+
+        //Disable buttons
+        document
+          .querySelectorAll("#documents-section button")
+          .forEach((button) => {
+            if (button.innerText.includes("Upload")) {
+              button.disabled = !editable;
+            }
+          });
+
+        document.querySelectorAll("#bank-section button").forEach((button) => {
+          button.disabled = !editable;
+        });
+
+        document.querySelector("#ngo-profile-form button").disabled = !editable;
+
+        // Update Profile button
+        document.querySelector("#ngo-profile-form .submit-btn").style.display =
+          editable ? "block" : "none";
+
+        // Save Bank Details button
+        document.querySelector("#bank-section .submit-btn").style.display =
+          editable ? "block" : "none";
+
+        // Upload PAN & Aadhaar buttons
+        document
+          .querySelectorAll("#documents-section button")
+          .forEach((button) => {
+            if (button.innerText.includes("Upload")) {
+              button.style.display = editable ? "inline-block" : "none";
+            }
+          });
+      }
+      // Image Preview
+
+      profileImage.onchange = function () {
+        if (this.files[0]) {
+          preview.src = URL.createObjectURL(this.files[0]);
+        }
+      };
+
+      // =========================
+      // Update Profile
+      // =========================
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData();
+
+        formData.append("ngo_name", ngo_name.value.trim());
+        formData.append(
+          "contact_person_name",
+          contact_person_name.value.trim(),
+        );
+        formData.append(
+          "contact_person_designation",
+          contact_person_designation.value.trim(),
+        );
+        formData.append("website", website.value.trim());
+
+        formData.append("address", address.value.trim());
+        formData.append("city", city.value.trim());
+        formData.append("state", state.value.trim());
+        formData.append("country", country.value.trim());
+        formData.append("pincode", pincode.value.trim());
+
+        if (profileImage.files.length) {
+          formData.append("profile_picture", profileImage.files[0]);
+        }
+
+        try {
+          const response = await fetch(UPDATE_URL, {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            showMessage(
+              "profile-message",
+              result.message || "Profile updated successfully.",
+              "success",
+            );
+
+            loadProfile();
+          } else if (result.errors) {
+            const messages = Object.values(result.errors).flat().join("<br>");
+
+            showMessage("profile-message", messages, "error");
+          } else {
+            showMessage(
+              "profile-message",
+              result.error || "Failed to update profile.",
+              "error",
+            );
+          }
+        } catch (error) {
+          console.error(error);
+
+          showMessage(
+            "profile-message",
+            "Something went wrong. Please try again.",
+            "error",
+          );
+        }
+      });
+
+      // =========================
+      // Tabs
+      // =========================
+
+      function showSection(section) {
+        document.querySelectorAll(".section").forEach((div) => {
+          div.style.display = "none";
+        });
+
+        document.getElementById(section + "-section").style.display = "block";
+      }
+
+      function showMessage(elementId, message, type) {
+        const box = document.getElementById(elementId);
+
+        box.innerHTML = message;
+        box.className = `message-box ${type}`;
+        box.style.display = "block";
+
+        setTimeout(() => {
+          box.style.display = "none";
+          box.innerHTML = "";
+        }, 5000);
+      }
+      function getFileName(url) {
+        if (!url) {
+          return "";
+        }
+
+        return url.split("/").pop();
+      }
+      loadProfile();
+    </script>
+  </body>
+</html>

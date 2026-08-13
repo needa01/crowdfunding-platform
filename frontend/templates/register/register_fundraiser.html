@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Individual Fundraiser Registration</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f9;
+      }
+
+      .container {
+        width: 500px;
+        margin: 50px auto;
+        background: #fff;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+
+      h2 {
+        text-align: center;
+      }
+
+      input,
+      textarea,
+      button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 12px;
+        box-sizing: border-box;
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #0056b3;
+      }
+
+      .success {
+        color: green;
+      }
+
+      .error {
+        color: red;
+      }
+
+      pre {
+        background: #f8f9fa;
+        padding: 10px;
+        overflow-x: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Individual Fundraiser Registration</h2>
+
+      <form id="fundraiserForm">
+        <input type="text" id="occupation" placeholder="Occupation" required />
+
+        <textarea id="address" placeholder="Address" required></textarea>
+
+        <input type="text" id="city" placeholder="City" required />
+
+        <input type="text" id="state" placeholder="State" required />
+
+        <input type="text" id="country" placeholder="Country" required />
+
+        <input type="text" id="pincode" placeholder="Pincode" required />
+
+        <button type="submit">Register Profile</button>
+      </form>
+
+      <br />
+
+      <div id="message"></div>
+    </div>
+
+    <script>
+      // Check authentication when page loads
+      function checkAuthentication() {
+        const accessToken = sessionStorage.getItem("access_token");
+
+        if (!accessToken) {
+          alert("Please login first.");
+
+          window.location.href = "/frontend/login";
+
+          return false;
+        }
+
+        return true;
+      }
+
+      // Run immediately when page loads
+      window.onload = function () {
+        checkAuthentication();
+      };
+
+      document
+        .getElementById("fundraiserForm")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault();
+
+          const accessToken = sessionStorage.getItem("access_token");
+
+          if (!accessToken) {
+            document.getElementById("message").innerHTML =
+              '<p class="error">Access token not found. Please login first.</p>';
+
+            return;
+          }
+
+          const payload = {
+            occupation: document.getElementById("occupation").value,
+            address: document.getElementById("address").value,
+            city: document.getElementById("city").value,
+            state: document.getElementById("state").value,
+            country: document.getElementById("country").value,
+            pincode: document.getElementById("pincode").value,
+          };
+
+          try {
+            const response = await fetch("/api/accounts/register/individual_fundraiser", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`,
+              },
+              body: JSON.stringify(payload),
+            });
+
+            // Token expired or invalid
+            if (response.status === 401) {
+              sessionStorage.removeItem("access_token");
+              sessionStorage.removeItem("refresh_token");
+
+              alert("Session expired. Please login again.");
+
+              window.location.href = "/frontend/login";
+
+              return;
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+              document.getElementById("message").innerHTML =
+                `<p class="success">${data.message}</p>`;
+
+              // Redirect after successful registration
+              setTimeout(() => {
+                window.location.href = "/frontend/campaigns";
+              }, 1000);
+            } else {
+              document.getElementById("message").innerHTML =
+                `<p class="error">${data.error}</p>`;
+            }
+          } catch (error) {
+            document.getElementById("message").innerHTML =
+              `<p class="error">${error.message}</p>`;
+          }
+        });
+    </script>
+  </body>
+</html>

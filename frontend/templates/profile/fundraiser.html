@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>My Profile</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        background: #f5f7fb;
+        min-height: 100vh;
+        padding: 40px;
+      }
+
+      .profile-container {
+        max-width: 700px;
+        margin: auto;
+        background: white;
+        padding: 35px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      }
+
+      h2 {
+        text-align: center;
+        margin-bottom: 25px;
+      }
+
+      #message {
+        text-align: center;
+        margin-bottom: 15px;
+      }
+
+      .success {
+        color: green;
+      }
+
+      .error {
+        color: red;
+      }
+
+      /* Tabs */
+
+      .profile-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 25px;
+      }
+
+      .profile-tabs button {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        background: #2563eb;
+        color: white;
+      }
+
+      .section {
+        display: none;
+      }
+
+      #personal-section {
+        display: block;
+      }
+
+      label {
+        display: block;
+        margin-top: 15px;
+        font-weight: 600;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 12px;
+        margin-top: 5px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+      }
+
+      textarea {
+        min-height: 100px;
+      }
+
+      input[readonly] {
+        background: #f3f4f6;
+      }
+
+      .profile-image {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      .profile-image img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      button.submit-btn {
+        width: 100%;
+        margin-top: 25px;
+        padding: 14px;
+        background: #16a34a;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      .card {
+        border: 1px solid #ddd;
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 15px;
+      }
+
+      .card button {
+        margin-top: 10px;
+        padding: 10px 15px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 8px;
+      }
+
+      .message-box {
+        display: none;
+        margin-top: 20px;
+        margin-bottom: 12px;
+        padding: 12px 15px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1.5;
+      }
+
+      .message-box.success {
+        display: block;
+        background: #ecfdf5;
+        color: #166534;
+        border: 1px solid #22c55e;
+      }
+
+      .message-box.error {
+        display: block;
+        background: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #ef4444;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="profile-container">
+      <h2>My Profile</h2>
+
+      <!-- Tabs -->
+
+      <div class="profile-tabs">
+        <button onclick="showSection('personal')">Personal Information</button>
+
+        <button id="bank-tab" onclick="showSection('bank')">
+          Bank Details
+        </button>
+        <button id="documents-tab" onclick="showSection('documents')">
+          Documents
+        </button>
+      </div>
+
+      <!-- =========================
+     PERSONAL SECTION
+========================= -->
+
+      <div id="personal-section" class="section">
+        <form id="fundraiser-profile-form">
+          <div class="profile-image">
+            <img id="profile-preview" src="" />
+
+            <br /><br />
+
+            <input type="file" id="profile_picture" accept="image/*" />
+          </div>
+
+          <label> Full Name </label>
+
+          <input type="text" id="fullname" />
+
+          <label> Email </label>
+
+          <input type="email" id="email" readonly />
+
+          <label> Mobile </label>
+
+          <input type="text" id="mobile" readonly />
+
+          <label> Occupation </label>
+
+          <input type="text" id="occupation" />
+
+          <label> Address </label>
+
+          <textarea id="address"></textarea>
+
+          <label> City </label>
+
+          <input type="text" id="city" />
+
+          <label> State </label>
+
+          <input type="text" id="state" />
+
+          <label> Country </label>
+
+          <input type="text" id="country" />
+
+          <label> Pincode </label>
+
+          <input type="text" id="pincode" />
+          <div id="profile-message" class="message-box"></div>
+          <button class="submit-btn">Update Profile</button>
+        </form>
+      </div>
+
+      <!-- =========================
+     BANK SECTION
+========================= -->
+
+      <!-- =========================
+     BANK SECTION
+========================= -->
+
+      <div id="bank-section" class="section">
+        <h3>Bank Details</h3>
+        <p style="margin-top: 8px; color: #666; font-size: 14px">
+          Upload a cancelled cheque for bank account verification.
+        </p>
+
+        <div class="card">
+          <label> Account Holder Name </label>
+
+          <input type="text" id="account_holder_name" />
+
+          <label> Bank Name </label>
+
+          <input type="text" id="bank_name" />
+
+          <label> Account Number </label>
+
+          <input type="text" id="account_number" />
+
+          <label> IFSC Code </label>
+
+          <input type="text" id="ifsc_code" />
+
+          <label> Branch Name </label>
+
+          <input type="text" id="branch_name" />
+
+          <label>Cancelled Cheque</label>
+
+          <div
+            id="cancelled-cheque-status"
+            style="display: flex; align-items: center; gap: 10px"
+          ></div>
+
+          <input
+            type="file"
+            id="cancelled_cheque"
+            accept=".pdf,.jpg,.jpeg,.png"
+          />
+          <div id="bank-message" class="message-box"></div>
+          <button type="button" class="submit-btn" onclick="saveBankAccount()">
+            Save Bank Details
+          </button>
+        </div>
+      </div>
+      <!-- =========================
+     DOCUMENT SECTION
+========================= -->
+
+      <div id="documents-section" class="section">
+        <h3>Upload Documents for Profile Verification</h3>
+
+        <p style="margin-top: 8px; color: #666; font-size: 14px">
+          Upload your identity documents for profile verification.
+        </p>
+        <!-- PAN Card -->
+
+        <div class="card">
+          <h4>PAN Card</h4>
+
+          <p id="pan-status"></p>
+
+          <label>Name as per PAN Card</label>
+          <input type="text" id="pan_holder_name" />
+
+          <label>PAN Number</label>
+          <input type="text" id="pan_number" />
+
+          <label>Select PAN Card</label>
+          <input type="file" id="pan_file" accept=".pdf,.jpg,.jpeg,.png" />
+
+          <div id="pan-message" class="message-box"></div>
+
+          <button type="button" onclick="uploadDocument('PAN Card')">
+            Upload PAN Card
+          </button>
+        </div>
+
+        <br />
+
+        <!-- Aadhaar Card -->
+
+        <div class="card">
+          <h4>Aadhaar Card</h4>
+
+          <p id="aadhaar-status"></p>
+
+          <label>Name as per Aadhaar Card</label>
+          <input type="text" id="aadhaar_holder_name" />
+
+          <label>Aadhaar Number</label>
+          <input type="text" id="aadhaar_number" />
+
+          <label>Select Aadhaar Card</label>
+          <input type="file" id="aadhaar_file" accept=".pdf,.jpg,.jpeg,.png" />
+
+          <div id="aadhaar-message" class="message-box"></div>
+
+          <button type="button" onclick="uploadDocument('Aadhaar Card')">
+            Upload Aadhaar Card
+          </button>
+        </div>
+        <br />
+
+        <div class="card">
+          <h4>Submit Profile for Verification</h4>
+
+          <p style="margin-top: 8px; color: #666; font-size: 14px">
+            After submitting your profile for verification, you will not be able
+            to edit your profile, bank details or documents until verification
+            is completed.
+          </p>
+          <p
+            id="profile-verification-status"
+            style="font-weight: 600; margin-top: 20px"
+          ></p>
+          <label
+            style="
+              display: flex;
+              align-items: flex-start;
+              margin-top: 18px;
+              font-weight: normal;
+            "
+          >
+            <input
+              type="checkbox"
+              id="verification-consent"
+              style="width: auto; margin-right: 10px; margin-top: 4px"
+            />
+
+            <span>
+              I confirm that all information and uploaded documents are correct.
+              I understand that I cannot modify them after submission until
+              verification is complete.
+            </span>
+          </label>
+
+          <div id="verification-message" class="message-box"></div>
+
+          <button
+            type="button"
+            class="submit-btn"
+            onclick="submitProfileVerification()"
+          >
+            Submit Profile for Verification
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const token = sessionStorage.getItem("access_token");
+
+      const GET_URL = "/api/accounts/fundraiser-profile";
+
+      const UPDATE_URL = "/api/accounts/fundraiser-profile/update";
+
+      const BANK_GET_URL = "/api/accounts/bankaccount";
+
+      const BANK_UPDATE_URL = "/api/accounts/bankaccount/update";
+
+      const DOCUMENTS_GET_URL = "/api/verification/profile/documents";
+
+      const PROFILE_VERIFICATION_URL = "/api/verification/profile/submit";
+      const form = document.getElementById("fundraiser-profile-form");
+
+      const profileImage = document.getElementById("profile_picture");
+
+      const preview = document.getElementById("profile-preview");
+
+      let profileStatus = "";
+
+      //Load Bank Account
+      async function loadBankAccount() {
+        try {
+          const response = await fetch(BANK_GET_URL, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const result = await response.json();
+
+          if (!result.success) {
+            return;
+          }
+
+          // No bank account exists yet
+          if (!result.has_bank_account || !result.data) {
+            document.getElementById("account_holder_name").value = "";
+            document.getElementById("bank_name").value = "";
+            document.getElementById("account_number").value = "";
+            document.getElementById("ifsc_code").value = "";
+            document.getElementById("branch_name").value = "";
+            document.getElementById("cancelled-cheque-status").innerHTML = "";
+
+            return;
+          }
+          const data = result.data;
+
+          document.getElementById("account_holder_name").value =
+            data.account_holder_name || "";
+
+          document.getElementById("bank_name").value = data.bank_name || "";
+
+          document.getElementById("account_number").value =
+            data.account_number || "";
+
+          document.getElementById("ifsc_code").value = data.ifsc_code || "";
+
+          document.getElementById("branch_name").value = data.branch_name || "";
+          const chequeStatus = document.getElementById(
+            "cancelled-cheque-status",
+          );
+
+          if (data.cancelled_cheque) {
+            chequeStatus.innerHTML = `
+        <span>${getFileName(data.cancelled_cheque)}</span>
+
+        <a
+            href="${data.cancelled_cheque}"
+            target="_blank"
+            title="View Cancelled Cheque"
+            style="margin-left:8px;"
+        >
+            <i class="fa fa-eye"></i>
+        </a>
+
+        <br>
+
+        <small>
+            Verification Status: ${data.verification_status}
+        </small>
+    `;
+          } else {
+            chequeStatus.innerHTML = "";
+          }
+        } catch (error) {
+          console.log("Bank load error", error);
+        }
+      }
+
+      //Save/Update Bank Account
+      async function saveBankAccount() {
+        const formData = new FormData();
+
+        formData.append(
+          "account_holder_name",
+          document.getElementById("account_holder_name").value.trim(),
+        );
+
+        formData.append(
+          "bank_name",
+          document.getElementById("bank_name").value.trim(),
+        );
+
+        formData.append(
+          "account_number",
+          document.getElementById("account_number").value.trim(),
+        );
+
+        formData.append(
+          "ifsc_code",
+          document.getElementById("ifsc_code").value.trim(),
+        );
+
+        formData.append(
+          "branch_name",
+          document.getElementById("branch_name").value.trim(),
+        );
+
+        const cheque = document.getElementById("cancelled_cheque").files[0];
+
+        if (cheque) {
+          formData.append("cancelled_cheque", cheque);
+        }
+
+        const response = await fetch(BANK_UPDATE_URL, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showMessage(
+            "bank-message",
+            "Bank details saved successfully",
+            "success",
+          );
+          loadBankAccount();
+        } else if (result.errors) {
+          const messages = Object.values(result.errors).flat().join("<br>");
+
+          showMessage("bank-message", messages, "error");
+        } else {
+          showMessage("bank-message", result.error, "error");
+        }
+      }
+
+      async function loadProfileDocuments() {
+        try {
+          const response = await fetch(DOCUMENTS_GET_URL, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const result = await response.json();
+
+          if (!result.success) {
+            return;
+          }
+
+          // Default state
+          document.getElementById("pan-status").innerHTML = "Not Uploaded";
+          document.getElementById("aadhaar-status").innerHTML = "Not Uploaded";
+
+
+          result.documents.forEach((doc) => {
+            if (doc.document_type === "PAN Card") {
+              document.getElementById("pan_holder_name").value =
+                doc.document_holder_name || "";
+
+              document.getElementById("pan_number").value =
+                doc.document_number || "";
+              document.getElementById("pan-status").innerHTML = `
+          <span>
+            ${getFileName(doc.file_url)}
+          </span>
+
+          <a href="${doc.file_url}" 
+             target="_blank"
+             title="View PAN Card"
+             style="margin-left:10px;">
+             <i class="fa fa-eye"></i>
+          </a>
+
+          <br>
+          <small>
+            Verification Status: ${doc.verification_status}
+          </small>
+        `;
+            }
+
+            if (doc.document_type === "Aadhaar Card") {
+              document.getElementById("aadhaar_holder_name").value =
+                doc.document_holder_name || "";
+
+              document.getElementById("aadhaar_number").value =
+                doc.document_number || "";
+
+              document.getElementById("aadhaar-status").innerHTML = `
+          <span>
+            ${getFileName(doc.file_url)}
+          </span>
+
+          <a href="${doc.file_url}" 
+             target="_blank"
+             title="View Aadhaar Card"
+             style="margin-left:10px;">
+             <i class="fa fa-eye"></i>
+          </a>
+
+          <br>
+          <small>
+            Verification Status: ${doc.verification_status}
+          </small>
+        `;
+            }
+          });
+        } catch (error) {
+          console.log("Document load error", error);
+        }
+      }
+      //DOCS Upload
+      async function uploadDocument(documentType) {
+        let numberInput;
+        let fileInput;
+        let statusElement;
+        let messageBox;
+
+        if (documentType === "PAN Card") {
+          numberInput = document.getElementById("pan_number");
+          fileInput = document.getElementById("pan_file");
+          statusElement = document.getElementById("pan-status");
+          messageBox = "pan-message";
+        } else if (documentType === "Aadhaar Card") {
+          numberInput = document.getElementById("aadhaar_number");
+          fileInput = document.getElementById("aadhaar_file");
+          statusElement = document.getElementById("aadhaar-status");
+          messageBox = "aadhaar-message";
+        }
+
+        const file = fileInput.files[0];
+
+        if (!file) {
+          showMessage(
+            messageBox,
+            `Please select a ${documentType} file.`,
+            "error",
+          );
+          return;
+        }
+
+        const formData = new FormData();
+
+        formData.append("document_type", documentType);
+        formData.append("purpose", "PROFILE_VERIFICATION");
+        let holderNameInput;
+
+        if (documentType === "PAN Card") {
+          holderNameInput = document.getElementById("pan_holder_name");
+        } else if (documentType === "Aadhaar Card") {
+          holderNameInput = document.getElementById("aadhaar_holder_name");
+        }
+
+        formData.append("document_holder_name", holderNameInput.value.trim());
+        if (numberInput.value.trim()) {
+          formData.append("document_number", numberInput.value.trim());
+        }
+        formData.append("file_url", file);
+
+        try {
+          const response = await fetch(
+            "/api/verification/profile/document/upload",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: formData,
+            },
+          );
+
+          const result = await response.json();
+
+          if (result.success) {
+            showMessage(
+              messageBox,
+              result.message || `${documentType} uploaded successfully.`,
+              "success",
+            );
+
+            statusElement.innerText = "Pending Verification";
+          } else if (result.errors) {
+            const messages = Object.values(result.errors).flat().join("<br>");
+
+            showMessage(messageBox, messages, "error");
+          } else {
+            showMessage(messageBox, result.error || "Upload failed.", "error");
+          }
+        } catch (error) {
+          console.error(error);
+
+          showMessage(messageBox, "Document upload failed.", "error");
+        }
+      }
+      // =========================
+      // Load Profile
+      // =========================
+
+      async function loadProfile() {
+        try {
+          const response = await fetch(GET_URL, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const result = await response.json();
+
+          if (!result.success) {
+            showMessage(
+              "profile-message",
+              result.error || "Unable to load profile.",
+              "error",
+            );
+            return;
+          }
+
+          const data = result.data;
+
+          fullname.value = data.fullname || "";
+          email.value = data.email || "";
+          mobile.value = data.mobile || "";
+          occupation.value = data.occupation || "";
+          address.value = data.address || "";
+          city.value = data.city || "";
+          state.value = data.state || "";
+          country.value = data.country || "";
+          pincode.value = data.pincode || "";
+
+          if (data.profile_picture) {
+            preview.src = data.profile_picture;
+            preview.style.display = "block";
+          } else {
+            preview.removeAttribute("src");
+            preview.style.display = "none";
+          }
+
+          profileStatus = data.profile_status;
+
+          if (
+            profileStatus === "Verification Pending" ||
+            profileStatus === "Verified"
+          ) {
+            document.querySelector("#verification-consent").disabled = true;
+
+            document.querySelector("#verification-consent").checked = true;
+
+            document.querySelector(
+              "#verification-consent",
+            ).parentElement.style.opacity = "0.7";
+
+            document
+              .querySelector("#verification-consent")
+              .closest(".card")
+              .querySelector("button").style.display = "none";
+          }
+          document.getElementById("profile-verification-status").innerHTML =
+            "Current Status : <b>" + profileStatus + "</b>";
+          await loadBankAccount();
+          await loadProfileDocuments();
+          toggleEditMode(profileStatus);
+        } catch (error) {
+          console.error(error);
+          showMessage("profile-message", "Unable to load profile.", "error");
+        }
+      }
+
+      //submit profile verification
+      async function submitProfileVerification() {
+        if (!document.getElementById("verification-consent").checked) {
+          showMessage(
+            "verification-message",
+            "Please accept the declaration before submitting.",
+            "error",
+          );
+
+          return;
+        }
+
+        try {
+          const response = await fetch(PROFILE_VERIFICATION_URL, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            showMessage("verification-message", result.message, "success");
+
+            loadProfile();
+          } else {
+            if (result.missing_documents) {
+              showMessage(
+                "verification-message",
+                "Missing Documents:<br>" +
+                  result.missing_documents.join("<br>"),
+                "error",
+              );
+            } else {
+              showMessage("verification-message", result.error, "error");
+            }
+          }
+        } catch (error) {
+          showMessage("verification-message", "Something went wrong.", "error");
+        }
+      }
+      //Disable edit after submission
+      function toggleEditMode(status) {
+        const editable =
+          status === "Profile Completed" || status === "Verification Rejected";
+
+        //Personal Information
+        document
+          .querySelectorAll(
+            "#personal-section input:not([readonly]), #personal-section textarea",
+          )
+          .forEach((element) => {
+            element.disabled = !editable;
+          });
+
+        //Bank Details
+        document.querySelectorAll("#bank-section input").forEach((element) => {
+          element.disabled = !editable;
+        });
+
+        //Documents
+        document
+          .querySelectorAll("#documents-section input")
+          .forEach((element) => {
+            element.disabled = !editable;
+          });
+
+        //Disable buttons
+        document
+          .querySelectorAll("#documents-section button")
+          .forEach((button) => {
+            if (button.innerText.includes("Upload")) {
+              button.disabled = !editable;
+            }
+          });
+
+        document.querySelectorAll("#bank-section button").forEach((button) => {
+          button.disabled = !editable;
+        });
+
+        document.querySelector("#fundraiser-profile-form button").disabled =
+          !editable;
+
+        // Update Profile button
+        document.querySelector(
+          "#fundraiser-profile-form .submit-btn",
+        ).style.display = editable ? "block" : "none";
+
+        // Save Bank Details button
+        document.querySelector("#bank-section .submit-btn").style.display =
+          editable ? "block" : "none";
+
+        // Upload PAN & Aadhaar buttons
+        document
+          .querySelectorAll("#documents-section button")
+          .forEach((button) => {
+            if (button.innerText.includes("Upload")) {
+              button.style.display = editable ? "inline-block" : "none";
+            }
+          });
+      }
+      // Image Preview
+
+      profileImage.onchange = function () {
+        if (this.files[0]) {
+          preview.src = URL.createObjectURL(this.files[0]);
+        }
+      };
+
+      // =========================
+      // Update Profile
+      // =========================
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData();
+
+        formData.append("fullname", fullname.value.trim());
+        formData.append("occupation", occupation.value.trim());
+        formData.append("address", address.value.trim());
+        formData.append("city", city.value.trim());
+        formData.append("state", state.value.trim());
+        formData.append("country", country.value.trim());
+        formData.append("pincode", pincode.value.trim());
+
+        if (profileImage.files.length) {
+          formData.append("profile_picture", profileImage.files[0]);
+        }
+
+        try {
+          const response = await fetch(UPDATE_URL, {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          });
+
+          const result = await response.json();
+
+          if (result.success) {
+            showMessage(
+              "profile-message",
+              result.message || "Profile updated successfully.",
+              "success",
+            );
+
+            loadProfile();
+          } else if (result.errors) {
+            const messages = Object.values(result.errors).flat().join("<br>");
+
+            showMessage("profile-message", messages, "error");
+          } else {
+            showMessage(
+              "profile-message",
+              result.error || "Failed to update profile.",
+              "error",
+            );
+          }
+        } catch (error) {
+          console.error(error);
+
+          showMessage(
+            "profile-message",
+            "Something went wrong. Please try again.",
+            "error",
+          );
+        }
+      });
+
+      // =========================
+      // Tabs
+      // =========================
+
+      function showSection(section) {
+        document.querySelectorAll(".section").forEach((div) => {
+          div.style.display = "none";
+        });
+
+        document.getElementById(section + "-section").style.display = "block";
+      }
+
+      function showMessage(elementId, message, type) {
+        const box = document.getElementById(elementId);
+
+        box.innerHTML = message;
+        box.className = `message-box ${type}`;
+        box.style.display = "block";
+
+        setTimeout(() => {
+          box.style.display = "none";
+          box.innerHTML = "";
+        }, 5000);
+      }
+      function getFileName(url) {
+        if (!url) {
+          return "";
+        }
+
+        return url.split("/").pop();
+      }
+      loadProfile();
+    </script>
+  </body>
+</html>

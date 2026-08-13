@@ -1,0 +1,1358 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Crowdfunding Campaign</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        background: #f5f7fb;
+        color: #333;
+      }
+
+      .container {
+        width: 90%;
+        max-width: 1000px;
+        margin: 40px auto;
+      }
+
+      .page-title {
+        margin-bottom: 25px;
+      }
+
+      .page-title h2 {
+        font-size: 30px;
+        margin-bottom: 6px;
+      }
+
+      .page-title p {
+        color: #666;
+        font-size: 15px;
+      }
+
+      .card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 5px 18px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+        overflow: hidden;
+      }
+
+      .card-header {
+        background: #fafafa;
+        border-bottom: 1px solid #ececec;
+        padding: 18px 25px;
+      }
+
+      .card-header h3 {
+        font-size: 18px;
+        color: #222;
+      }
+
+      .card-body {
+        padding: 25px;
+      }
+
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+
+      .col-6 {
+        flex: 1 1 calc(50% - 20px);
+      }
+
+      .col-12 {
+        flex: 1 1 100%;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border: 1px solid #d8d8d8;
+        border-radius: 8px;
+        font-size: 14px;
+        outline: none;
+        transition: 0.25s;
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 130px;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: #0d6efd;
+      }
+
+      input[type="file"] {
+        padding: 10px;
+      }
+
+      .btn-group {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        margin-top: 30px;
+      }
+
+      .btn {
+        border: none;
+        border-radius: 8px;
+        padding: 12px 25px;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      .btn-secondary {
+        background: #ddd;
+      }
+
+      .btn-primary {
+        background: #0d6efd;
+        color: #fff;
+      }
+
+      .note {
+        background: #fff9e8;
+        border-left: 4px solid orange;
+        padding: 15px;
+        border-radius: 8px;
+        color: #555;
+        margin-bottom: 25px;
+      }
+
+      .wizard {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+      }
+
+      .wizard-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        color: #888;
+        font-size: 13px;
+      }
+
+      .wizard-item.active {
+        color: #0d6efd;
+        font-weight: 600;
+      }
+
+      .circle {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-bottom: 8px;
+      }
+
+      .wizard-item.active .circle {
+        background: #0d6efd;
+        color: white;
+      }
+
+      .wizard-line {
+        flex: 1;
+        height: 3px;
+        background: #ddd;
+        max-width: 120px;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      @media (max-width: 768px) {
+        .col-6 {
+          flex: 1 1 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="page-title">
+        <h2>Create Crowdfunding Campaign</h2>
+        <p>Create a fundraising campaign for yourself or your beneficiary.</p>
+      </div>
+
+      <div class="note">
+        Campaign Type is automatically <strong>Crowdfunding</strong> for
+        Individual Fundraisers.
+      </div>
+
+      <form id="campaignForm" enctype="multipart/form-data">
+        <!-- =======================
+                STEP INDICATOR
+        ======================== -->
+
+        <div class="card">
+          <div class="card-body">
+            <div class="wizard">
+              <div class="wizard-item active" id="step-indicator-1">
+                <div class="circle">1</div>
+                <span>Campaign</span>
+              </div>
+
+              <div class="wizard-line"></div>
+
+              <div class="wizard-item" id="step-indicator-2">
+                <div class="circle">2</div>
+                <span>Beneficiary</span>
+              </div>
+
+              <div class="wizard-line"></div>
+
+              <div class="wizard-item" id="step-indicator-3">
+                <div class="circle">3</div>
+                <span>Documents</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =====================================================
+                        STEP 1
+        ====================================================== -->
+
+        <div id="step1">
+          <div class="card">
+            <div class="card-header">
+              <h3>Campaign Details</h3>
+            </div>
+
+            <div class="card-body">
+              <div class="row">
+                <div class="col-12">
+                  <label>Campaign Name</label>
+                  <input
+                    type="text"
+                    name="campaign_name"
+                    placeholder="Enter campaign title"
+                    required
+                  />
+                </div>
+
+                <div class="col-12">
+                  <label>Campaign Description</label>
+
+                  <textarea
+                    name="campaign_desc"
+                    placeholder="Describe why you're raising funds..."
+                    required
+                  ></textarea>
+                </div>
+
+                <div class="col-6">
+                  <label>Goal Amount (₹)</label>
+
+                  <input
+                    type="number"
+                    min="1000"
+                    step="0.01"
+                    name="goal_amount"
+                    required
+                  />
+                </div>
+
+                <div class="col-6">
+                  <label>Cause</label>
+
+                  <select name="cause" id="cause" required>
+                    <option value="" selected disabled>Select Cause</option>
+
+                    <option value="Medical">Medical</option>
+
+                    <option value="Memorial">Memorial</option>
+
+                    <option value="Education">Education</option>
+
+                    <option value="Children">Children</option>
+
+                    <option value="Women Empowerment">Women Empowerment</option>
+
+                    <option value="Animal Welfare">Animal Welfare</option>
+
+                    <option value="Others">Others</option>
+                  </select>
+                </div>
+
+                <div class="col-6">
+                  <label>Campaign Start Date</label>
+
+                  <input
+                    type="date"
+                    name="start_date"
+                    id="start_date"
+                    required
+                  />
+                </div>
+
+                <div class="col-6">
+                  <label>Campaign End Date</label>
+
+                  <input type="date" name="end_date" id="end_date" required />
+                </div>
+
+                <div class="col-12">
+                  <label>Cover Photo</label>
+
+                  <input
+                    type="file"
+                    name="cover_photo"
+                    accept="image/*"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button type="button" class="btn btn-primary" id="nextBtn1">
+              Next →
+            </button>
+          </div>
+        </div>
+
+        <!-- =====================================================
+                        STEP 2
+    ====================================================== -->
+
+        <div id="step2" style="display: none">
+          <div class="card">
+            <div class="card-header">
+              <h3>Beneficiary Information</h3>
+            </div>
+
+            <div class="card-body">
+              <div class="row">
+                <div class="col-6">
+                  <label>Beneficiary Type</label>
+
+                  <select
+                    name="beneficiary_type"
+                    id="beneficiary_type"
+                    required
+                  >
+                    <option value="" selected disabled>
+                      Select Beneficiary
+                    </option>
+
+                    <option value="Me">Me</option>
+                    <option value="Relative">Relative</option>
+                    <option value="Friend">Friend</option>
+                    <option value="Others">Others</option>
+                  </select>
+                </div>
+
+                <div class="col-6">
+                  <label>Beneficiary Group Type</label>
+
+                  <select
+                    name="beneficiary_group_type"
+                    id="beneficiary_group_type"
+                    required
+                  >
+                    <option value="" selected disabled>Select</option>
+
+                    <option value="Individual">Individual</option>
+
+                    <option value="Group">Group</option>
+                  </select>
+                </div>
+
+                <div class="col-6">
+                  <label>Beneficiary Name</label>
+
+                  <input type="text" name="beneficiary_name" required />
+                </div>
+
+                <div class="col-6">
+                  <label>Relationship</label>
+
+                  <select name="beneficiary_relation">
+                    <option value="" selected disabled>Select</option>
+                    <option>Father</option>
+                    <option>Mother</option>
+                    <option>Brother</option>
+                    <option>Sister</option>
+                    <option>Spouse</option>
+                    <option>Child</option>
+                    <option>Others</option>
+                  </select>
+                </div>
+
+                <div class="col-6">
+                  <label>Beneficiary Mobile</label>
+
+                  <input type="text" name="beneficiary_mobile" />
+                </div>
+
+                <div class="col-6">
+                  <label>Beneficiary Age</label>
+
+                  <input type="number" name="beneficiary_age" />
+                </div>
+
+                <div
+                  class="col-6"
+                  id="beneficiary-count-section"
+                  style="display: none"
+                >
+                  <label>Number of Beneficiaries</label>
+
+                  <input
+                    type="number"
+                    id="beneficiary_member_count"
+                    name="beneficiary_member_count"
+                    min="2"
+                  />
+                </div>
+
+                <div class="col-6">
+                  <label>Beneficiary Location</label>
+
+                  <input type="text" name="beneficiary_location" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Medical -->
+
+          <div class="card" id="medical-section" style="display: none">
+            <div class="card-header">
+              <h3>Medical Details</h3>
+            </div>
+
+            <div class="card-body">
+              <div class="row">
+                <div class="col-6">
+                  <label>Hospital Name</label>
+
+                  <input type="text" name="hospital_name" />
+                </div>
+
+                <div class="col-6">
+                  <label>Hospital Location</label>
+
+                  <input type="text" name="hospital_location" />
+                </div>
+
+                <div class="col-12">
+                  <label>Ailment</label>
+
+                  <textarea name="ailment"></textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button type="button" class="btn btn-secondary" id="prevBtn2">
+              ← Previous
+            </button>
+
+            <button type="button" class="btn btn-primary" id="saveDraftBtn">
+              Save & Continue →
+            </button>
+          </div>
+        </div>
+
+        <!-- =====================================================
+                        STEP 3
+    ====================================================== -->
+
+        <div id="step3" style="display: none">
+          <div class="card">
+            <div class="card-header">
+              <h3>Campaign Supporting Documents</h3>
+            </div>
+
+            <div class="card-body">
+              <div class="note">
+                <strong>Upload documents to support your campaign.</strong>
+
+                <br /><br />
+
+                Supporting documents help verify your campaign faster and build
+                donor trust.
+              </div>
+
+              <div class="row">
+                <div class="col-6">
+                  <label>Document Type</label>
+
+                  <select id="document_type">
+                    <option value="" selected disabled>
+                      Select Document Type
+                    </option>
+                  </select>
+                </div>
+
+                <div class="col-6">
+                  <label>Document Holder Name</label>
+
+                  <input type="text" id="document_holder_name" />
+                </div>
+
+                <div class="col-6">
+                  <label>Document Number (Optional)</label>
+
+                  <input type="text" id="document_number" />
+                </div>
+
+                <div class="col-6">
+                  <label>Document</label>
+
+                  <input type="file" id="campaign_document" />
+                </div>
+              </div>
+
+              <br />
+
+              <button type="button" class="btn btn-primary" id="addDocumentBtn">
+                + Add Document
+              </button>
+
+              <br /><br />
+
+              <table
+                width="100%"
+                border="1"
+                cellspacing="0"
+                cellpadding="10"
+                id="documentTable"
+              >
+                <thead>
+                  <tr>
+                    <th>Document</th>
+
+                    <th>Holder</th>
+
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+
+                <tbody></tbody>
+              </table>
+
+              <br />
+
+              <label style="display: flex; align-items: flex-start; gap: 10px">
+                <input
+                  type="checkbox"
+                  id="declaration"
+                  required
+                  style="width: 18px"
+                />
+
+                <span>
+                  I certify that the information and documents submitted are
+                  genuine.
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button type="button" class="btn btn-secondary" id="prevBtn3">
+              ← Previous
+            </button>
+
+            <button type="submit" class="btn btn-primary">
+              Submit Campaign
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("campaignForm");
+
+        // =====================================================
+        // STEPS
+        // =====================================================
+
+        const step1 = document.getElementById("step1");
+        const step2 = document.getElementById("step2");
+        const step3 = document.getElementById("step3");
+
+        const indicator1 = document.getElementById("step-indicator-1");
+        const indicator2 = document.getElementById("step-indicator-2");
+        const indicator3 = document.getElementById("step-indicator-3");
+
+        const nextBtn1 = document.getElementById("nextBtn1");
+
+        const prevBtn2 = document.getElementById("prevBtn2");
+        const prevBtn3 = document.getElementById("prevBtn3");
+        let createdCampaignSlug = null;
+
+        // Remove any old draft Slug
+        sessionStorage.removeItem("draft_campaign_slug");
+        // =====================================================
+        // BENEFICIARY GROUP
+        // =====================================================
+
+        const beneficiaryGroupType = document.getElementById(
+          "beneficiary_group_type",
+        );
+
+        const beneficiaryCountSection = document.getElementById(
+          "beneficiary-count-section",
+        );
+
+        const beneficiaryMemberCount = document.getElementById(
+          "beneficiary_member_count",
+        );
+
+        function toggleBeneficiaryCount() {
+          if (beneficiaryGroupType.value === "Group") {
+            beneficiaryCountSection.style.display = "block";
+
+            beneficiaryMemberCount.required = true;
+
+            beneficiaryMemberCount.min = 2;
+          } else {
+            beneficiaryCountSection.style.display = "none";
+
+            beneficiaryMemberCount.required = false;
+
+            beneficiaryMemberCount.value = "";
+          }
+        }
+
+        beneficiaryGroupType.addEventListener("change", toggleBeneficiaryCount);
+
+        const beneficiaryType = document.getElementById("beneficiary_type");
+        const beneficiaryGroup = document.getElementById(
+          "beneficiary_group_type",
+        );
+
+        const beneficiaryName = form.beneficiary_name;
+        const beneficiaryRelation = form.beneficiary_relation;
+        const beneficiaryMobile = form.beneficiary_mobile;
+        const beneficiaryLocation = form.beneficiary_location;
+        const beneficiaryAge = form.beneficiary_age;
+
+        function toggleBeneficiaryFields() {
+          if (beneficiaryType.value === "Me") {
+            beneficiaryGroup.value = "Individual";
+            beneficiaryGroup.disabled = true;
+
+            beneficiaryName.value = "";
+            beneficiaryName.disabled = true;
+
+            beneficiaryRelation.value = "";
+            beneficiaryRelation.disabled = true;
+
+            beneficiaryMobile.value = "";
+            beneficiaryMobile.disabled = true;
+
+            beneficiaryLocation.value = "";
+            beneficiaryLocation.disabled = true;
+
+            beneficiaryCountSection.style.display = "none";
+            beneficiaryMemberCount.value = "";
+            beneficiaryMemberCount.required = false;
+
+            beneficiaryAge.disabled = false;
+          } else {
+            beneficiaryGroup.disabled = false;
+
+            beneficiaryName.disabled = false;
+
+            beneficiaryRelation.disabled = false;
+
+            beneficiaryMobile.disabled = false;
+
+            beneficiaryLocation.disabled = false;
+
+            beneficiaryAge.disabled = false;
+
+            toggleBeneficiaryCount();
+          }
+        }
+
+        beneficiaryType.addEventListener("change", toggleBeneficiaryFields);
+
+        toggleBeneficiaryFields();
+
+        // =====================================================
+        // STEP INDICATOR
+        // =====================================================
+
+        function activateStep(step) {
+          indicator1.classList.remove("active");
+          indicator2.classList.remove("active");
+          indicator3.classList.remove("active");
+
+          if (step === 1) {
+            indicator1.classList.add("active");
+          }
+
+          if (step === 2) {
+            indicator1.classList.add("active");
+            indicator2.classList.add("active");
+          }
+
+          if (step === 3) {
+            indicator1.classList.add("active");
+            indicator2.classList.add("active");
+            indicator3.classList.add("active");
+          }
+        }
+
+        // =====================================================
+        // DATE VALIDATION
+        // =====================================================
+
+        const today = new Date().toISOString().split("T")[0];
+
+        const startDate = document.getElementById("start_date");
+        const endDate = document.getElementById("end_date");
+
+        startDate.min = today;
+        endDate.min = today;
+
+        startDate.addEventListener("change", function () {
+          endDate.min = this.value;
+
+          if (endDate.value && endDate.value < this.value) {
+            endDate.value = "";
+          }
+        });
+
+        toggleBeneficiaryCount();
+
+        // =====================================================
+        // MEDICAL SECTION
+        // =====================================================
+
+        const cause = document.getElementById("cause");
+
+        const medicalSection = document.getElementById("medical-section");
+
+        function toggleMedical() {
+          const required = cause.value === "Medical";
+
+          medicalSection.style.display = required ? "block" : "none";
+
+          form.hospital_name.required = required;
+          form.hospital_location.required = required;
+          form.ailment.required = required;
+
+          if (!required) {
+            form.hospital_name.value = "";
+            form.hospital_location.value = "";
+            form.ailment.value = "";
+          }
+        }
+
+        cause.addEventListener("change", toggleMedical);
+
+        toggleMedical();
+
+        // =====================================================
+        // LOAD DOCUMENT TYPES
+        // =====================================================
+
+        async function loadDocumentTypes() {
+          const token = sessionStorage.getItem("access_token");
+
+          if (!token) return;
+
+          try {
+            const response = await fetch(
+              "/api/verification/document-types?purpose=Campaign",
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              },
+            );
+
+            const data = await response.json();
+
+            const select = document.getElementById("document_type");
+
+            if (data.success) {
+              data.data.forEach((doc) => {
+                select.innerHTML += `
+                                      <option value="${doc.uuid}">
+                                          ${doc.name}
+                                      </option>
+                                  `;
+              });
+            }
+          } catch (err) {
+            console.log(err);
+          }
+        }
+
+        loadDocumentTypes();
+        async function deleteDocument(documentUUID) {
+          if (!confirm("Are you sure you want to delete this document?")) {
+            return;
+          }
+
+          const token = sessionStorage.getItem("access_token");
+
+          if (!token) {
+            alert("Please login first.");
+            return;
+          }
+
+          try {
+            const response = await fetch(
+              `/api/verification/documents/${documentUUID}/delete`,
+              {
+                method: "DELETE",
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              },
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              alert(data.message || "Unable to delete document.");
+              return;
+            }
+
+            document.getElementById(`doc-row-${documentUUID}`)?.remove();
+
+            alert(data.message || "Document deleted successfully.");
+          } catch (err) {
+            console.error(err);
+            alert("Something went wrong.");
+          }
+        }
+
+        window.deleteDocument = deleteDocument;
+        // =====================================================
+        // NEXT BUTTON STEP 1
+        // =====================================================
+
+        nextBtn1.addEventListener("click", function () {
+          if (!form.campaign_name.value.trim()) {
+            alert("Campaign name is required.");
+
+            return;
+          }
+
+          if (!form.campaign_desc.value.trim()) {
+            alert("Campaign description is required.");
+
+            return;
+          }
+
+          if (!form.goal_amount.value) {
+            alert("Goal amount is required.");
+
+            return;
+          }
+
+          if (!form.cause.value) {
+            alert("Please select a cause.");
+
+            return;
+          }
+
+          if (!form.start_date.value) {
+            alert("Select start date.");
+
+            return;
+          }
+
+          if (!form.end_date.value) {
+            alert("Select end date.");
+
+            return;
+          }
+
+          if (form.cover_photo.files.length === 0) {
+            alert("Please upload a cover photo.");
+
+            return;
+          }
+
+          step1.style.display = "none";
+
+          step2.style.display = "block";
+
+          activateStep(2);
+
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+          });
+        });
+
+        // =====================================================
+        // PREVIOUS STEP 2
+        // =====================================================
+
+        prevBtn2.addEventListener("click", function () {
+          step2.style.display = "none";
+
+          step1.style.display = "block";
+
+          activateStep(1);
+
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+          });
+        });
+
+        // =====================================================
+        // NEXT STEP 2
+        // =====================================================
+
+        // =====================================================
+        // SAVE CAMPAIGN AS DRAFT FROM STEP 2
+        // =====================================================
+
+        const saveDraftBtn = document.getElementById("saveDraftBtn");
+
+        saveDraftBtn.addEventListener("click", async function () {
+          if (!form.campaign_name.value.trim()) {
+            alert("Campaign name is required.");
+            return;
+          }
+
+          if (!form.beneficiary_type.value) {
+            alert("Select beneficiary type.");
+            return;
+          }
+
+          if (!form.beneficiary_type.value) {
+            alert("Select beneficiary type.");
+            return;
+          }
+
+          if (form.beneficiary_type.value !== "Me") {
+            if (!form.beneficiary_group_type.value) {
+              alert("Select beneficiary group.");
+              return;
+            }
+
+            if (!form.beneficiary_name.value.trim()) {
+              alert("Beneficiary name is required.");
+              return;
+            }
+
+            if (!form.beneficiary_location.value.trim()) {
+              alert("Beneficiary location is required.");
+              return;
+            }
+          }
+
+          const token = sessionStorage.getItem("access_token");
+
+          if (!token) {
+            alert("Please login first.");
+            return;
+          }
+
+          const formData = new FormData();
+
+          formData.append("campaign_type", "Crowdfunding");
+
+          formData.append("status", "DRAFT");
+
+          formData.append("campaign_name", form.campaign_name.value.trim());
+
+          formData.append("campaign_desc", form.campaign_desc.value.trim());
+
+          formData.append("goal_amount", form.goal_amount.value);
+
+          formData.append("cause", form.cause.value);
+
+          formData.append("beneficiary_type", form.beneficiary_type.value);
+
+          formData.append("beneficiary_age", form.beneficiary_age.value);
+
+          if (form.beneficiary_type.value !== "Me") {
+            formData.append(
+              "beneficiary_group_type",
+              form.beneficiary_group_type.value,
+            );
+
+            formData.append(
+              "beneficiary_name",
+              form.beneficiary_name.value.trim(),
+            );
+
+            formData.append(
+              "beneficiary_mobile",
+              form.beneficiary_mobile.value,
+            );
+
+            formData.append(
+              "beneficiary_location",
+              form.beneficiary_location.value,
+            );
+
+            if (form.beneficiary_relation.value) {
+              formData.append(
+                "beneficiary_relation",
+                form.beneficiary_relation.value,
+              );
+            }
+
+            if (form.beneficiary_group_type.value === "Group") {
+              formData.append(
+                "beneficiary_member_count",
+                form.beneficiary_member_count.value,
+              );
+            }
+          }
+
+          formData.append("start_date", form.start_date.value);
+
+          formData.append("end_date", form.end_date.value);
+
+          if (form.cover_photo.files.length) {
+            formData.append("cover_photo", form.cover_photo.files[0]);
+          }
+
+          if (form.cause.value === "Medical") {
+            formData.append("hospital_name", form.hospital_name.value);
+
+            formData.append("hospital_location", form.hospital_location.value);
+
+            formData.append("ailment", form.ailment.value);
+          }
+          console.log("createdCampaignSlug:", createdCampaignSlug);
+          console.log(
+            "sessionStorage:",
+            sessionStorage.getItem("draft_campaign_slug"),
+          );
+          try {
+            let url;
+            let method;
+
+            if (createdCampaignSlug) {
+              // Existing draft
+              url = `/api/campaigns/update-campaigns/${createdCampaignSlug}`;
+              method = "PATCH";
+            } else {
+              // First save
+              url = "/api/campaigns/create-campaign";
+              method = "POST";
+            }
+
+            const response = await fetch(url, {
+              method: method,
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: formData,
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              alert(data.message || "Unable to save draft");
+
+              return;
+            }
+            console.log(data);
+            console.log(data.data);
+            console.log(data.data.campaign_slug);
+            createdCampaignSlug = data.data.campaign_slug;
+
+            // save draft campaign slug
+            sessionStorage.setItem("draft_campaign_slug", createdCampaignSlug);
+
+            alert("Campaign saved as draft.");
+
+            step2.style.display = "none";
+
+            step3.style.display = "block";
+
+            activateStep(3);
+
+            window.scrollTo({
+              top: 0,
+              behavior: "smooth",
+            });
+          } catch (error) {
+            console.log(error);
+
+            alert("Something went wrong");
+          }
+        });
+
+        // =====================================================
+        // PREVIOUS STEP 3
+        // =====================================================
+
+        prevBtn3.addEventListener("click", function () {
+          step3.style.display = "none";
+
+          step2.style.display = "block";
+
+          activateStep(2);
+
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+          });
+        });
+
+        // =====================================================
+        // UPLOAD CAMPAIGN DOCUMENTS
+        // =====================================================
+
+        const addDocumentBtn = document.getElementById("addDocumentBtn");
+
+        addDocumentBtn.addEventListener("click", async function () {
+          if (!createdCampaignSlug) {
+            alert("Please save campaign before uploading documents.");
+
+            return;
+          }
+
+          const token = sessionStorage.getItem("access_token");
+
+          if (!token) {
+            alert("Please login first.");
+
+            return;
+          }
+
+          const type = document.getElementById("document_type");
+
+          const holder = document.getElementById("document_holder_name");
+
+          const number = document.getElementById("document_number");
+
+          const file = document.getElementById("campaign_document");
+
+          if (!type.value) {
+            alert("Select document type.");
+
+            return;
+          }
+
+          if (!holder.value.trim()) {
+            alert("Enter document holder name.");
+
+            return;
+          }
+
+          if (file.files.length === 0) {
+            alert("Select document file.");
+
+            return;
+          }
+
+          const fd = new FormData();
+
+          fd.append("campaign_slug", createdCampaignSlug);
+
+          fd.append("purpose", "Campaign Verification");
+
+          fd.append("document_type_id", type.value);
+
+          fd.append("document_holder_name", holder.value.trim());
+
+          fd.append("document_number", number.value.trim());
+
+          fd.append("file_url", file.files[0]);
+
+          try {
+            const response = await fetch(
+              "/api/verification/campaign/document/upload",
+              {
+                method: "POST",
+
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+
+                body: fd,
+              },
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              alert(data.message || "Document upload failed.");
+
+              return;
+            }
+
+            const tbody = document.querySelector("#documentTable tbody");
+
+            tbody.innerHTML += `
+                <tr id="doc-row-${data.document.uuid}">
+                    <td>${type.options[type.selectedIndex].text}</td>
+
+                    <td>${holder.value}</td>
+
+                    <td style="color:green">
+                        Uploaded
+                    </td>
+
+                    <td style="text-align:center">
+                        <button
+                            type="button"
+                            onclick="deleteDocument('${data.document.uuid}')"
+                            style="
+                                border:none;
+                                background:none;
+                                cursor:pointer;
+                                font-size:18px;
+                                color:red;
+                            "
+                            title="Delete Document"
+                        >
+                            <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        fill="#dc3545"
+        viewBox="0 0 16 16"
+    >
+        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0A.5.5 0 0 1 8.5 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2H5V1.5A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5V2h2.5a1 1 0 0 1 1 1zM6 2h4v-.5a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5V2zm-2 2v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4H4z"/>
+    </svg>
+                        </button>
+                    </td>
+                </tr>
+                `;
+
+            // reset fields
+
+            // Remove uploaded document type from dropdown
+            const uploadedOption = type.options[type.selectedIndex];
+            uploadedOption.remove();
+
+            // Reset form fields
+            type.selectedIndex = 0;
+            holder.value = "";
+            number.value = "";
+            file.value = "";
+
+
+            alert("Document uploaded successfully.");
+          } catch (error) {
+            console.log(error);
+
+            alert("Something went wrong while uploading document.");
+          }
+        });
+
+        // =====================================================
+        // SUBMIT CAMPAIGN
+        // =====================================================
+
+        form.addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          if (!document.getElementById("declaration").checked) {
+            alert("Please accept the declaration.");
+            return;
+          }
+
+          const token = sessionStorage.getItem("access_token");
+
+          if (!token) {
+            alert("Please login first.");
+            return;
+          }
+
+          if (!createdCampaignSlug) {
+            alert("Please save campaign before uploading documents.");
+            return;
+          }
+
+          try {
+            alert("Submitting campaign for verification...");
+
+            /*
+                          Change campaign status from DRAFT
+                          to PENDING VERIFICATION
+                      */
+
+            const response = await fetch(
+              `/api/verification/campaign/submit`,
+              {
+                method: "POST",
+
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  campaign_slug: createdCampaignSlug,
+                }),
+              },
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+              alert(data.message || "Unable to submit campaign");
+
+              return;
+            }
+
+            alert("Campaign submitted successfully.");
+
+            sessionStorage.removeItem("draft_campaign_slug");
+
+            window.location.href = "/frontend/profile/my-campaigns";
+          } catch (error) {
+            console.log(error);
+
+            alert("Something went wrong.");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

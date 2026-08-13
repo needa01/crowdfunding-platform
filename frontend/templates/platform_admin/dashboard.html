@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Admin Dashboard</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        background: #f5f7fb;
+      }
+
+      .dashboard-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+
+      .kpi-card {
+        padding: 18px;
+        min-height: 115px;
+      }
+
+      .kpi-title {
+        color: #6c757d;
+        font-size: 14px;
+      }
+
+      .kpi-value {
+        margin-top: 8px;
+        font-size: 30px;
+        font-weight: 700;
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 20px;
+      }
+
+      .action-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 0;
+        border-bottom: 1px solid #ececec;
+      }
+
+      .action-item:last-child {
+        border-bottom: none;
+      }
+
+      .action-count {
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+      }
+
+      nav .nav-link {
+        padding: 14px 22px;
+        color: #ddd;
+        transition: 0.2s;
+      }
+
+      nav .nav-link:hover {
+        background: #343a40;
+        color: #fff;
+      }
+
+      nav .nav-link.active {
+        background: #0d6efd;
+        color: #fff;
+        font-weight: 600;
+      }
+
+      nav {
+        position: sticky;
+        top: 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container-fluid">
+      <div class="row">
+        <!-- LEFT SIDEBAR -->
+        <nav class="col-md-2 col-lg-2 bg-dark vh-100 p-0">
+          <div class="p-3 border-bottom border-secondary">
+            <h4 class="text-white">Admin Panel</h4>
+          </div>
+
+          <ul class="nav flex-column mt-3">
+            <li class="nav-item">
+              <a
+                class="nav-link text-white active"
+                href="/frontend/admin/dashboard"
+              >
+                Dashboard
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link text-white" href="/frontend/admin/donor-management"> Donors </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link text-white" href="/frontend/admin/ngo-management"> NGOs </a>
+            </li>
+
+            <li class="nav-item">
+              <a
+                class="nav-link text-white"
+                href="/frontend/admin/csr-management"
+              >
+                CSRs
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a
+                class="nav-link text-white"
+                href="/frontend/admin/fundraiser-management"
+              >
+                Individual Fundraisers
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link text-white" href="/frontend/admin/campaign-management">
+                Campaigns
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link text-white" href="/frontend/admin/document-management">
+                Documents
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link text-white" href="/frontend/admin/withdrawals-management">
+                Withdrawals
+              </a>
+            </li>
+
+            <!-- Only Super Admin -->
+            <li class="nav-item d-none" id="admin-management-menu">
+              <a class="nav-link text-white" href="/frontend/admin/admin-management">
+                Admin Management
+              </a>
+            </li>
+
+            <li class="nav-item">
+              <a class="nav-link text-white" href="/frontend/admin/settings">
+                Settings
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link text-white" onclick="admin_logout()"> Logout </a>
+            </li>
+          </ul>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <main class="col-md-10 col-lg-10 p-4">
+          <h2 class="mb-4">Admin Dashboard</h2>
+
+          <!-- ================= KPIs ================= -->
+
+          <div class="row g-3 mb-4">
+            <!-- Users -->
+
+            <div class="col-lg-3 col-md-6">
+              <div class="card dashboard-card kpi-card">
+                <div class="kpi-title">Total Users</div>
+                <div class="kpi-value" id="total_users">0</div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+              <div class="card dashboard-card kpi-card">
+                <div class="kpi-title">Individual Fundraisers</div>
+                <div class="kpi-value" id="individual_fundraisers">0</div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+              <div class="card dashboard-card kpi-card">
+                <div class="kpi-title">NGOs</div>
+                <div class="kpi-value" id="ngos">0</div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+              <div class="card dashboard-card kpi-card">
+                <div class="kpi-title">CSR</div>
+                <div class="kpi-value" id="csr">0</div>
+              </div>
+            </div>
+
+            <!-- Campaign -->
+
+            <div class="col-lg-3 col-md-6">
+              <div class="card dashboard-card kpi-card">
+                <div class="kpi-title">Active Campaigns</div>
+                <div class="kpi-value" id="active_campaigns">0</div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+              <div class="card dashboard-card kpi-card">
+                <div class="kpi-title">Completed Campaigns</div>
+                <div class="kpi-value" id="completed_campaigns">0</div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+              <div class="card dashboard-card kpi-card">
+                <div class="kpi-title">Pending Approval</div>
+                <div class="kpi-value" id="pending_campaigns">0</div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+              <div class="card dashboard-card kpi-card">
+                <div class="kpi-title">Rejected Campaigns</div>
+                <div class="kpi-value" id="rejected_campaigns">0</div>
+              </div>
+            </div>
+
+            <!-- Donations -->
+
+            <div class="col-lg-3 col-md-6">
+              <div class="card dashboard-card kpi-card">
+                <div class="kpi-title">Total Donations</div>
+                <div class="kpi-value" id="total_donations">₹0</div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+              <div class="card dashboard-card kpi-card">
+                <div class="kpi-title">Donation Count</div>
+                <div class="kpi-value" id="donation_count">0</div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+              <div class="card dashboard-card kpi-card">
+                <div class="kpi-title">Platform Donations</div>
+                <div class="kpi-value" id="platform_donations">₹0</div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+              <div class="card dashboard-card kpi-card">
+                <div class="kpi-title">Total Refund</div>
+                <div class="kpi-value" id="total_refund">₹0</div>
+              </div>
+            </div>
+
+            <!-- Payments -->
+
+            <div class="col-lg-3 col-md-6">
+              <div class="card dashboard-card kpi-card">
+                <div class="kpi-title">Pending Withdrawal Amount</div>
+                <div class="kpi-value" id="pending_withdrawal_amount">₹0</div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+              <div class="card dashboard-card kpi-card">
+                <div class="kpi-title">Total Withdrawn Amount</div>
+                <div class="kpi-value" id="total_withdrawn">₹0</div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+              <div class="card dashboard-card kpi-card">
+                <div class="kpi-title">Failed Payments</div>
+                <div class="kpi-value" id="failed_payments">0</div>
+              </div>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+              <div class="card dashboard-card kpi-card">
+                <div class="kpi-title">Total Campaign Service Amount</div>
+                <div class="kpi-value" id="total_campaign_service_amount">
+                  ₹0
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ================= Main Area ================= -->
+
+          <div class="row">
+            <!-- Empty future dashboard -->
+
+            <div class="col-lg-9">
+              <div class="card dashboard-card" style="min-height: 600px">
+                <div class="card-body">
+                  <h5>Analytics</h5>
+
+                  <hr />
+
+                  <!-- charts/tables later -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Pending Sidebar -->
+
+            <div class="col-lg-3">
+              <div class="card dashboard-card sidebar">
+                <div class="card-header bg-white">
+                  <strong>Pending Actions</strong>
+                </div>
+
+                
+                <div class="card-body">
+                  
+                  <div class="action-item">
+                    <a href="/frontend/admin/campaign-management">
+                      Campaign Approval
+                    </a>
+                    <span class="action-count" id="pending_campaign_actions"
+                      >0</span
+                    >
+                  </div>
+
+                  <div class="action-item">
+                    <a href="/frontend/admin/csr-management">
+                      CSR Verification
+                    </a>
+                    <span class="action-count" id="pending_csrs">0</span>
+                  </div>
+
+                  <div class="action-item">
+                    <a href="/frontend/admin/ngo-management">
+                      NGO Verification
+                    </a>
+                    <span class="action-count" id="pending_ngos">0</span>
+                  </div>
+
+
+                  <div class="action-item">
+                    <a
+                      href="/frontend/admin/fundraiser-management"
+                    >
+                      Fundraisers Verification
+                    </a>
+                    <span class="action-count" id="pending_individuals">0</span>
+                  </div>
+
+
+                  <div class="action-item">
+                    <a href="/frontend/admin/donor-management">
+                      Donor Verification
+                    </a>
+                    <span class="action-count" id="pending_donors">0</span>
+                  </div>
+                  
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      function admin_logout() {
+        sessionStorage.removeItem("access_token");
+        sessionStorage.removeItem("refresh_token");
+
+        window.location.href = "/frontend/admin/login";
+      }
+
+      async function loadDashboard() {
+        const token = sessionStorage.getItem("access_token");
+
+        if (!token) {
+          admin_logout();
+          return;
+        }
+        try {
+            const response = await fetch("/api/accounts/get-user-info", {
+                headers: {
+                    "Authorization": "Bearer " + token,
+                },
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                admin_logout();
+                return;
+            }
+
+            const data = await response.json();
+
+            if (data.user_type === "Super Admin") {
+                document
+                    .getElementById("admin-management-menu")
+                    .classList.remove("d-none");
+            }
+
+        } catch (error) {
+            console.error(error);
+        }
+    
+        try {
+            const response = await fetch("/api/admin/dashboard", {
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer " + token,
+                },
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                admin_logout();
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const data = await response.json();
+
+
+            // Users
+            document.getElementById("total_users").innerHTML = data.data.kpis.users.total_users;
+            document.getElementById("individual_fundraisers").innerHTML = data.data.kpis.users.individual_fundraisers;
+            document.getElementById("ngos").innerHTML = data.data.kpis.users.ngos;
+            document.getElementById("csr").innerHTML = data.data.kpis.users.csrs;
+
+            // Campaigns
+            document.getElementById("active_campaigns").innerHTML = data.data.kpis.campaigns.active;
+            document.getElementById("completed_campaigns").innerHTML = data.data.kpis.campaigns.completed;
+            document.getElementById("pending_campaigns").innerHTML = data.data.kpis.campaigns.pending_approval;
+            document.getElementById("rejected_campaigns").innerHTML = data.data.kpis.campaigns.rejected;
+
+            // Donations
+            document.getElementById("total_donations").innerHTML = "₹" + data.data.kpis.donations.total_donations.toLocaleString();
+            document.getElementById("donation_count").innerHTML = data.data.kpis.donations.donation_count;
+            document.getElementById("platform_donations").innerHTML = "₹" + data.data.kpis.donations.platform_donations.toLocaleString();
+            document.getElementById("total_refund").innerHTML = "₹" + data.data.kpis.donations.total_refund.toLocaleString();
+
+            // Payments
+            document.getElementById("pending_withdrawal_amount").innerHTML = "₹" + data.data.kpis.payments.pending_withdrawal_amount.toLocaleString();
+            document.getElementById("total_withdrawn").innerHTML ="₹" + data.data.kpis.payments.total_withdrawn.toLocaleString();
+            document.getElementById("failed_payments").innerHTML = data.data.kpis.payments.failed_payments.toLocaleString();
+            document.getElementById("total_campaign_service_amount").innerHTML = "₹" + data.data.kpis.payments.total_campaign_service_amount.toLocaleString();
+
+            // Pending Actions
+            document.getElementById("pending_individuals").innerHTML = data.data.pending_actions.individual_fundraisers;
+            document.getElementById("pending_ngos").innerHTML =
+                data.data.pending_actions.ngos;
+            document.getElementById("pending_csrs").innerHTML =
+                data.data.pending_actions.csrs;
+            document.getElementById("pending_donors").innerHTML =
+                data.data.pending_actions.donors;
+            document.getElementById("pending_campaign_actions").innerHTML =
+                data.data.pending_actions.campaigns;
+
+        } catch (error) {
+            console.error("Dashboard loading failed:", error);
+        }
+      }
+
+      // Call when the page is loaded
+      document.addEventListener("DOMContentLoaded", loadDashboard);
+    </script>
+  </body>
+</html>

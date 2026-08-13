@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Campaigns</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        background: #f5f7fb;
+      }
+
+      /* NAVBAR */
+
+      .navbar {
+        background: white;
+        padding: 15px 60px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .logo {
+        font-size: 24px;
+        font-weight: 700;
+        color: #00a859;
+      }
+
+      .nav-right button {
+        padding: 10px 18px;
+        border: none;
+        border-radius: 8px;
+        background: #dc3545;
+        color: white;
+        cursor: pointer;
+      }
+
+      /* HERO */
+
+      .hero {
+        width: 100%;
+        background: linear-gradient(120deg, #00a859, #008b48);
+        color: white;
+        padding: 60px 0;
+        text-align: center;
+      }
+
+      .hero h1 {
+        font-size: 38px;
+      }
+
+      .hero p {
+        margin-top: 15px;
+        opacity: 0.95;
+      }
+
+      /* CONTAINER */
+
+      .container {
+        width: 92%;
+        max-width: 1400px;
+        margin: 40px auto;
+      }
+
+      /* GRID */
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
+      }
+
+      /* CARD */
+
+      .card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        transition: 0.3s;
+      }
+
+      .card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+      }
+
+      .card img {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+      }
+
+      .content {
+        padding: 20px;
+      }
+
+      .badge {
+        display: inline-block;
+        background: #eef9f2;
+        color: #00a859;
+        padding: 6px 12px;
+        border-radius: 30px;
+        font-size: 12px;
+        margin-bottom: 15px;
+      }
+
+      .title {
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 12px;
+      }
+
+      .desc {
+        color: #666;
+        line-height: 1.6;
+        height: 72px;
+        overflow: hidden;
+      }
+
+      .stats {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+      }
+
+      .stat {
+        text-align: center;
+      }
+
+      .stat h3 {
+        color: #00a859;
+      }
+
+      .progress {
+        width: 100%;
+        height: 10px;
+        background: #ececec;
+        border-radius: 50px;
+        margin: 20px 0 10px;
+      }
+
+      .progress-bar {
+        height: 10px;
+        background: #00a859;
+        border-radius: 50px;
+      }
+
+      .percentage {
+        text-align: right;
+        color: #666;
+        font-size: 14px;
+      }
+
+      .buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 25px;
+      }
+
+      .details {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        background: #0d6efd;
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      .donate {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        background: #00a859;
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      .details:hover {
+        background: #0a58ca;
+      }
+
+      .donate:hover {
+        background: #01894b;
+      }
+
+      .loading {
+        text-align: center;
+        font-size: 22px;
+        margin-top: 60px;
+      }
+
+      @media (max-width: 768px) {
+        .navbar {
+          padding: 15px 20px;
+        }
+
+        .hero h1 {
+          font-size: 30px;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        position: relative;
+      }
+
+      .profile-menu {
+        position: relative;
+      }
+
+      .profile-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: #00a859;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+
+      .profile-icon:hover {
+        background: #008b48;
+        transform: scale(1.05);
+      }
+
+      .dropdown {
+        position: absolute;
+        top: 60px;
+        right: 0;
+        width: 320px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        display: none;
+        overflow-y: auto; /* Enable vertical scrolling */
+        overflow-x: hidden;
+        max-height: 80vh; /* Never exceed 80% of viewport height */
+        z-index: 999;
+      }
+
+      .dropdown.show {
+        display: block;
+      }
+
+      .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 20px;
+      }
+
+      .avatar {
+        width: 55px;
+        height: 55px;
+        border-radius: 50%;
+        background: #00a859;
+        color: white;
+        font-size: 24px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: 600;
+      }
+
+      .profile-header h4 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .profile-header p {
+        color: #777;
+        font-size: 13px;
+      }
+
+      .dropdown hr {
+        border: none;
+        border-top: 1px solid #eee;
+      }
+
+      .dropdown a {
+        display: block;
+        padding: 14px 22px;
+        color: #333;
+        text-decoration: none;
+        transition: 0.2s;
+      }
+
+      .dropdown a:hover {
+        background: #f5f7fb;
+        padding-left: 30px;
+      }
+
+      .sidebar {
+        overflow: visible;
+      }
+
+      .menu-item {
+        position: relative;
+      }
+
+      .menu-item > a {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .submenu {
+        display: none;
+        padding-left: 18px;
+        margin-top: 4px;
+      }
+
+      .submenu a {
+        display: block;
+        padding: 8px 12px;
+        text-decoration: none;
+        color: #555;
+        font-size: 14px;
+        border-left: 2px solid #e5e5e5;
+      }
+
+      .submenu a:hover {
+        color: #0d6efd;
+        background: #f8f9fa;
+      }
+
+      .has-submenu:hover .submenu {
+        display: block;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="navbar">
+      <div class="logo">Crowdfunding</div>
+
+      <div class="nav-right">
+        <div class="profile-menu" id="profile-menu">
+          <div class="profile-icon" onclick="toggleMenu()">👤</div>
+
+          <div id="profileDropdown" class="dropdown">
+            <div class="profile-header">
+              <div class="avatar">U</div>
+              <div>
+                <h4>Loading...</h4>
+                <p>Loading...</p>
+              </div>
+            </div>
+
+            <!-- Menu items will be added dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero">
+      <h1>Discover Campaigns That Change Lives</h1>
+
+      <p>Support NGOs, Individuals & Social Causes</p>
+    </div>
+
+    <div class="container">
+      <div id="campaigns-container" class="grid">
+        <div class="loading">Loading campaigns...</div>
+      </div>
+    </div>
+
+    <script>
+      // =========================
+      // Authentication
+      // =========================
+
+      const token = sessionStorage.getItem("access_token");
+      const profileMenu = document.getElementById("profile-menu");
+
+      if (token) {
+        profileMenu.style.display = "block";
+      } else {
+        profileMenu.style.display = "none";
+      }
+
+      // =========================
+      // Profile Dropdown
+      // =========================
+
+      function toggleMenu() {
+        document.getElementById("profileDropdown").classList.toggle("show");
+      }
+
+      window.onclick = function (event) {
+        if (!event.target.closest(".profile-menu")) {
+          document.getElementById("profileDropdown").classList.remove("show");
+        }
+      };
+
+      function logout() {
+        sessionStorage.removeItem("access_token");
+        sessionStorage.removeItem("refresh_token");
+        window.location = "/frontend/login";
+      }
+
+      // =========================
+      // Dynamic Menu
+      // =========================
+
+      function renderMenu(userType) {
+        const dropdown = document.getElementById("profileDropdown");
+
+        const avatar = document.querySelector(".avatar").textContent;
+        const name = document.querySelector(".profile-header h4").textContent;
+        const email = document.querySelector(".profile-header p").textContent;
+
+        const profileHeader = `
+      <div class="profile-header">
+        <div class="avatar">${avatar}</div>
+        <div>
+          <h4>${name}</h4>
+          <p>${email}</p>
+        </div>
+      </div>
+    `;
+
+        let menu = "";
+
+        switch (userType) {
+          case "Donor":
+            menu = `
+          <a href="/">🏠 Home</a>
+          <a href="/frontend/campaigns">🔍 Browse Campaigns</a>
+          <a href="/frontend/my-donations">❤️ My Donations</a>
+          <a href="/frontend/donation-receipts">📄 Donation Receipts</a>
+          <a href="/frontend/saved-campaigns">⭐ Saved Campaigns</a>
+          <a href="/frontend/profile/donor">👤 Profile</a>
+          <a href="/frontend/notifications">🔔 Notifications</a>
+          <a href="/frontend/settings">⚙️ Settings</a>
+          <a href="/frontend/help">❓ Help & Support</a>
+        `;
+            break;
+
+          case "Individual Fundraiser":
+            menu = `
+          <a href="/frontend/dashboard">🏠 Dashboard</a>
+          <a href="/frontend/fundraiser/create-campaign/">➕ Start Campaign</a>
+          <a href="/frontend/profile/my-campaigns">📢 My Campaigns</a>
+          <a href="/frontend/campaign-funds">💰 Campaign Funds</a>
+          <a href="/frontend/withdrawals">💳 Withdrawals</a>
+          <a href="/frontend/analytics">📈 Analytics</a>
+          <a href="/frontend/profile/fundraiser">👤 Profile</a>
+          <a href="/frontend/notifications">🔔 Notifications</a>
+          <a href="/frontend/settings">⚙️ Settings</a>
+          <a href="/frontend/help">❓ Help & Support</a>
+        `;
+            break;
+
+          case "NGO":
+            menu = `
+                <a href="/frontend/dashboard">🏠 Dashboard</a>
+                <div class="menu-item has-submenu">
+                  <a href="">➕ Create Campaign ▾</a>
+
+                  <div class="submenu">
+                      <a href="/frontend/ngo/create-campaign/crowdfunding">
+                          ❤️ Crowdfunding Campaign
+                      </a>
+
+                      <a href="/frontend/ngo/create-campaign/csr">
+                          🤝 CSR Campaign
+                      </a>
+                  </div>
+                </div>
+                <a href="/frontend/profile/my-campaigns">📢 My Campaigns</a>
+                <a href="/frontend/campaign-funds">💰 Campaign Funds</a>
+                <a href="/frontend/withdrawals">💳 Withdrawals</a>
+                <a href="/frontend/analytics">📈 Analytics</a>
+                <a href="/frontend/profile/ngo">👤 Organization Profile</a>
+                <a href="/frontend/notifications">🔔 Notifications</a>
+                <a href="/frontend/settings">⚙️ Settings</a>
+                <a href="/frontend/help">❓ Help & Support</a>
+              `;
+            break;
+
+          case "CSR":
+            menu = `
+          <a href="/frontend/dashboard">🏠 Dashboard</a>
+          <a href="/frontend/campaigns">🔍 Browse Campaigns</a>
+          <a href="/frontend/my-contributions">❤️ My Contributions</a>
+          <a href="/frontend/tax-invoices">📄 Tax Invoices</a>
+          <a href="/frontend/csr-reports">📊 CSR Reports</a>
+          <a href="/frontend/profile/csr">👤 Company Profile</a>
+          <a href="/frontend/notifications">🔔 Notifications</a>
+          <a href="/frontend/settings">⚙️ Settings</a>
+          <a href="/frontend/help">❓ Help & Support</a>
+        `;
+            break;
+
+          default:
+            menu = `
+          <a href="/">🏠 Home</a>
+          <a href="/frontend/profile">👤 Profile</a>
+        `;
+        }
+
+        dropdown.innerHTML = `
+      ${profileHeader}
+      <hr>
+      ${menu}
+      <hr>
+      <a href="#" onclick="logout()" style="color:#dc3545">🚪 Logout</a>
+    `;
+      }
+
+      // =========================
+      // Load Logged-in User
+      // =========================
+
+      async function loadUserInfo() {
+        if (!token) return;
+
+        try {
+          const response = await fetch("/api/accounts/get-user-info", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const data = await response.json();
+
+          if (!data.success) return;
+
+          // Redirect users with incomplete profiles
+          if (data.profile_status === "Basic Info") {
+            const redirects = {
+              NGO: "/frontend/register/ngo",
+              CSR: "/frontend/register/csr",
+              "Individual Fundraiser": "/frontend/register/fundraiser",
+            };
+
+            const target = redirects[data.user_type];
+
+            if (target && window.location.pathname !== target) {
+              window.location.replace(target);
+              return false;
+            }
+          }
+
+          const fullName = data.user_name || "User";
+
+          document.querySelector(".avatar").textContent = fullName
+            .trim()
+            .charAt(0)
+            .toUpperCase();
+
+          document.querySelector(".profile-header h4").textContent = fullName;
+
+          document.querySelector(".profile-header p").textContent =
+            data.user_email;
+
+          renderMenu(data.user_type);
+        } catch (error) {
+          console.error("Error loading user:", error);
+        }
+      }
+
+      // =========================
+      // Campaigns
+      // =========================
+
+      async function loadCampaigns() {
+        const headers = {};
+
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+
+        try {
+          const response = await fetch("/api/campaigns/get-campaigns", {
+            headers,
+          });
+
+          const data = await response.json();
+
+          const container = document.getElementById("campaigns-container");
+
+          container.innerHTML = "";
+
+          data.campaigns.forEach((c) => {
+            const percentage = Math.min(
+              ((c.raised_amount / c.goal_amount) * 100).toFixed(1),
+              100,
+            );
+
+            container.innerHTML += `
+          <div class="card">
+
+            <img src="${
+              c.cover_photo
+                ? c.cover_photo
+                : "https://images.unsplash.com/photo-1469571486292-b53601010376?w=900"
+            }">
+
+            <div class="content">
+
+              <div class="badge">${c.cause}</div>
+
+              <div class="title">${c.campaign_name}</div>
+
+              <div class="desc">${c.campaign_desc}</div>
+
+              <p style="margin-top:10px;color:#666;">
+                <strong>Organizer:</strong> ${c.organizer}
+              </p>
+
+              <div class="stats">
+
+                <div class="stat">
+                  <small>Raised</small>
+                  <h3>₹${c.raised_amount}</h3>
+                </div>
+
+                <div class="stat">
+                  <small>Goal</small>
+                  <h3>₹${c.goal_amount}</h3>
+                </div>
+
+                <div class="stat">
+                  <small>Days Left</small>
+                  <h3>${c.days_left}</h3>
+                </div>
+
+              </div>
+
+              <div class="progress">
+                <div class="progress-bar" style="width:${percentage}%"></div>
+              </div>
+
+              <div class="percentage">
+                ${percentage}% Funded
+              </div>
+
+              <div style="margin-top:12px;font-size:14px;color:#666;">
+                👥 ${c.total_donors} Donors &nbsp;&nbsp;
+                👁 ${c.total_views} Views
+              </div>
+
+              ${
+                c.is_featured
+                  ? `<div style="margin-top:10px;color:#ff9800;font-weight:600;">
+                      ⭐ Featured Campaign
+                    </div>`
+                  : ""
+              }
+
+              <div class="buttons">
+
+                <button class="details"
+                  onclick="window.location='/frontend/campaign/${c.campaign_slug}'">
+                  View Details
+                </button>
+
+                <button class="donate"
+                  onclick="window.location='/frontend/campaign/${c.campaign_slug}/donate'">
+                  Donate Now
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+        `;
+          });
+        } catch (err) {
+          document.getElementById("campaigns-container").innerHTML =
+            "<h2>Unable to load campaigns.</h2>";
+        }
+      }
+
+      // =========================
+      // Initialize
+      // =========================
+
+      loadUserInfo();
+      loadCampaigns();
+    </script>
+  </body>
+</html>

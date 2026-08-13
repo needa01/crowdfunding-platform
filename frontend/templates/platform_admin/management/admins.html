@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Admin Management</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+      }
+
+      body {
+        background: #f5f7fb;
+        color: #1f2937;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+
+      /* Header */
+
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+      }
+
+      .page-header h1 {
+        font-size: 28px;
+        margin-bottom: 6px;
+      }
+
+      .page-header p {
+        color: #6b7280;
+        font-size: 14px;
+      }
+
+      .add-admin-btn {
+        border: none;
+        background: #2563eb;
+        color: white;
+        padding: 11px 18px;
+        border-radius: 7px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .add-admin-btn:hover {
+        background: #1d4ed8;
+      }
+
+      /* Stats */
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin-bottom: 25px;
+      }
+
+      .stat-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+      }
+
+      .stat-title {
+        color: #6b7280;
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
+
+      .stat-value {
+        font-size: 26px;
+        font-weight: bold;
+      }
+
+      /* Main card */
+
+      .admin-card {
+        background: white;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+      }
+
+      .card-header {
+        padding: 18px 20px;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .card-header h2 {
+        font-size: 18px;
+      }
+
+      .search-box {
+        width: 280px;
+        padding: 9px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        outline: none;
+      }
+
+      .search-box:focus {
+        border-color: #2563eb;
+      }
+
+      /* Table */
+
+      .table-wrapper {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th {
+        text-align: left;
+        padding: 14px 20px;
+        background: #f9fafb;
+        color: #6b7280;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      td {
+        padding: 16px 20px;
+        border-top: 1px solid #f0f0f0;
+        font-size: 14px;
+      }
+
+      tr:hover {
+        background: #fafafa;
+      }
+
+      /* Admin */
+
+      .admin-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #dbeafe;
+        color: #1d4ed8;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+      }
+
+      .admin-name {
+        font-weight: 600;
+      }
+
+      .admin-email {
+        color: #6b7280;
+        font-size: 12px;
+        margin-top: 3px;
+      }
+
+      /* Status */
+
+      .status {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .status-active {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .status-inactive {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      /* Actions */
+
+      .actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .action-btn {
+        padding: 7px 11px;
+        border-radius: 5px;
+        border: 1px solid #d1d5db;
+        background: white;
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .edit-btn:hover {
+        background: #eff6ff;
+        color: #1d4ed8;
+      }
+
+      .delete-btn {
+        color: #dc2626;
+      }
+
+      .delete-btn:hover {
+        background: #fef2f2;
+      }
+
+      /* Loading */
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #6b7280;
+      }
+
+      /* Empty */
+
+      .empty {
+        text-align: center;
+        padding: 50px;
+        color: #6b7280;
+      }
+
+      /* Error */
+
+      .error {
+        text-align: center;
+        padding: 30px;
+        color: #dc2626;
+      }
+
+      /* Responsive */
+
+      @media (max-width: 768px) {
+        .stats {
+          grid-template-columns: 1fr;
+        }
+
+        .page-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 15px;
+        }
+
+        .card-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 15px;
+        }
+
+        .search-box {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <!-- Page Header -->
+
+      <div class="page-header">
+        <div>
+          <h1>Admin Management</h1>
+          <p>Manage platform administrators and their access.</p>
+        </div>
+
+        <button class="add-admin-btn" onclick="createAdmin()">
+          + Add Admin
+        </button>
+      </div>
+
+      <!-- Statistics -->
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-title">Total Admins</div>
+
+          <div class="stat-value" id="total-admins">0</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-title">Active Admins</div>
+
+          <div class="stat-value" id="active-admins">0</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-title">Inactive Admins</div>
+
+          <div class="stat-value" id="inactive-admins">0</div>
+        </div>
+      </div>
+
+      <!-- Admin List -->
+
+      <div class="admin-card">
+        <div class="card-header">
+          <h2>Administrators</h2>
+
+          <input
+            type="text"
+            id="search-input"
+            class="search-box"
+            placeholder="Search admins..."
+            oninput="searchAdmins()"
+          />
+        </div>
+
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Administrator</th>
+                <th>Mobile</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody id="admin-table-body">
+              <tr>
+                <td colspan="5" class="loading">Loading administrators...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API_URL = "/api/admin/get-admins";
+
+      let admins = [];
+
+      /*
+       * Load admins
+       */
+
+      async function loadAdmins() {
+        const tableBody = document.getElementById("admin-table-body");
+
+        try {
+          const response = await fetch(API_URL, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+
+              Authorization: "Bearer " + sessionStorage.getItem("access_token"),
+            },
+          });
+
+          const result = await response.json();
+
+          if (!response.ok || !result.success) {
+            throw new Error(result.message || "Failed to load administrators");
+          }
+
+          admins = result.data || [];
+
+          updateStats();
+
+          renderAdmins(admins);
+        } catch (error) {
+          console.error(error);
+
+          tableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="error">
+                        Failed to load administrators.
+                    </td>
+                </tr>
+            `;
+        }
+      }
+
+      /*
+       * Render admins
+       */
+
+      function renderAdmins(adminList) {
+        const tableBody = document.getElementById("admin-table-body");
+
+        if (!adminList.length) {
+          tableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="empty">
+                        No administrators found.
+                    </td>
+                </tr>
+            `;
+
+          return;
+        }
+
+        tableBody.innerHTML = "";
+
+        adminList.forEach((admin) => {
+          const fullname = admin.fullname || "Unknown";
+
+          const initials = getInitials(fullname);
+
+          const status = admin.status || "Inactive";
+
+          const isActive = status.toLowerCase() === "active";
+
+          const createdDate = admin.created_at
+            ? formatDate(admin.created_at)
+            : "-";
+
+          tableBody.innerHTML += `
+
+                <tr>
+
+                    <td>
+
+                        <div class="admin-info">
+
+                            <div class="avatar">
+                                ${initials}
+                            </div>
+
+                            <div>
+
+                                <div class="admin-name">
+                                    ${escapeHtml(fullname)}
+                                </div>
+
+                                <div class="admin-email">
+                                    ${escapeHtml(admin.email || "-")}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+                        ${escapeHtml(admin.mobile || "-")}
+                    </td>
+
+
+                    <td>
+
+                        <span class="
+                            status
+                            ${isActive ? "status-active" : "status-inactive"}
+                        ">
+
+                            ${escapeHtml(status)}
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+                        ${createdDate}
+                    </td>
+
+
+                    <td>
+
+                        <div class="actions">
+
+                            {% comment %} <button
+                                class="action-btn edit-btn"
+                                onclick="editAdmin('${admin.uuid}')">
+                                Edit
+                            </button> {% endcomment %}
+
+                            <button
+                                class="action-btn delete-btn"
+                                onclick="deleteAdmin('${admin.uuid}', '${escapeHtml(fullname)}')">
+                                Delete
+                            </button>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+            `;
+        });
+      }
+
+      /*
+       * Update statistics
+       */
+
+      function updateStats() {
+        const total = admins.length;
+
+        const active = admins.filter(
+          (admin) => (admin.status || "").toLowerCase() === "active",
+        ).length;
+
+        const inactive = total - active;
+
+        document.getElementById("total-admins").textContent = total;
+
+        document.getElementById("active-admins").textContent = active;
+
+        document.getElementById("inactive-admins").textContent = inactive;
+      }
+
+      /*
+       * Search
+       */
+
+      function searchAdmins() {
+        const search = document
+          .getElementById("search-input")
+          .value.toLowerCase()
+          .trim();
+
+        if (!search) {
+          renderAdmins(admins);
+
+          return;
+        }
+
+        const filtered = admins.filter((admin) => {
+          return (
+            (admin.fullname || "").toLowerCase().includes(search) ||
+            (admin.email || "").toLowerCase().includes(search) ||
+            (admin.mobile || "").toLowerCase().includes(search) ||
+            (admin.status || "").toLowerCase().includes(search)
+          );
+        });
+
+        renderAdmins(filtered);
+      }
+
+      /*
+       * Create admin
+       */
+
+      function createAdmin() {
+        window.location.href = "/frontend/admin/create-admin";
+      }
+
+      /*
+       * Delete admin
+       */
+
+      async function deleteAdmin(uuid, fullname) {
+        const confirmed = confirm(
+          `Are you sure you want to delete ${fullname}?`,
+        );
+
+        if (!confirmed) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`/api/admin/delete/${uuid}`, {
+            method: "DELETE",
+
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer " + sessionStorage.getItem("access_token")
+              /*
+               * JWT example:
+               *
+               * "Authorization":
+               *     "Bearer " +
+               *     localStorage.getItem("access_token")
+               */
+            },
+          });
+
+          const result = await response.json();
+
+          if (!response.ok || !result.success) {
+            throw new Error(result.message || "Failed to delete admin");
+          }
+
+          alert("Admin deleted successfully.");
+
+          loadAdmins();
+        } catch (error) {
+          console.error(error);
+
+          alert(error.message || "Failed to delete admin.");
+        }
+      }
+
+      /*
+       * Helpers
+       */
+
+      function getInitials(name) {
+        return name
+          .split(" ")
+          .map((word) => word.charAt(0))
+          .join("")
+          .substring(0, 2)
+          .toUpperCase();
+      }
+
+      function formatDate(dateString) {
+        const date = new Date(dateString);
+
+        return date.toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        });
+      }
+
+      function escapeHtml(value) {
+        const div = document.createElement("div");
+
+        div.textContent = value;
+
+        return div.innerHTML;
+      }
+
+      /*
+       * Load when page opens
+       */
+
+      document.addEventListener("DOMContentLoaded", loadAdmins);
+    </script>
+  </body>
+</html>

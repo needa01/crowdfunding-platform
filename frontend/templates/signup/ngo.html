@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NGO Signup</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f9;
+      }
+
+      .container {
+        width: 450px;
+        margin: 50px auto;
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      }
+
+      h2 {
+        text-align: center;
+        margin-bottom: 25px;
+      }
+
+      input {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        box-sizing: border-box;
+      }
+
+      .input-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .input-group input {
+        flex: 1;
+      }
+
+      .small-btn {
+        width: 120px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+
+      .signup-btn {
+        width: 100%;
+        padding: 14px;
+        background: green;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      .error {
+        color: red;
+        text-align: center;
+        margin-top: 15px;
+      }
+
+      .success {
+        color: green;
+        text-align: center;
+        margin-top: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>NGO Signup</h2>
+
+      <form id="signupForm">
+        <div class="input-group">
+          <input type="text" id="fullname" placeholder="Full Name" required />
+        </div>
+
+        <div class="input-group">
+          <input type="email" id="email" placeholder="Email" required />
+        </div>
+
+        <div class="input-group">
+          <input type="text" id="mobile" placeholder="Mobile Number" required />
+
+          <button type="button" class="small-btn" id="sendOtpBtn">
+            Send OTP
+          </button>
+        </div>
+
+        <div class="input-group">
+          <input type="text" id="otp" placeholder="Enter OTP" />
+
+          <button type="button" class="small-btn" id="verifyOtpBtn">
+            Verify
+          </button>
+        </div>
+
+        <div class="input-group">
+          <input
+            type="password"
+            id="password"
+            placeholder="Password"
+            required
+          />
+        </div>
+
+        <div class="input-group">
+          <input
+            type="password"
+            id="confirm_password"
+            placeholder="Confirm Password"
+            required
+          />
+        </div>
+
+        <button type="submit" class="signup-btn">Sign Up & Next</button>
+      </form>
+
+      <div id="message"></div>
+    </div>
+
+    <script>
+      let otpVerified = false;
+      let timer = null;
+
+      const form = document.getElementById("signupForm");
+      const messageDiv = document.getElementById("message");
+      const sendOtpBtn = document.getElementById("sendOtpBtn");
+      const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+      const otpInput = document.getElementById("otp");
+      const mobileInput = document.getElementById("mobile");
+
+      // SEND OTP
+
+      sendOtpBtn.addEventListener("click", async () => {
+        try {
+          const response = await fetch("/api/accounts/send-otp", {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+            },
+
+            body: JSON.stringify({
+              mobile: mobileInput.value,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            messageDiv.className = "success";
+            messageDiv.innerHTML = data.message;
+
+            sendOtpBtn.disabled = true;
+
+            let seconds = 300;
+
+            timer = setInterval(() => {
+              sendOtpBtn.innerHTML = "Resend (" + seconds + "s)";
+
+              seconds--;
+
+              if (seconds < 0) {
+                clearInterval(timer);
+
+                sendOtpBtn.disabled = false;
+                sendOtpBtn.innerHTML = "Send OTP";
+              }
+            }, 1000);
+          } else {
+            messageDiv.className = "error";
+            messageDiv.innerHTML = data.error || data.message;
+          }
+        } catch {
+          messageDiv.className = "error";
+          messageDiv.innerHTML = "Something went wrong";
+        }
+      });
+
+      // VERIFY OTP
+
+      verifyOtpBtn.addEventListener("click", async () => {
+        try {
+          const response = await fetch("/api/accounts/verify-otp", {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+            },
+
+            body: JSON.stringify({
+              mobile: mobileInput.value,
+              otp: otpInput.value,
+            }),
+          });
+
+          const data = await response.json();
+
+          // ONLY stop timer if API says verified
+          if (data.is_verified === true) {
+            otpVerified = true;
+
+            clearInterval(timer);
+
+            // Remove Send OTP button completely
+            sendOtpBtn.style.display = "none";
+
+            verifyOtpBtn.disabled = true;
+            verifyOtpBtn.innerHTML = "Verified";
+
+            otpInput.disabled = true;
+            mobileInput.disabled = true;
+
+            messageDiv.className = "success";
+            messageDiv.innerHTML = "OTP verified successfully";
+          } else {
+            otpVerified = false;
+
+            messageDiv.className = "error";
+            messageDiv.innerHTML = data.error || "Invalid OTP";
+          }
+        } catch {
+          messageDiv.className = "error";
+          messageDiv.innerHTML = "Something went wrong";
+        }
+      });
+
+      // SIGNUP
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        messageDiv.innerHTML = "";
+
+        if (password.value !== confirm_password.value) {
+          messageDiv.className = "error";
+          messageDiv.innerHTML = "Passwords do not match";
+
+          return;
+        }
+
+        if (!otpVerified) {
+          messageDiv.className = "error";
+          messageDiv.innerHTML = "Please verify OTP first";
+
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            "/api/accounts/signup/ngo",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type": "application/json",
+              },
+
+              body: JSON.stringify({
+                fullname: fullname.value,
+                email: email.value,
+                mobile: mobileInput.value,
+                password: password.value,
+                confirm_password: confirm_password.value,
+              }),
+            },
+          );
+
+          const data = await response.json();
+
+          if (response.ok) {
+            messageDiv.className = "success";
+            messageDiv.innerHTML = data.message;
+
+            form.reset();
+
+            otpVerified = false;
+
+            sessionStorage.setItem("access_token", data.access_token);
+
+            sessionStorage.setItem("refresh_token", data.refresh_token);
+            window.location.href = "/frontend/register/ngo";
+          } else {
+            messageDiv.className = "error";
+
+            if (data.error) {
+              messageDiv.innerHTML = data.error;
+            } else if (data.message) {
+              messageDiv.innerHTML = data.message;
+            } else {
+              let errors = [];
+
+              for (let key in data) {
+                if (Array.isArray(data[key])) {
+                  errors.push(data[key][0]);
+                } else {
+                  errors.push(data[key]);
+                }
+              }
+
+              messageDiv.innerHTML = errors.join("<br>");
+            }
+          }
+        } catch {
+          messageDiv.className = "error";
+          messageDiv.innerHTML = "Something went wrong";
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -382,7 +382,7 @@ Profile = Verified
 Campaign Type = Crowdfunding
        AND
 Campaign = Verified
-
+```
 ### Crowdfunding Donation Flow
 
 ```text

@@ -1,7 +1,9 @@
 from decimal import Decimal
 
 from django.db import transaction
+from django.http import FileResponse
 from django.shortcuts import render
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from django.shortcuts import get_object_or_404
@@ -21,8 +23,10 @@ from crowdfunding.enums import (
     VerificationType,
 )
 from crowdfunding.permissions import CanDonate, IsActiveAccount, IsDonor
-from donations.models import Donation
+from crowdfunding.utils import generate_receipt_number
+from donations.models import Donation, DonationReceipt
 from donations.serializers import CreateDonationSerializer
+from donations.services import generate_donation_receipt
 from payments.models import PaymentTransaction
 from verification.models import EntityVerificationRequest
 
@@ -89,7 +93,19 @@ def create_campaign_donation(request):
             {"success": False, "message": "Campaign not found."},
             status=status.HTTP_404_NOT_FOUND,
         )
+    # ----------------------------
+    # Campaign Expiry Check
+    # ----------------------------
 
+    if campaign.end_date <= timezone.localdate():
+        return Response(
+            {
+                "success": False,
+                "message": "This campaign has expired and is no longer accepting donations.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
     # ----------------------------
     # Cannot Donate Own Campaign
     # ----------------------------
@@ -229,11 +245,10 @@ def get_donation_details(request, donation_uuid):
                             if hasattr(donation, "receipt")
                             else None
                         ),
-                        "receipt_url": (
-                            request.build_absolute_uri(donation.receipt.receipt_url.url)
+                        "has_receipt_file": (
+                            bool(donation.receipt.receipt_file)
                             if hasattr(donation, "receipt")
-                            and donation.receipt.receipt_url
-                            else None
+                            else False
                         ),
                     },
                     "payment": {
@@ -362,3 +377,94 @@ def get_my_donations(request):
             },
             status=500,
         )
+
+
+@api_view(["POST"])
+@permission_classes([CanDonate])
+def generate_receipt(request, donation_uuid):
+
+    try:
+        donation = Donation.objects.select_related("campaign", "donor").get(
+            uuid=donation_uuid, donor=request.user
+        )
+
+    except Donation.DoesNotExist:
+        return Response(
+            {"success": False, "message": "Donation not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    # Receipt can only be generated for successful donations
+    if donation.status != DonationStatus.SUCCESS:
+        return Response(
+            {
+                "success": False,
+                "message": "Receipt can only be generated for successful donations.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        receipt = donation.receipt
+
+    except DonationReceipt.DoesNotExist:
+        return Response(
+            {"success": False, "message": "Receipt record not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    # Don't generate the PDF again
+    if receipt.receipt_file:
+        return Response(
+            {
+                "success": True,
+                "message": "Receipt already generated.",
+                "receipt_uuid": str(receipt.uuid),
+                "receipt_number": receipt.receipt_num,
+                "receipt_url": receipt.receipt_file.url,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    # Generate PDF
+    generate_donation_receipt(receipt)
+
+    return Response(
+        {
+            "success": True,
+            "message": "Receipt generated successfully.",
+            "receipt_uuid": str(receipt.uuid),
+            "receipt_number": receipt.receipt_num,
+            "receipt_url": receipt.receipt_file.url,
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+@permission_classes([CanDonate])
+def download_receipt(request, donation_uuid):
+
+    try:
+        receipt = DonationReceipt.objects.select_related("donation").get(
+            donation__uuid=donation_uuid, donation__donor=request.user
+        )
+
+    except DonationReceipt.DoesNotExist:
+        return Response(
+            {"success": False, "message": "Receipt not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    if not receipt.receipt_file:
+        return Response(
+            {"success": False, "message": "Receipt has not been generated yet."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    return FileResponse(
+        receipt.receipt_file.open("rb"),
+        as_attachment=True,
+        filename=f"{receipt.receipt_num}.pdf",
+        content_type="application/pdf",
+    )

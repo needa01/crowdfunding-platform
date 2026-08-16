@@ -184,7 +184,7 @@ class Campaign(models.Model):
         # --------------------------------------------
         if self._state.adding:
             if not self.start_date:
-                self.start_date = today
+                self.start_date = today + datetime.timedelta(days=1)
 
             elif self.start_date < today:
                 raise ValidationError(
@@ -196,9 +196,9 @@ class Campaign(models.Model):
         # --------------------------------------------
         if self.end_date:
 
-            if self.end_date < self.start_date:
+            if self.end_date < self.start_date + datetime.timedelta(days=7):
                 raise ValidationError(
-                    {"end_date": "End date must be on or after the start date."}
+                    {"end_date": "Campaign must run for at least 7 days from the start date."}
                 )
         if self.cause == CampaignCause.MEDICAL:
 
@@ -306,7 +306,7 @@ class Campaign(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.pk:
-            self.start_date = timezone.localdate()
+            self.start_date = timezone.localdate() + datetime.timedelta(days=1)
 
         if self.beneficiary_group_type == BeneficiaryGroupType.INDIVIDUAL:
             self.beneficiary_member_count = 1

@@ -455,21 +455,15 @@
         switch (userType) {
           case "Donor":
             menu = `
-          <a href="/">🏠 Home</a>
           <a href="/frontend/campaigns">🔍 Browse Campaigns</a>
           <a href="/frontend/my-donations">❤️ My Donations</a>
-          <a href="/frontend/donation-receipts">📄 Donation Receipts</a>
-          <a href="/frontend/saved-campaigns">⭐ Saved Campaigns</a>
           <a href="/frontend/profile/donor">👤 Profile</a>
           <a href="/frontend/notifications">🔔 Notifications</a>
-          <a href="/frontend/settings">⚙️ Settings</a>
-          <a href="/frontend/help">❓ Help & Support</a>
         `;
             break;
 
           case "Individual Fundraiser":
             menu = `
-          <a href="/frontend/dashboard">🏠 Dashboard</a>
           <a href="/frontend/fundraiser/create-campaign/">➕ Start Campaign</a>
           <a href="/frontend/profile/my-campaigns">📢 My Campaigns</a>
           <a href="/frontend/campaign-funds">💰 Campaign Funds</a>
@@ -484,7 +478,6 @@
 
           case "NGO":
             menu = `
-                <a href="/frontend/dashboard">🏠 Dashboard</a>
                 <div class="menu-item has-submenu">
                   <a href="">➕ Create Campaign ▾</a>
 
@@ -511,7 +504,6 @@
 
           case "CSR":
             menu = `
-          <a href="/frontend/dashboard">🏠 Dashboard</a>
           <a href="/frontend/campaigns">🔍 Browse Campaigns</a>
           <a href="/frontend/my-contributions">❤️ My Contributions</a>
           <a href="/frontend/tax-invoices">📄 Tax Invoices</a>
@@ -525,7 +517,7 @@
 
           default:
             menu = `
-          <a href="/">🏠 Home</a>
+          
           <a href="/frontend/profile">👤 Profile</a>
         `;
         }

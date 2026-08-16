@@ -21,6 +21,18 @@ urlpatterns = [
         views.get_donation_details,
         name="get_donation_details",
     ),
+    
+    path(
+        "<uuid:donation_uuid>/generate-receipt/",
+        views.generate_receipt,
+        name="generate_receipt"
+    ),
+    
+    path(
+        "<uuid:donation_uuid>/download-receipt/",
+        views.download_receipt,
+        name="download_receipt"
+    ),
 
     # path(
     #     "<uuid:donation_uuid>/receipt",

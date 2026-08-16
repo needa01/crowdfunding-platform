@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django_enum.fields import EnumField
 import uuid
 from crowdfunding.enums import Currency, DonationStatus, DonationType
@@ -101,12 +102,11 @@ class DonationReceipt(models.Model):
         db_index=True,
     )
 
-    # receipt_url = models.URLField(
-    #     max_length=500,
-    #     blank=True,
-    #     null=True
-    # )
-    receipt_url = models.FileField(upload_to="documents/receipt/%Y/%m/",null=True, blank=True)
+    receipt_file = models.FileField(
+        upload_to="documents/receipt/%Y/%m/",
+        null=True,
+        blank=True,
+    )
     
 
     email_sent_at = models.DateTimeField(
@@ -115,7 +115,8 @@ class DonationReceipt(models.Model):
     )
 
     generated_at = models.DateTimeField(
-        auto_now_add=True
+        null=True,
+        blank=True
     )
 
     generated_by = models.ForeignKey(

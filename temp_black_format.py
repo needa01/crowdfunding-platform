@@ -9,7 +9,6 @@ from verification.models import Document, EntityVerificationRequest
 class CampaignListSerializer(serializers.ModelSerializer):
     organizer = serializers.SerializerMethodField()
     cover_photo = serializers.SerializerMethodField()
-    campaign_status = serializers.SerializerMethodField()
     percentage_raised = serializers.SerializerMethodField()
     days_left = serializers.SerializerMethodField()
 
@@ -42,9 +41,9 @@ class CampaignListSerializer(serializers.ModelSerializer):
                 and obj.end_date < timezone.localdate()
                 and obj.campaign_status == CampaignStatus.ACTIVE
         ):
-            return "Expired"
+                return "Expired"
     
-        return obj.campaign_status.value
+            return obj.campaign_status.value
 
     def get_cover_photo(self, obj):
         """
@@ -112,7 +111,7 @@ class CampaignListSerializer(serializers.ModelSerializer):
 class MyCampaignListSerializer(serializers.ModelSerializer):
     verification_status = serializers.SerializerMethodField()
     verification_remarks = serializers.CharField(read_only=True)
-    campaign_status = serializers.SerializerMethodField()
+
     class Meta:
         model = Campaign
         fields = [
@@ -132,15 +131,6 @@ class MyCampaignListSerializer(serializers.ModelSerializer):
             "verification_remarks",
         ]
 
-    def get_campaign_status(self, obj):
-        if (
-            obj.end_date
-            and obj.end_date < timezone.localdate()
-            and obj.campaign_status == CampaignStatus.ACTIVE
-        ):
-            return "Expired"
-
-        return obj.campaign_status.value
     def get_verification_status(self, obj):
         return obj.verification_status.value if obj.verification_status else None
 

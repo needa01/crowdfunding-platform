@@ -288,14 +288,15 @@
           editBtn.style.display = "none";
           publicBtn.style.display = "none";
             
-
-          const campaignStatus = (c.campaign_status || "").toLowerCase();
+          console.log(c.campaign_status);
+          const status = (c.campaign_status || "").toLowerCase();
 
           // Show Edit & Delete only for Draft
           if (campaignStatus === "Draft") {
             actionsCard.style.display = "block";
             editBtn.style.display = "block";
           }
+          
 
           // Show Public Page only for Active campaigns
           if (campaignStatus === "Active") {
@@ -305,7 +306,7 @@
 
 
           title.innerHTML = c.campaign_name;
-
+          console.log("we are here",c.campaign_status);
           campaignStatus.innerHTML = `<span class="badge bg-primary badge-status">${c.campaign_status}</span>`;
 
           verificationStatus.innerHTML = `<span class="badge bg-warning text-dark badge-status">${c.verification.status}</span>`;

@@ -12,7 +12,12 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from campaigns.models import Campaign
-from campaigns.serializers import CampaignDetailSerializer, CampaignListSerializer, MyCampaignDetailSerializer, MyCampaignListSerializer
+from campaigns.serializers import (
+    CampaignDetailSerializer,
+    CampaignListSerializer,
+    MyCampaignDetailSerializer,
+    MyCampaignListSerializer,
+)
 from crowdfunding.enums import (
     BeneficiaryGroupType,
     BeneficiaryType,
@@ -306,8 +311,6 @@ def create_campaign(request):
 
     beneficiary_type = request.data.get("beneficiary_type")
 
-    
-
     if beneficiary_type != BeneficiaryType.ME.value:
 
         campaign_data["beneficiary_group_type"] = request.data.get(
@@ -325,12 +328,10 @@ def create_campaign(request):
         campaign_data["beneficiary_member_count"] = (
             int(member_count) if member_count not in (None, "") else None
         )
-        
+
         age = request.data.get("beneficiary_age")
 
-        campaign_data["beneficiary_age"] = (
-            int(age) if age not in (None, "") else None
-        )
+        campaign_data["beneficiary_age"] = int(age) if age not in (None, "") else None
 
         if user.user_type == UserType.INDIVIDUAL_FUNDRAISER:
             campaign_data["beneficiary_relation"] = request.data.get(
@@ -472,11 +473,10 @@ def update_campaign(request, campaign_slug):
     )
 
 
-
 @api_view(["GET"])
 @permission_classes([IsCampaignCreator])
 def get_my_campaigns(request):
-    
+
     print("entered")
     verification_qs = EntityVerificationRequest.objects.filter(
         campaign=OuterRef("pk"),
@@ -486,12 +486,8 @@ def get_my_campaigns(request):
     campaigns = (
         Campaign.objects.filter(created_by=request.user)
         .annotate(
-            verification_status=Subquery(
-                verification_qs.values("status")[:1]
-            ),
-            verification_remarks=Subquery(
-                verification_qs.values("remarks")[:1]
-            ),
+            verification_status=Subquery(verification_qs.values("status")[:1]),
+            verification_remarks=Subquery(verification_qs.values("remarks")[:1]),
         )
         .order_by("-created_at")
     )
@@ -514,33 +510,27 @@ def campaign_detail(request, campaign_slug):
 
     try:
 
-        campaign = (
-            Campaign.objects
-            .select_related(
-                "created_by",
-                "ngo",
-            )
-            .get(
-                campaign_slug=campaign_slug,
-                campaign_status=CampaignStatus.ACTIVE,
-            )
+        campaign = Campaign.objects.select_related(
+            "created_by",
+            "ngo",
+        ).get(
+            campaign_slug=campaign_slug,
+            campaign_status__in=[
+                CampaignStatus.ACTIVE,
+                CampaignStatus.PAUSED,
+                CampaignStatus.COMPLETED,
+                CampaignStatus.CLOSED,
+            ],
         )
 
     except Campaign.DoesNotExist:
 
         return Response(
-            {
-                "success": False,
-                "message": "Campaign not found."
-            },
+            {"success": False, "message": "Campaign not found."},
             status=404,
         )
 
-    Campaign.objects.filter(
-        pk=campaign.pk
-    ).update(
-        total_views=F("total_views") + 1
-    )
+    Campaign.objects.filter(pk=campaign.pk).update(total_views=F("total_views") + 1)
 
     campaign.refresh_from_db()
 
@@ -550,7 +540,6 @@ def campaign_detail(request, campaign_slug):
             "request": request,
         },
     )
-    
 
     return Response(
         {
@@ -560,35 +549,23 @@ def campaign_detail(request, campaign_slug):
     )
 
 
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsCampaignCreator])
 def my_campaign_detail(request, campaign_slug):
 
     try:
 
-        campaign = (
-            Campaign.objects
-            .select_related(
-                "created_by",
-                "ngo",
-            )
-            .get(
-                campaign_slug=campaign_slug
-            )
-        )
+        campaign = Campaign.objects.select_related(
+            "created_by",
+            "ngo",
+        ).get(campaign_slug=campaign_slug)
 
     except Campaign.DoesNotExist:
 
         return Response(
-            {
-                "success": False,
-                "message": "Campaign not found."
-            },
+            {"success": False, "message": "Campaign not found."},
             status=404,
         )
-
-
 
     serializer = MyCampaignDetailSerializer(
         campaign,
@@ -605,7 +582,6 @@ def my_campaign_detail(request, campaign_slug):
     )
 
 
-
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_campaign_donations(request, campaign_slug):
@@ -617,13 +593,17 @@ def get_campaign_donations(request, campaign_slug):
 
         campaign = Campaign.objects.get(
             campaign_slug=campaign_slug,
-            campaign_status=CampaignStatus.ACTIVE,
+            campaign_status__in=[
+                CampaignStatus.ACTIVE,
+                CampaignStatus.PAUSED,
+                CampaignStatus.COMPLETED,
+                CampaignStatus.CLOSED,
+            ],
             is_deleted=False,
         )
 
         donations = (
-            Donation.objects
-            .filter(
+            Donation.objects.filter(
                 campaign=campaign,
                 status=DonationStatus.SUCCESS,
             )
@@ -670,14 +650,16 @@ def get_campaign_donations(request, campaign_slug):
                     # Donor / Individual Fundraiser / Others
                     donor_name = donor.fullname
 
-            data.append({
-                "donor_name": donor_name,
-                "amount": str(donation.amount),
-                "currency": donation.currency.value,
-                "message": donation.message or "",
-                "is_anonymous": donation.is_anonymous,
-                "donated_at": donation.donated_at,
-            })
+            data.append(
+                {
+                    "donor_name": donor_name,
+                    "amount": str(donation.amount),
+                    "currency": donation.currency.value,
+                    "message": donation.message or "",
+                    "is_anonymous": donation.is_anonymous,
+                    "donated_at": donation.donated_at,
+                }
+            )
 
         return Response(
             {
@@ -710,4 +692,3 @@ def get_campaign_donations(request, campaign_slug):
             },
             status=500,
         )
-

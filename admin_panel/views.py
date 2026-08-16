@@ -3,6 +3,8 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.db.models import Q
+from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from accounts.models import CustomUser, DonorProfile, IndividualProfile
@@ -119,7 +121,7 @@ def admin_dashboard(request):
             campaign_status=CampaignStatus.ACTIVE
         ).count()
         total_completed_campaigns = Campaign.objects.filter(
-            campaign_status=CampaignStatus.COMPLETED
+            Q(campaign_status=CampaignStatus.COMPLETED) | Q(end_date__lt=timezone.now())
         ).count()
         total_pending_campaigns = Campaign.objects.filter(
             campaign_status=CampaignStatus.PENDING
@@ -356,15 +358,13 @@ def get_admins(request):
             return Response(
                 {
                     "success": False,
-                    "message": "Only superadmin can access admin management."
+                    "message": "Only superadmin can access admin management.",
                 },
-                status=403
+                status=403,
             )
 
-        admins = (
-            CustomUser.objects
-            .filter(user_type=UserType.ADMIN)
-            .order_by("-created_at")
+        admins = CustomUser.objects.filter(user_type=UserType.ADMIN).order_by(
+            "-created_at"
         )
 
         data = []
@@ -389,7 +389,7 @@ def get_admins(request):
                 "data": data,
                 "count": len(data),
             },
-            status=200
+            status=200,
         )
 
     except Exception as e:
@@ -400,7 +400,7 @@ def get_admins(request):
                 "message": "Failed to retrieve admins.",
                 "error": str(e),
             },
-            status=500
+            status=500,
         )
 
 
@@ -1300,9 +1300,7 @@ def get_campaign_for_verification(request, campaign_slug):
 @permission_classes([IsSuperAdmin])
 def create_admin(request):
 
-    serializer = CreateAdminSerializer(
-        data=request.data
-    )
+    serializer = CreateAdminSerializer(data=request.data)
 
     if serializer.is_valid():
 
@@ -1391,5 +1389,3 @@ def delete_admin(request, admin_uuid):
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-
-

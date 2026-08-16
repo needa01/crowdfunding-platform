@@ -74,9 +74,9 @@ class CampaignStatus(Enum):
     PENDING = "Pending"
     ACTIVE = "Active"
     PAUSED = "Paused"
-    COMPLETED = "Completed"
+    COMPLETED = "Completed" # Campaign has reached its end date or target amount
     REJECTED = "Rejected"
-    CLOSED = "Closed"
+    CLOSED = "Closed" # Campaign has been closed by the campaign owner or admin
 
 
 

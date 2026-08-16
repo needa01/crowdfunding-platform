@@ -141,14 +141,7 @@
           </tr>
         </table>
 
-        <a
-          id="download-receipt"
-          class="btn"
-          target="_blank"
-          style="display: none"
-        >
-          Download Receipt
-        </a>
+        <button id="receipt-action" class="btn" style="display: none"></button>
       </div>
 
       <div class="card">
@@ -184,9 +177,9 @@
         .filter(Boolean)
         .pop();
 
-      async function loadDonation() {
-        const token = sessionStorage.getItem("access_token");
+      const token = sessionStorage.getItem("access_token");
 
+      async function loadDonation() {
         const response = await fetch(`/api/donations/${donationUUID}`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -215,7 +208,8 @@
 
         document.getElementById("message").innerText = d.message || "-";
 
-        document.getElementById("campaign-title").innerText = d.campaign.campaign_name;
+        document.getElementById("campaign-title").innerText =
+          d.campaign.campaign_name;
 
         document.getElementById("campaign-link").href =
           `/frontend/campaign/${d.campaign.campaign_slug}`;
@@ -245,17 +239,143 @@
         document.getElementById("payment-id").innerText =
           d.payment.gateway_payment_id || "-";
 
-        if (d.receipt.available) {
-          document.getElementById("receipt-number").innerText =
-            d.receipt.receipt_number;
+        // Receipt
+        setupReceipt(d.receipt);
+      }
+      function setupReceipt(receipt) {
+        const receiptNumber = document.getElementById("receipt-number");
 
-          const btn = document.getElementById("download-receipt");
+        const receiptAction = document.getElementById("receipt-action");
 
-          btn.href = d.receipt.receipt_url;
+        // No receipt record
+        if (!receipt.available) {
+          receiptNumber.innerText = "Not Available";
 
-          btn.style.display = "inline-block";
-        } else {
-          document.getElementById("receipt-number").innerText = "Not Generated";
+          receiptAction.style.display = "none";
+
+          return;
+        }
+
+        // Receipt record exists
+        receiptNumber.innerText = receipt.receipt_number;
+
+        receiptAction.style.display = "inline-block";
+
+        // PDF does NOT exist
+        if (!receipt.has_receipt_file) {
+          receiptAction.innerText = "Generate Receipt";
+
+          receiptAction.onclick = generateReceipt;
+        }
+
+        // PDF already exists
+        else {
+          receiptAction.innerText = "Download Receipt";
+
+          receiptAction.onclick = downloadReceipt;
+        }
+      }
+
+      async function generateReceipt() {
+        const button = document.getElementById("receipt-action");
+
+        button.disabled = true;
+        button.innerText = "Generating...";
+
+        try {
+          const response = await fetch(
+            `/api/donations/${donationUUID}/generate-receipt/`,
+            {
+              method: "POST",
+
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
+
+          const result = await response.json();
+
+          if (!result.success) {
+            alert(result.message);
+
+            button.disabled = false;
+            button.innerText = "Generate Receipt";
+
+            return;
+          }
+
+          // PDF has now been generated
+          button.disabled = false;
+          button.innerText = "Download Receipt";
+
+          button.onclick = downloadReceipt;
+        } catch (error) {
+          console.error(error);
+
+          alert("Unable to generate receipt.");
+
+          button.disabled = false;
+          button.innerText = "Generate Receipt";
+        }
+      }
+
+      async function downloadReceipt() {
+        const button = document.getElementById("receipt-action");
+
+        button.disabled = true;
+        button.innerText = "Downloading...";
+
+        try {
+          const response = await fetch(
+            `/api/donations/${donationUUID}/download-receipt/`,
+            {
+              method: "GET",
+
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
+
+          if (!response.ok) {
+            const result = await response.json();
+
+            alert(result.message || "Unable to download receipt.");
+
+            button.disabled = false;
+            button.innerText = "Download Receipt";
+
+            return;
+          }
+
+          const blob = await response.blob();
+
+          const url = window.URL.createObjectURL(blob);
+
+          const a = document.createElement("a");
+
+          a.href = url;
+
+          a.download = `${document.getElementById("receipt-number").innerText}.pdf`;
+
+          document.body.appendChild(a);
+
+          a.click();
+
+          a.remove();
+
+          window.URL.revokeObjectURL(url);
+
+          button.disabled = false;
+          button.innerText = "Download Receipt";
+        } catch (error) {
+          console.error(error);
+
+          alert("Unable to download receipt.");
+
+          button.disabled = false;
+          button.innerText = "Download Receipt";
         }
       }
 

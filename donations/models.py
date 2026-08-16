@@ -57,7 +57,7 @@ class Donation(models.Model):
 
     status = EnumField(
         DonationStatus,
-        default=DonationStatus.SUCCESS
+        default=DonationStatus.PENDING
     )
 
     donated_at = models.DateTimeField(

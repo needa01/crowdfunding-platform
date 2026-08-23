@@ -365,6 +365,8 @@ class Campaign(models.Model):
 
 
 class PromotionServicePricing(models.Model):
+    
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     service_type = EnumField(ServiceType, unique=True)
 

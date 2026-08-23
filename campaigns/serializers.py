@@ -5,6 +5,7 @@ from campaigns.models import Campaign
 from crowdfunding.enums import CampaignStatus
 from verification.models import Document, EntityVerificationRequest
 
+from .models import PromotionServicePricing
 
 class CampaignListSerializer(serializers.ModelSerializer):
     organizer = serializers.SerializerMethodField()
@@ -498,3 +499,17 @@ class MyCampaignDetailSerializer(serializers.ModelSerializer):
             "mobile": obj.ngo.user.mobile,
             "address": obj.ngo.address,
         }
+
+
+
+
+class PromotionServicePricingSerializer(serializers.ModelSerializer):
+    service_type = serializers.CharField(source="service_type.value")
+
+    class Meta:
+        model = PromotionServicePricing
+        fields = [
+            "uuid"
+            "service_type",
+            "minimum_amount",
+        ]

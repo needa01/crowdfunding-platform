@@ -9,6 +9,12 @@ urlpatterns = [
         views.create_campaign_donation,
         name="create_campaign_donation",
     ),
+    
+    path(
+        "create-campaign-promotion",
+        views.create_campaign_promotion_payment,
+        name="create_campaign_promotion_payment"
+        ),
 
     path(
         "my-donations",
@@ -38,12 +44,6 @@ urlpatterns = [
             "success/<uuid:donation_uuid>/",
             views.donation_success,
             name="donation_success",
-        ),
-
-    # path(
-    #     "<uuid:donation_uuid>/receipt",
-    #     views.download_receipt,
-    #     name="download_receipt",
-    # ),
+        )
 
 ]

@@ -692,3 +692,23 @@ def get_campaign_donations(request, campaign_slug):
             },
             status=500,
         )
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_promotion_services(request):
+
+    services = PromotionServicePricing.objects.filter(
+        is_active=True
+    ).order_by("service_type")
+
+    serializer = PromotionServicePricingSerializer(services, many=True)
+
+    return Response(
+        {
+            "success": True,
+            "message": "Promotion services retrieved successfully.",
+            "data": serializer.data,
+        },
+        status=status.HTTP_200_OK
+    )

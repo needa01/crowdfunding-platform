@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Donation Successful</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        font-family: Arial, sans-serif;
+        background: #f5f5f5;
+      }
+
+      .container {
+        width: 90%;
+        max-width: 550px;
+
+        background: white;
+        padding: 40px;
+
+        border-radius: 12px;
+
+        text-align: center;
+
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+      }
+
+      .success-icon {
+        width: 80px;
+        height: 80px;
+
+        margin: 0 auto 20px;
+
+        border-radius: 50%;
+
+        background: #e8f7ee;
+        color: #198754;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        font-size: 45px;
+      }
+
+      h1 {
+        margin-bottom: 10px;
+        color: #198754;
+      }
+
+      .message {
+        color: #555;
+        margin-bottom: 30px;
+      }
+
+      .details {
+        text-align: left;
+
+        background: #fafafa;
+
+        border: 1px solid #ddd;
+        border-radius: 8px;
+
+        padding: 20px;
+
+        margin-bottom: 25px;
+      }
+
+      .row {
+        display: flex;
+        justify-content: space-between;
+
+        padding: 10px 0;
+
+        border-bottom: 1px solid #eee;
+      }
+
+      .row:last-child {
+        border-bottom: none;
+      }
+
+      .label {
+        color: #666;
+      }
+
+      .value {
+        font-weight: bold;
+        color: #222;
+      }
+
+      .button {
+        display: inline-block;
+
+        padding: 12px 25px;
+
+        background: #0d6efd;
+        color: white;
+
+        text-decoration: none;
+
+        border-radius: 6px;
+
+        font-size: 15px;
+      }
+
+      .button:hover {
+        background: #0b5ed7;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="success-icon">✓</div>
+
+      <h1>Donation Successful!</h1>
+
+      <p class="message">
+        Thank you for supporting this campaign. Your donation has been
+        successfully processed.
+      </p>
+
+      <div class="details">
+        <div class="row">
+          <span class="label">Donation Number</span>
+          <span class="value" id="donationNumber"> Loading... </span>
+        </div>
+
+        <div class="row">
+          <span class="label">Receipt Number</span>
+          <span class="value" id="receiptNumber"> Loading... </span>
+        </div>
+
+        <div class="row">
+          <span class="label">Amount</span>
+          <span class="value" id="amount"> Loading... </span>
+        </div>
+
+        <div class="row">
+          <span class="label">Payment Status</span>
+          <span class="value" id="paymentStatus"> Loading... </span>
+        </div>
+      </div>
+
+      <a href="/frontend/campaigns" class="button"> Back to Home </a>
+    </div>
+    <script>
+      async function loadDonationDetails() {
+        // -----------------------------------------
+        // 1. Get donation_uuid from page URL
+        // -----------------------------------------
+
+        const params = new URLSearchParams(window.location.search);
+
+        const donationUUID = params.get("donation_uuid");
+
+        console.log("Donation UUID:", donationUUID);
+
+        // -----------------------------------------
+        // 2. Validate UUID
+        // -----------------------------------------
+
+        if (!donationUUID) {
+          document.getElementById("donationNumber").innerText = "Unavailable";
+
+          document.getElementById("receiptNumber").innerText = "Unavailable";
+
+          document.getElementById("amount").innerText = "Unavailable";
+
+          document.getElementById("paymentStatus").innerText = "Unavailable";
+
+          return;
+        }
+
+        // -----------------------------------------
+        // 3. Call success API
+        // -----------------------------------------
+
+        try {
+          const response = await fetch(
+            `/api/donations/success/${donationUUID}/`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            },
+          );
+
+          const data = await response.json();
+
+          console.log("SUCCESS API RESPONSE:", data);
+
+          // -----------------------------------------
+          // 4. API error
+          // -----------------------------------------
+
+          if (!response.ok || !data.success) {
+            document.getElementById("donationNumber").innerText = "Unavailable";
+
+            document.getElementById("receiptNumber").innerText = "Unavailable";
+
+            document.getElementById("amount").innerText = "Unavailable";
+
+            document.getElementById("paymentStatus").innerText =
+              "Unable to load";
+
+            return;
+          }
+
+          // -----------------------------------------
+          // 5. Get API data
+          // -----------------------------------------
+
+          const donation = data.data;
+
+          // -----------------------------------------
+          // 6. Display data
+          // -----------------------------------------
+
+          document.getElementById("donationNumber").innerText =
+            donation.donation_number;
+
+          document.getElementById("receiptNumber").innerText =
+            donation.receipt_number || "Generating...";
+
+          document.getElementById("amount").innerText = "₹" + donation.amount;
+
+          document.getElementById("paymentStatus").innerText = donation.status;
+        } catch (error) {
+          console.error("SUCCESS API ERROR:", error);
+
+          document.getElementById("donationNumber").innerText =
+            "Unable to load";
+
+          document.getElementById("receiptNumber").innerText = "Unable to load";
+
+          document.getElementById("amount").innerText = "Unable to load";
+
+          document.getElementById("paymentStatus").innerText = "Unable to load";
+        }
+      }
+
+      // -----------------------------------------
+      // Run when page loads
+      // -----------------------------------------
+
+      document.addEventListener("DOMContentLoaded", loadDonationDetails);
+    </script>
+  </body>
+</html>

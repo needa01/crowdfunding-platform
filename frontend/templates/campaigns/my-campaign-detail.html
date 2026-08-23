@@ -1,4 +1,5 @@
 <!doctype html>
+
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -68,8 +69,13 @@
 
   <body>
     <div class="container py-5">
-      <a href="my-campaigns" class="btn btn-outline-secondary mb-4"> ← Back </a>
 
+      <!-- Back -->
+      <a href="my-campaigns" class="btn btn-outline-secondary mb-4">
+        ← Back
+      </a>
+
+      <!-- Campaign Header -->
       <div class="card p-4">
         <div class="d-flex justify-content-between">
           <div>
@@ -77,28 +83,30 @@
 
             <div class="mt-2">
               <span id="campaignStatus"></span>
-
               <span id="verificationStatus"></span>
             </div>
           </div>
 
           <div>
             <h3 class="text-success" id="raised"></h3>
-
             <p class="text-muted mb-0">Raised</p>
           </div>
         </div>
       </div>
 
       <div class="row">
+
+        <!-- LEFT COLUMN -->
         <div class="col-lg-8">
+
+          <!-- Cover -->
           <div class="card p-3">
-            <img id="cover" class="cover" />
+            <img id="cover" class="cover" alt="Campaign Cover" />
           </div>
 
+          <!-- Campaign Information -->
           <div class="card p-4">
             <h4>Campaign Information</h4>
-
             <hr />
 
             <table class="table">
@@ -129,9 +137,9 @@
             </table>
           </div>
 
+          <!-- Beneficiary Information -->
           <div class="card p-4">
             <h4>Beneficiary Information</h4>
-
             <hr />
 
             <table class="table">
@@ -152,19 +160,22 @@
             </table>
           </div>
 
+          <!-- Documents -->
           <div class="card p-4">
             <h4>Campaign Documents</h4>
-
             <hr />
 
             <div id="documents"></div>
           </div>
+
         </div>
 
+        <!-- RIGHT COLUMN -->
         <div class="col-lg-4">
+
+          <!-- Statistics -->
           <div class="card p-4">
             <h4>Statistics</h4>
-
             <hr />
 
             <p>
@@ -187,16 +198,23 @@
             </p>
 
             <div class="progress">
-              <div class="progress-bar" id="progress" style="width: 0%">0%</div>
+              <div
+                class="progress-bar"
+                id="progress"
+                style="width: 0%"
+              >
+                0%
+              </div>
             </div>
           </div>
 
+          <!-- Verification -->
           <div class="card p-4">
             <h4>Verification</h4>
-
             <hr />
 
             <table class="table table-bordered align-middle mb-0">
+
               <tr>
                 <th width="35%">Verification Status</th>
                 <td id="verification_Status"></td>
@@ -226,177 +244,523 @@
                 <th>Submitted At</th>
                 <td id="verificationCreatedAt"></td>
               </tr>
+
             </table>
           </div>
 
+          <!-- Timeline -->
           <div class="card p-4">
             <h4>Timeline</h4>
-
             <hr />
 
             <div class="timeline">
+
               <div class="timeline-item">
                 <h6>Campaign Created</h6>
-
                 <p id="created"></p>
               </div>
 
               <div class="timeline-item">
                 <h6>Last Updated</h6>
-
                 <p id="updated"></p>
               </div>
+
             </div>
           </div>
 
+          <!-- Actions -->
           <div class="card p-4" id="actionsCard">
-            <h4>Actions</h4>
 
+            <h4>Actions</h4>
             <hr />
 
-            <a class="btn btn-primary w-100 mb-2" id="editBtn">
+            <!-- Edit Campaign -->
+            <a
+              class="btn btn-primary w-100 mb-2"
+              id="editBtn"
+            >
               Edit Campaign
             </a>
 
-            <a class="btn btn-warning w-100 mb-2" id="publicBtn">
+            <!-- View Public Page -->
+            <a
+              class="btn btn-warning w-100 mb-2"
+              id="publicBtn"
+            >
               View Public Page
             </a>
+
+            <!-- Promote Campaign -->
+            <a
+              class="btn btn-success w-100 mb-2"
+              id="promoteBtn"
+            >
+              🚀 Promote Campaign
+            </a>
+
           </div>
+
         </div>
       </div>
     </div>
 
+
     <script>
-      const slug = new URLSearchParams(window.location.search).get("slug");
+
+      const slug =
+        new URLSearchParams(window.location.search).get("slug");
+
+
+      /*
+       * DOM ELEMENTS
+       */
+
+      const title = document.getElementById("title");
+      const campaignStatus =
+        document.getElementById("campaignStatus");
+
+      const verificationStatus =
+        document.getElementById("verificationStatus");
+
+      const cover = document.getElementById("cover");
+
+      const raised = document.getElementById("raised");
+      const raised2 = document.getElementById("raised2");
+
+      const goal = document.getElementById("goal");
+      const goal2 = document.getElementById("goal2");
+
+      const category = document.getElementById("category");
+      const start = document.getElementById("start");
+      const end = document.getElementById("end");
+
+      const description =
+        document.getElementById("description");
+
+      const beneficiaryName =
+        document.getElementById("beneficiaryName");
+
+      const beneficiaryType =
+        document.getElementById("beneficiaryType");
+
+      const relation =
+        document.getElementById("relation");
+
+      const verification_Status =
+        document.getElementById("verification_Status");
+
+      const verifiedBy =
+        document.getElementById("verifiedBy");
+
+      const verifiedAt =
+        document.getElementById("verifiedAt");
+
+      const verificationAiScore =
+        document.getElementById("verificationAiScore");
+
+      const verificationRemarks =
+        document.getElementById("verificationRemarks");
+
+      const verificationCreatedAt =
+        document.getElementById("verificationCreatedAt");
+
+      const created =
+        document.getElementById("created");
+
+      const updated =
+        document.getElementById("updated");
+
+      const donors =
+        document.getElementById("donors");
+
+      const progress =
+        document.getElementById("progress");
+
+      const documents =
+        document.getElementById("documents");
+
+      const actionsCard =
+        document.getElementById("actionsCard");
+
+      const editBtn =
+        document.getElementById("editBtn");
+
+      const publicBtn =
+        document.getElementById("publicBtn");
+
+      const promoteBtn =
+        document.getElementById("promoteBtn");
+
+
+      /*
+       * HIDE ACTIONS BY DEFAULT
+       */
+
+      actionsCard.style.display = "none";
+      editBtn.style.display = "none";
+      publicBtn.style.display = "none";
+      promoteBtn.style.display = "none";
+
+
+      /*
+       * GET CAMPAIGN
+       */
 
       fetch(`/api/campaigns/my-campaign/${slug}`, {
         headers: {
-          Authorization: "Bearer " + sessionStorage.getItem("access_token"),
+          Authorization:
+            "Bearer " +
+            sessionStorage.getItem("access_token"),
         },
       })
+
         .then((r) => r.json())
 
         .then((res) => {
+
+          if (!res.success && !res.data) {
+            alert(
+              res.message ||
+              "Unable to load campaign."
+            );
+            return;
+          }
+
+
           const c = res.data;
 
-          const editBtn = document.getElementById("editBtn");
-          const publicBtn = document.getElementById("publicBtn");
-          const actionsCard = document.getElementById("actionsCard");
 
-          // Hide by default
-          actionsCard.style.display = "none";
-          editBtn.style.display = "none";
-          publicBtn.style.display = "none";
-            
-          console.log(c.campaign_status);
-          const status = (c.campaign_status || "").toLowerCase();
+          /*
+           * CAMPAIGN STATUS
+           *
+           * IMPORTANT:
+           * Use the string variable "status"
+           * instead of campaignStatus DOM element.
+           */
 
-          // Show Edit & Delete only for Draft
-          if (campaignStatus === "Draft") {
+          const status =
+            (c.campaign_status || "")
+              .trim()
+              .toLowerCase();
+
+
+          const verification =
+            (c.verification?.status || "")
+              .trim()
+              .toLowerCase();
+
+
+          console.log(
+            "Campaign Status:",
+            c.campaign_status
+          );
+
+          console.log(
+            "Verification Status:",
+            c.verification?.status
+          );
+
+
+          /*
+           * ACTION VISIBILITY
+           */
+
+          if (status === "draft") {
+
             actionsCard.style.display = "block";
+
             editBtn.style.display = "block";
-          }
-          
 
-          // Show Public Page only for Active campaigns
-          if (campaignStatus === "Active") {
+            editBtn.href =
+              `/campaigns/edit?slug=${encodeURIComponent(slug)}`;
+          }
+
+
+          /*
+           * ACTIVE CAMPAIGN
+           */
+
+          if (status === "active") {
+
             actionsCard.style.display = "block";
+
             publicBtn.style.display = "block";
+
+            publicBtn.href =
+              `/campaigns/${encodeURIComponent(
+                c.campaign_slug || slug
+              )}`;
           }
 
 
-          title.innerHTML = c.campaign_name;
-          console.log("we are here",c.campaign_status);
-          campaignStatus.innerHTML = `<span class="badge bg-primary badge-status">${c.campaign_status}</span>`;
+          /*
+           * PROMOTE CAMPAIGN
+           *
+           * Only show promotion after
+           * campaign has been verified.
+           */
 
-          verificationStatus.innerHTML = `<span class="badge bg-warning text-dark badge-status">${c.verification.status}</span>`;
+          const isVerified =
+            verification === "verified" ||
+            verification === "approved";
 
-          cover.src = c.cover_photo;
 
-          raised.innerHTML = "₹" + (c.amount_raised || 0);
+          if (
+            status === "active" &&
+            isVerified
+          ) {
 
-          raised2.innerHTML = "₹" + (c.amount_raised || 0);
+            actionsCard.style.display = "block";
 
-          goal.innerHTML = "₹" + c.goal_amount;
+            promoteBtn.style.display = "block";
 
-          goal2.innerHTML = "₹" + c.goal_amount;
+            promoteBtn.href =
+              `/frontend/campaign/promote/${encodeURIComponent(
+                c.campaign_slug || slug
+              )}`;
+          }
 
-          category.innerHTML = c.campaign_type;
 
-          start.innerHTML = c.start_date;
+          /*
+           * CAMPAIGN BASIC INFORMATION
+           */
 
-          end.innerHTML = c.end_date;
+          title.innerHTML =
+            c.campaign_name || "-";
 
-          description.innerHTML = c.campaign_desc;
 
-          beneficiaryName.innerHTML = c.beneficiary_name;
+          campaignStatus.innerHTML = `
+            <span class="badge bg-primary badge-status">
+              ${c.campaign_status || "-"}
+            </span>
+          `;
 
-          beneficiaryType.innerHTML = c.beneficiary_type;
 
-          relation.innerHTML = c.beneficiary_relation || "N/A";
+          verificationStatus.innerHTML = `
+            <span class="badge bg-warning text-dark badge-status">
+              ${c.verification?.status || "-"}
+            </span>
+          `;
 
-          verification_Status.innerHTML = c.verification.status;
 
-          verifiedBy.innerHTML = c.verification.verified_by || "-";
+          cover.src =
+            c.cover_photo || "";
 
-          verifiedAt.innerHTML = c.verification.verified_at || "-";
 
-          verificationAiScore.innerHTML = c.verification.ai_score || "-";
+          raised.innerHTML =
+            "₹" + (c.amount_raised || 0);
 
-          verificationRemarks.innerHTML = c.verification.remarks || "-";
 
-          verificationCreatedAt.innerHTML = c.verification.created_at || "-";
-          created.innerHTML = c.created_at;
+          raised2.innerHTML =
+            "₹" + (c.amount_raised || 0);
 
-          updated.innerHTML = c.updated_at;
 
-          donors.innerHTML = c.total_donors;
+          goal.innerHTML =
+            "₹" + (c.goal_amount || 0);
 
-          const percent = ((c.amount_raised || 0) / c.goal_amount) * 100;
 
-          progress.style.width = percent + "%";
+          goal2.innerHTML =
+            "₹" + (c.goal_amount || 0);
 
-          progress.innerHTML = Math.round(percent) + "%";
+
+          category.innerHTML =
+            c.campaign_type || "-";
+
+
+          start.innerHTML =
+            c.start_date || "-";
+
+
+          end.innerHTML =
+            c.end_date || "-";
+
+
+          description.innerHTML =
+            c.campaign_desc || "-";
+
+
+          /*
+           * BENEFICIARY
+           */
+
+          beneficiaryName.innerHTML =
+            c.beneficiary_name || "-";
+
+
+          beneficiaryType.innerHTML =
+            c.beneficiary_type || "-";
+
+
+          relation.innerHTML =
+            c.beneficiary_relation || "N/A";
+
+
+          /*
+           * VERIFICATION
+           */
+
+          verification_Status.innerHTML =
+            c.verification?.status || "-";
+
+
+          verifiedBy.innerHTML =
+            c.verification?.verified_by || "-";
+
+
+          verifiedAt.innerHTML =
+            c.verification?.verified_at || "-";
+
+
+          verificationAiScore.innerHTML =
+            c.verification?.ai_score ?? "-";
+
+
+          verificationRemarks.innerHTML =
+            c.verification?.remarks || "-";
+
+
+          verificationCreatedAt.innerHTML =
+            c.verification?.created_at || "-";
+
+
+          /*
+           * TIMELINE
+           */
+
+          created.innerHTML =
+            c.created_at || "-";
+
+
+          updated.innerHTML =
+            c.updated_at || "-";
+
+
+          /*
+           * DONORS
+           */
+
+          donors.innerHTML =
+            c.total_donors || 0;
+
+
+          /*
+           * PROGRESS
+           */
+
+          const goalAmount =
+            Number(c.goal_amount || 0);
+
+          const raisedAmount =
+            Number(c.amount_raised || 0);
+
+
+          let percent = 0;
+
+          if (goalAmount > 0) {
+
+            percent =
+              (raisedAmount / goalAmount) * 100;
+          }
+
+
+          /*
+           * Don't allow progress bar
+           * to exceed 100%.
+           */
+
+          percent =
+            Math.min(percent, 100);
+
+
+          progress.style.width =
+            percent + "%";
+
+
+          progress.innerHTML =
+            Math.round(percent) + "%";
+
+
+          /*
+           * DOCUMENTS
+           */
 
           let docs = "";
 
-          c.documents.forEach((doc) => {
-            docs += `
+          if (
+            c.documents &&
+            c.documents.length > 0
+          ) {
 
-<div class="document-card">
+            c.documents.forEach((doc) => {
 
-<div class="d-flex justify-content-between">
+              docs += `
 
-<div>
+                <div class="document-card">
 
-<h5>${doc.document_type}</h5>
+                  <div class="d-flex justify-content-between">
 
-<p class="mb-1">${doc.document_holder_name}</p>
+                    <div>
 
-<span class="badge bg-secondary">${doc.verification_status}</span>
+                      <h5>
+                        ${doc.document_type || "-"}
+                      </h5>
 
-</div>
+                      <p class="mb-1">
+                        ${doc.document_holder_name || "-"}
+                      </p>
 
-<div>
+                      <span class="badge bg-secondary">
+                        ${doc.verification_status || "-"}
+                      </span>
 
-<a href="${doc.document_url}" target="_blank"
-class="btn btn-primary">
+                    </div>
 
-View
+                    <div>
 
-</a>
+                      <a
+                        href="${doc.document_url}"
+                        target="_blank"
+                        class="btn btn-primary"
+                      >
+                        View
+                      </a>
 
-</div>
+                    </div>
 
-</div>
+                  </div>
 
-</div>
+                </div>
+              `;
+            });
 
-`;
-          });
+          } else {
+
+            docs = `
+              <p class="text-muted">
+                No documents available.
+              </p>
+            `;
+          }
+
 
           documents.innerHTML = docs;
+
+        })
+
+        .catch((error) => {
+
+          console.error(
+            "Campaign loading error:",
+            error
+          );
+
+          alert(
+            "Something went wrong while loading the campaign."
+          );
         });
+
     </script>
+
   </body>
 </html>
+

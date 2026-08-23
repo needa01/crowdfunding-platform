@@ -26,6 +26,7 @@ urlpatterns = [
         "campaign/<slug:campaign_slug>", views.campaign_detail, name="detail_campaign"
     ),
     path("profile/my-campaign", views.my_campaign_detail, name="my_detail_campaign"),
+    path("campaign/promote/<slug:campaign_slug>", views.campaign_promotion_view, name="campaign_promotion_view"),
     # create campaign page for individual fundraiser and ngo
     path(
         "fundraiser/create-campaign/",
@@ -42,28 +43,28 @@ urlpatterns = [
         views.create_ngo_csr_campaign_view,
         name="create_ngo_csr_campaign",
     ),
-    
-    
-    #donation urls
+    # donation urls
     path(
         "campaign/<slug:campaign_slug>/donate",
         views.create_campaign_donation,
         name="create_campaign_donation",
     ),
-    
     path(
         "my-donations",
         views.my_donations,
         name="my_donations",
     ),
-    
     path(
         "donations/<uuid:donation_uuid>",
         views.get_donation_details,
         name="get_donation_details",
     ),
-    
-    
+    # payment urls
+    path(
+        "payment/success",
+        views.donation_success_page,
+        name="donation_success",
+    ),
     # admin urls
     path("admin/login", views.admin_login_view, name="admin_login"),
     path("admin/dashboard", views.admin_dashboard_view, name="admin_dashboard"),
@@ -78,12 +79,8 @@ urlpatterns = [
     path(
         "admin/campaign-management", views.admin_campaigns_view, name="admin_campaigns"
     ),
-    path(
-        "admin/admin-management", views.admin_admins_view, name="admin_admins"
-    ),
-    path(
-        "admin/create-admin", views.admin_create_view, name="admin_create"
-    ),
+    path("admin/admin-management", views.admin_admins_view, name="admin_admins"),
+    path("admin/create-admin", views.admin_create_view, name="admin_create"),
     path(
         "admin/donor-verification/<uuid:user_uuid>",
         views.admin_donor_verification_view,

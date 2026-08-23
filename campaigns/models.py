@@ -26,6 +26,7 @@ from crowdfunding.enums import (
     ServiceType,
     UserType,
     UserType,
+    Currency,
 )
 from organizations.models import NGOProfile
 from django.core.exceptions import ValidationError
@@ -70,10 +71,6 @@ class Campaign(models.Model):
     total_charges = models.DecimalField(max_digits=15, decimal_places=2, default=0)
 
     amount_withdrawn = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-
-    # available_wallet_balance = models.DecimalField(
-    #     max_digits=15, decimal_places=2, default=0
-    # )
 
     beneficiary_type = EnumField(BeneficiaryType)
 
@@ -178,17 +175,15 @@ class Campaign(models.Model):
                     )
 
         today = timezone.localdate()
+        minimum_start_date = today + datetime.timedelta(days=1)
 
-        # --------------------------------------------
-        # Start Date Validation
-        # --------------------------------------------
         if self._state.adding:
             if not self.start_date:
-                self.start_date = today + datetime.timedelta(days=1)
+                self.start_date = minimum_start_date
 
-            elif self.start_date < today:
+            elif self.start_date < minimum_start_date:
                 raise ValidationError(
-                    {"start_date": "Start date cannot be earlier than today."}
+                    {"start_date": "Start date must be at least tomorrow."}
                 )
 
         # --------------------------------------------
@@ -198,7 +193,9 @@ class Campaign(models.Model):
 
             if self.end_date < self.start_date + datetime.timedelta(days=7):
                 raise ValidationError(
-                    {"end_date": "Campaign must run for at least 7 days from the start date."}
+                    {
+                        "end_date": "Campaign must run for at least 7 days from the start date."
+                    }
                 )
         if self.cause == CampaignCause.MEDICAL:
 
@@ -305,8 +302,6 @@ class Campaign(models.Model):
             self.beneficiary_relation = None
 
     def save(self, *args, **kwargs):
-        if not self.pk:
-            self.start_date = timezone.localdate() + datetime.timedelta(days=1)
 
         if self.beneficiary_group_type == BeneficiaryGroupType.INDIVIDUAL:
             self.beneficiary_member_count = 1
@@ -369,6 +364,20 @@ class Campaign(models.Model):
         super().save(*args, **kwargs)
 
 
+class PromotionServicePricing(models.Model):
+
+    service_type = EnumField(ServiceType, unique=True)
+
+    minimum_amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table="campaign_promotion_services_pricing"
+
 class CampaignPromotionService(models.Model):
 
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -377,9 +386,15 @@ class CampaignPromotionService(models.Model):
         Campaign, on_delete=models.CASCADE, related_name="services"
     )
 
-    service_type = EnumField(ServiceType)
+    service_type = models.ForeignKey(
+        PromotionServicePricing,
+        on_delete=models.PROTECT,
+        related_name="campaign_promotions"
+    )
 
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    currency = EnumField(Currency, default=Currency.INR)
 
     promotion_status = EnumField(PromotionStatus, default=PromotionStatus.PENDING)
 
@@ -391,12 +406,70 @@ class CampaignPromotionService(models.Model):
 
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        db_table="campaign_promotion_services"
+
     def clean(self):
-        if self.campaign and self.campaign.campaign_type == CampaignType.CSR:
+
+        if self.campaign:
+
+            # Only verified crowdfunding campaigns
+            if self.campaign.campaign_type == CampaignType.CSR:
+                raise ValidationError(
+                    {
+                        "campaign": (
+                            "Promotional services are available only "
+                            "for crowdfunding campaigns."
+                        )
+                    }
+                )
+
+            if self.campaign.campaign_status != CampaignStatus.VERIFIED:
+                raise ValidationError(
+                    {
+                        "campaign": (
+                            "Promotional services are available only "
+                            "for verified campaigns."
+                        )
+                    }
+                )
+
+        # Amount must be positive
+        if self.amount <= 0:
+            raise ValidationError(
+                {"amount": "Promotion amount must be greater than zero."}
+            )
+
+        # Date validation
+        if self.start_date and self.end_date:
+            if self.end_date <= self.start_date:
+                raise ValidationError(
+                    {"end_date": ("End date must be greater than start date.")}
+                )
+
+        overlapping = (
+            CampaignPromotionService.objects.filter(
+                campaign=self.campaign,
+                service_type=self.service_type,
+                promotion_status__in=[
+                    PromotionStatus.PAID,
+                    PromotionStatus.SCHEDULED,
+                    PromotionStatus.ACTIVE,
+                ],
+            )
+            .exclude(uuid=self.uuid)
+            .filter(
+                start_date__lt=self.end_date,
+                end_date__gt=self.start_date,
+            )
+        )
+
+        if overlapping.exists():
             raise ValidationError(
                 {
-                    "campaign": (
-                        "Promotional services are available only for crowdfunding campaigns."
+                    "start_date": (
+                        "This campaign already has an overlapping "
+                        "promotion for this service."
                     )
                 }
             )

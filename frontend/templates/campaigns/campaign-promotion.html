@@ -1,0 +1,1485 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Promote Campaign</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        background: #f6f8fb;
+      }
+
+      .container {
+        max-width: 1100px;
+      }
+
+      .card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+      }
+
+      .campaign-cover {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+        border-radius: 12px;
+      }
+
+      .service-card {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 20px;
+        cursor: pointer;
+        transition: 0.2s;
+        height: 100%;
+      }
+
+      .service-card:hover {
+        border-color: #0d6efd;
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.1);
+      }
+
+      .service-card.selected {
+        border-color: #0d6efd;
+        background: #f0f6ff;
+      }
+
+      .service-checkbox {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+      }
+
+      .service-icon {
+        font-size: 35px;
+      }
+
+      .price {
+        font-size: 22px;
+        font-weight: bold;
+        color: #198754;
+      }
+
+      .summary-card {
+        position: sticky;
+        top: 20px;
+      }
+
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .total {
+        font-size: 25px;
+        font-weight: bold;
+        color: #198754;
+      }
+
+      .alert {
+        border-radius: 10px;
+      }
+
+      .campaign-status {
+        font-size: 14px;
+      }
+
+      .description {
+        color: #6c757d;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container py-5">
+      <!-- BACK BUTTON -->
+      <div class="mb-4">
+        <a href="javascript:history.back()" class="btn btn-outline-secondary">
+          ← Back
+        </a>
+      </div>
+
+      <!-- PAGE HEADER -->
+      <div class="mb-4">
+        <h2>Promote Your Campaign</h2>
+
+        <p class="text-muted">
+          Choose the marketing services you want to use to increase the reach
+          and visibility of your campaign.
+        </p>
+      </div>
+
+      <!-- CAMPAIGN DETAILS -->
+      <div class="card p-4">
+        <div class="row align-items-center">
+          <div class="col-md-4 mb-3 mb-md-0">
+            <img
+              id="campaignCover"
+              class="campaign-cover"
+              src=""
+              alt="Campaign Cover"
+            />
+          </div>
+
+          <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h3 id="campaignName">Loading...</h3>
+
+                <span
+                  id="campaignStatus"
+                  class="badge bg-secondary campaign-status"
+                >
+                  Loading...
+                </span>
+
+                <span
+                  id="verificationStatus"
+                  class="badge bg-warning text-dark campaign-status"
+                >
+                  Loading...
+                </span>
+              </div>
+            </div>
+
+            <hr />
+
+            <div class="row">
+              <div class="col-md-4">
+                <small class="text-muted"> Goal Amount </small>
+
+                <h5 id="campaignGoal">₹0</h5>
+              </div>
+
+              <div class="col-md-4">
+                <small class="text-muted"> Raised </small>
+
+                <h5 id="campaignRaised" class="text-success">₹0</h5>
+              </div>
+
+              <div class="col-md-4">
+                <small class="text-muted"> Donors </small>
+
+                <h5 id="campaignDonors">0</h5>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ERROR / SUCCESS MESSAGE -->
+
+      <div id="messageBox" style="display: none"></div>
+
+      <div class="row">
+        <!-- SERVICES -->
+        <div class="col-lg-8">
+          <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h4 class="mb-1">Promotion Services</h4>
+
+                <p class="text-muted mb-0">Select one or more services.</p>
+              </div>
+            </div>
+
+            <hr />
+
+            <!-- SERVICES WILL BE LOADED HERE -->
+
+            <div class="row g-3" id="servicesContainer">
+              <div class="col-12 text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+
+                <p class="text-muted mt-2">Loading promotion services...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- PROMOTION DETAILS -->
+
+          <div class="card p-4">
+            <h4>Promotion Details</h4>
+
+            <hr />
+
+            <div class="mb-3">
+              <label for="promotionDuration" class="form-label">
+                Promotion Duration
+              </label>
+
+              <select id="promotionDuration" class="form-select">
+                <option value="7">7 Days</option>
+
+                <option value="14">14 Days</option>
+
+                <option value="30">30 Days</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="promotionNotes" class="form-label">
+                Additional Requirements
+              </label>
+
+              <textarea
+                id="promotionNotes"
+                class="form-control"
+                rows="4"
+                placeholder="Tell us anything important about your promotion..."
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUMMARY -->
+        <div class="col-lg-4">
+          <div class="card p-4 summary-card">
+            <h4>Promotion Summary</h4>
+
+            <hr />
+
+            <!-- SELECTED SERVICES -->
+
+            <div id="selectedServices">
+              <p class="text-muted">No services selected.</p>
+            </div>
+
+            <hr />
+
+            <!-- DURATION -->
+
+            <div class="summary-row">
+              <span> Duration </span>
+
+              <strong>
+                <span id="summaryDuration"> 7 </span>
+                Days
+              </strong>
+            </div>
+
+            <!-- SUBTOTAL -->
+
+            <div class="summary-row">
+              <span> Subtotal </span>
+
+              <strong id="subtotal"> ₹0 </strong>
+            </div>
+
+            <!-- PLATFORM FEE -->
+
+            <div class="summary-row">
+              <span> Platform Fee </span>
+
+              <strong id="platformFee"> ₹0 </strong>
+            </div>
+
+            <!-- TAX -->
+
+            <div class="summary-row">
+              <span> Tax </span>
+
+              <strong id="tax"> ₹0 </strong>
+            </div>
+
+            <hr />
+
+            <!-- TOTAL -->
+
+            <div class="summary-row">
+              <span>
+                <strong>Total</strong>
+              </span>
+
+              <span id="total" class="total"> ₹0 </span>
+            </div>
+
+            <div class="alert alert-info mt-3">
+              <small>
+                Payment for campaign promotion is separate from campaign
+                donations. Promotion charges will not be deducted from the
+                campaign wallet.
+              </small>
+            </div>
+
+            <!-- PAY BUTTON -->
+
+            <button
+              id="payButton"
+              class="btn btn-success btn-lg w-100 mt-3"
+              disabled
+            >
+              Proceed to Payment
+            </button>
+
+            <p class="text-muted text-center mt-3 mb-0" style="font-size: 13px">
+              You will be redirected to Razorpay to complete the payment.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js">
+
+            /*
+            ============================================================
+            CONFIGURATION
+            ============================================================
+            */
+
+            const API_BASE = "";
+
+            const accessToken =
+                sessionStorage.getItem("access_token");
+
+
+            /*
+            ============================================================
+            GET CAMPAIGN SLUG
+            ============================================================
+            */
+
+            const params =
+                new URLSearchParams(window.location.search);
+
+            const campaignSlug =
+                params.get("slug");
+
+
+            /*
+            ============================================================
+            DOM ELEMENTS
+            ============================================================
+            */
+
+            const campaignName =
+                document.getElementById("campaignName");
+
+            const campaignCover =
+                document.getElementById("campaignCover");
+
+            const campaignStatus =
+                document.getElementById("campaignStatus");
+
+            const verificationStatus =
+                document.getElementById("verificationStatus");
+
+            const campaignGoal =
+                document.getElementById("campaignGoal");
+
+            const campaignRaised =
+                document.getElementById("campaignRaised");
+
+            const campaignDonors =
+                document.getElementById("campaignDonors");
+
+            const servicesContainer =
+                document.getElementById("servicesContainer");
+
+            const selectedServices =
+                document.getElementById("selectedServices");
+
+            const promotionDuration =
+                document.getElementById("promotionDuration");
+
+            const promotionNotes =
+                document.getElementById("promotionNotes");
+
+            const summaryDuration =
+                document.getElementById("summaryDuration");
+
+            const subtotal =
+                document.getElementById("subtotal");
+
+            const platformFee =
+                document.getElementById("platformFee");
+
+            const tax =
+                document.getElementById("tax");
+
+            const total =
+                document.getElementById("total");
+
+            const payButton =
+                document.getElementById("payButton");
+
+            const messageBox =
+                document.getElementById("messageBox");
+
+
+            /*
+            ============================================================
+            SELECTED SERVICES
+            ============================================================
+            */
+
+            let selected = [];
+
+
+            /*
+            ============================================================
+            SHOW MESSAGE
+            ============================================================
+            */
+
+            function showMessage(message, type = "danger") {
+
+                messageBox.style.display = "block";
+
+                messageBox.className =
+                    `alert alert-${type}`;
+
+                messageBox.innerHTML =
+                    message;
+
+                window.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
+                });
+            }
+
+
+            /*
+            ============================================================
+            FORMAT CURRENCY
+            ============================================================
+            */
+
+            function formatCurrency(amount) {
+
+                return "₹" +
+                    Number(amount || 0).toLocaleString("en-IN", {
+                        maximumFractionDigits: 2
+                    });
+            }
+
+
+            /*
+            ============================================================
+            LOAD CAMPAIGN
+            ============================================================
+            */
+
+            async function loadCampaign() {
+
+                if (!campaignSlug) {
+
+                    showMessage(
+                        "Campaign slug is missing."
+                    );
+
+                    return;
+                }
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            `${API_BASE}/api/campaigns/my-campaign/${encodeURIComponent(campaignSlug)}`,
+                            {
+                                headers: {
+                                    Authorization:
+                                        "Bearer " + accessToken
+                                }
+                            }
+                        );
+
+
+                    const result =
+                        await response.json();
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            result.message ||
+                            "Unable to load campaign."
+                        );
+                    }
+
+
+                    const campaign =
+                        result.data;
+
+
+                    /*
+                    ----------------------------------------------------
+                    CAMPAIGN DATA
+                    ----------------------------------------------------
+                    */
+
+                    campaignName.innerText =
+                        campaign.campaign_name || "-";
+
+
+                    campaignCover.src =
+                        campaign.cover_photo || "";
+
+
+                    campaignGoal.innerText =
+                        formatCurrency(
+                            campaign.goal_amount
+                        );
+
+
+                    campaignRaised.innerText =
+                        formatCurrency(
+                            campaign.amount_raised
+                        );
+
+
+                    campaignDonors.innerText =
+                        campaign.total_donors || 0;
+
+
+                    campaignStatus.innerText =
+                        campaign.campaign_status || "-";
+
+
+                    verificationStatus.innerText =
+                        campaign.verification?.status || "-";
+
+
+                    /*
+                    ----------------------------------------------------
+                    VERIFY CAMPAIGN STATUS
+                    ----------------------------------------------------
+                    */
+
+                    const status =
+                        (
+                            campaign.campaign_status || ""
+                        )
+                        .trim()
+                        .toLowerCase();
+
+
+                    const verification =
+                        (
+                            campaign.verification?.status || ""
+                        )
+                        .trim()
+                        .toLowerCase();
+
+
+                    const isActive =
+                        status === "active";
+
+
+                    const isVerified =
+                        verification === "verified" ||
+                        verification === "approved";
+
+
+                    if (!isActive || !isVerified) {
+
+                        payButton.disabled = true;
+
+                        showMessage(
+                            "This campaign cannot be promoted until it is active and verified.",
+                            "warning"
+                        );
+
+                    }
+
+                }
+                catch (error) {
+
+                    console.error(
+                        "Campaign error:",
+                        error
+                    );
+
+                    showMessage(
+                        error.message ||
+                        "Unable to load campaign."
+                    );
+                }
+            }
+
+
+            /*
+            ============================================================
+            LOAD PROMOTION SERVICES
+            ============================================================
+            */
+
+            async function loadServices() {
+
+                try {
+
+                    const response =
+                        await fetch(
+                            `${API_BASE}/api/campaign-promotion/services/`,
+                            {
+                                headers: {
+                                    Authorization:
+                                        "Bearer " + accessToken
+                                }
+                            }
+                        );
+
+
+                    const result =
+                        await response.json();
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            result.message ||
+                            "Unable to load promotion services."
+                        );
+                    }
+
+
+                    const services =
+                        result.data || [];
+
+
+                    if (services.length === 0) {
+
+                        servicesContainer.innerHTML = `
+                            <div class="col-12">
+
+                                <div class="alert alert-warning">
+                                    No promotion services are currently available.
+                                </div>
+
+                            </div>
+                        `;
+
+                        return;
+                    }
+
+
+                    servicesContainer.innerHTML = "";
+
+
+                    services.forEach(service => {
+
+                        const serviceId =
+                            service.uuid || service.id;
+
+
+                        const serviceName =
+                            service.name ||
+                            service.service_name;
+
+
+                        const serviceDescription =
+                            service.description || "";
+
+
+                        const servicePrice =
+                            Number(
+                                service.price || 0
+                            );
+
+
+                        let icon = "📢";
+
+
+                        const lowerName =
+                            serviceName.toLowerCase();
+
+
+                        if (
+                            lowerName.includes("google")
+                        ) {
+
+                            icon = "🔎";
+
+                        }
+                        else if (
+                            lowerName.includes("social")
+                        ) {
+
+                            icon = "📱";
+
+                        }
+                        else if (
+                            lowerName.includes("seo")
+                        ) {
+
+                            icon = "🚀";
+
+                        }
+
+
+                        const col =
+                            document.createElement("div");
+
+                        col.className =
+                            "col-md-6";
+
+
+                        col.innerHTML = `
+
+                            <div
+                                class="service-card"
+                                data-id="${serviceId}"
+                            >
+
+                                <div
+                                    class="d-flex justify-content-between"
+                                >
+
+                                    <div>
+
+                                        <div class="service-icon mb-2">
+                                            ${icon}
+                                        </div>
+
+                                        <h5>
+                                            ${serviceName}
+                                        </h5>
+
+                                    </div>
+
+
+                                    <div>
+
+                                        <input
+                                            type="checkbox"
+                                            class="service-checkbox"
+                                        >
+
+                                    </div>
+
+                                </div>
+
+
+                                <p class="description">
+                                    ${serviceDescription}
+                                </p>
+
+
+                                <div class="mt-3">
+
+                                    <span class="price">
+                                        ${formatCurrency(servicePrice)}
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        `;
+
+
+                        const card =
+                            col.querySelector(".service-card");
+
+                        const checkbox =
+                            col.querySelector(".service-checkbox");
+
+
+                        card.addEventListener(
+                            "click",
+                            function(event) {
+
+                                if (
+                                    event.target !== checkbox
+                                ) {
+
+                                    checkbox.checked =
+                                        !checkbox.checked;
+                                }
+
+
+                                toggleService(
+                                    service,
+                                    checkbox.checked,
+                                    card
+                                );
+
+                            }
+                        );
+
+
+                        servicesContainer.appendChild(col);
+
+                    });
+
+                }
+                catch (error) {
+
+                    console.error(
+                        "Services error:",
+                        error
+                    );
+
+
+                    servicesContainer.innerHTML = `
+
+                        <div class="col-12">
+
+                            <div class="alert alert-danger">
+                                ${error.message}
+                            </div>
+
+                        </div>
+
+                    `;
+                }
+            }
+
+
+            /*
+            ============================================================
+            SELECT / UNSELECT SERVICE
+            ============================================================
+            */
+
+            function toggleService(
+                service,
+                checked,
+                card
+            ) {
+
+                const serviceId =
+                    service.uuid || service.id;
+
+
+                if (checked) {
+
+                    card.classList.add(
+                        "selected"
+                    );
+
+
+                    const exists =
+                        selected.some(
+                            item =>
+                                (item.uuid || item.id) === serviceId
+                        );
+
+
+                    if (!exists) {
+
+                        selected.push(service);
+                    }
+
+                }
+                else {
+
+                    card.classList.remove(
+                        "selected"
+                    );
+
+
+                    selected =
+                        selected.filter(
+                            item =>
+                                (item.uuid || item.id) !== serviceId
+                        );
+                }
+
+
+                updateSummary();
+            }
+
+
+            /*
+            ============================================================
+            UPDATE SUMMARY
+            ============================================================
+            */
+
+            function updateSummary() {
+
+                let serviceTotal = 0;
+
+
+                if (selected.length === 0) {
+
+                    selectedServices.innerHTML = `
+
+                        <p class="text-muted">
+                            No services selected.
+                        </p>
+
+                    `;
+
+                }
+                else {
+
+                    let html = "";
+
+
+                    selected.forEach(service => {
+
+                        const price =
+                            Number(service.price || 0);
+
+
+                        serviceTotal += price;
+
+
+                        html += `
+
+                            <div class="summary-row">
+
+                                <span>
+                                    ${
+                                        service.name ||
+                                        service.service_name
+                                    }
+                                </span>
+
+                                <strong>
+                                    ${formatCurrency(price)}
+                                </strong>
+
+                            </div>
+
+                        `;
+
+                    });
+
+
+                    selectedServices.innerHTML =
+                        html;
+                }
+
+
+                /*
+                --------------------------------------------------------
+                PLATFORM FEE
+                --------------------------------------------------------
+
+                IMPORTANT:
+                Change this according to your actual
+                platform fee calculation.
+
+                Example:
+                5% platform fee
+                --------------------------------------------------------
+                */
+
+                const platformFeeAmount =
+                    serviceTotal * 0.05;
+
+
+                /*
+                --------------------------------------------------------
+                GST / TAX
+                --------------------------------------------------------
+
+                Example:
+                18% GST
+
+                Change according to your actual
+                business/payment configuration.
+                --------------------------------------------------------
+                */
+
+                const taxableAmount =
+                    serviceTotal +
+                    platformFeeAmount;
+
+
+                const taxAmount =
+                    taxableAmount * 0.18;
+
+
+                const finalTotal =
+                    serviceTotal +
+                    platformFeeAmount +
+                    taxAmount;
+
+
+                subtotal.innerText =
+                    formatCurrency(serviceTotal);
+
+
+                platformFee.innerText =
+                    formatCurrency(
+                        platformFeeAmount
+                    );
+
+
+                tax.innerText =
+                    formatCurrency(
+                        taxAmount
+                    );
+
+
+                total.innerText =
+                    formatCurrency(
+                        finalTotal
+                    );
+
+
+                /*
+                --------------------------------------------------------
+                ENABLE PAYMENT BUTTON
+                --------------------------------------------------------
+                */
+
+                payButton.disabled =
+                    selected.length === 0;
+            }
+
+
+            /*
+            ============================================================
+            DURATION CHANGE
+            ============================================================
+            */
+
+            promotionDuration.addEventListener(
+                "change",
+                function() {
+
+                    summaryDuration.innerText =
+                        this.value;
+
+                }
+            );
+
+
+            /*
+            ============================================================
+            CREATE PROMOTION
+            ============================================================
+            */
+
+            payButton.addEventListener(
+                "click",
+                async function() {
+
+                    if (selected.length === 0) {
+
+                        showMessage(
+                            "Please select at least one promotion service.",
+                            "warning"
+                        );
+
+                        return;
+                    }
+
+
+                    /*
+                    ----------------------------------------------------
+                    DISABLE BUTTON
+                    ----------------------------------------------------
+                    */
+
+                    payButton.disabled = true;
+
+                    payButton.innerText =
+                        "Creating Promotion...";
+
+
+                    try {
+
+                        const serviceIds =
+                            selected.map(
+                                service =>
+                                    service.uuid ||
+                                    service.id
+                            );
+
+
+                        /*
+                        ------------------------------------------------
+                        CREATE PROMOTION REQUEST
+                        ------------------------------------------------
+                        */
+
+                        const response =
+                            await fetch(
+                                `${API_BASE}/api/campaign-promotion/create/`,
+                                {
+                                    method: "POST",
+
+                                    headers: {
+                                        "Content-Type":
+                                            "application/json",
+
+                                        Authorization:
+                                            "Bearer " +
+                                            accessToken
+                                    },
+
+                                    body: JSON.stringify({
+
+                                        campaign_slug:
+                                            campaignSlug,
+
+                                        service_ids:
+                                            serviceIds,
+
+                                        duration_days:
+                                            Number(
+                                                promotionDuration.value
+                                            ),
+
+                                        notes:
+                                            promotionNotes.value.trim()
+
+                                    })
+                                }
+                            );
+
+
+                        const result =
+                            await response.json();
+
+
+                        if (!response.ok) {
+
+                            throw new Error(
+                                result.message ||
+                                "Unable to create promotion."
+                            );
+                        }
+
+
+                        /*
+                        ------------------------------------------------
+                        PROMOTION CREATED
+                        ------------------------------------------------
+
+                        Expected backend response:
+
+                        {
+                            success: true,
+                            data: {
+                                promotion_uuid: "...",
+                                razorpay_order_id: "...",
+                                amount: 12345
+                            }
+                        }
+
+                        ------------------------------------------------
+                        */
+
+                        const promotion =
+                            result.data;
+
+
+                        /*
+                        ------------------------------------------------
+                        IF BACKEND RETURNS RAZORPAY ORDER
+                        ------------------------------------------------
+                        */
+
+                        if (
+                            promotion &&
+                            promotion.razorpay_order_id
+                        ) {
+
+                            openRazorpayCheckout(
+                                promotion
+                            );
+
+                            return;
+                        }
+
+
+                        /*
+                        ------------------------------------------------
+                        IF PAYMENT URL IS RETURNED
+                        ------------------------------------------------
+                        */
+
+                        if (
+                            promotion &&
+                            promotion.payment_url
+                        ) {
+
+                            window.location.href =
+                                promotion.payment_url;
+
+                            return;
+                        }
+
+
+                        /*
+                        ------------------------------------------------
+                        PROMOTION CREATED WITHOUT PAYMENT
+                        ------------------------------------------------
+                        */
+
+                        showMessage(
+                            "Promotion request created successfully.",
+                            "success"
+                        );
+
+
+                        payButton.innerText =
+                            "Promotion Created";
+
+                    }
+                    catch (error) {
+
+                        console.error(
+                            "Promotion error:",
+                            error
+                        );
+
+
+                        showMessage(
+                            error.message ||
+                            "Unable to create promotion."
+                        );
+
+
+                        payButton.disabled =
+                            false;
+
+
+                        payButton.innerText =
+                            "Proceed to Payment";
+                    }
+
+                }
+            );
+
+            function openRazorpayCheckout(promotion) {
+
+                if (!promotion.razorpay_order_id) {
+                    showMessage("Razorpay order ID is missing.", "danger");
+                    return;
+                }
+
+                if (!promotion.razorpay_key_id) {
+                    showMessage("Razorpay key is missing.", "danger");
+                    return;
+                }
+
+                const options = {
+
+                    key: promotion.razorpay_key_id,
+
+                    amount: Number(promotion.amount_in_paise),
+
+                    currency: promotion.currency || "INR",
+
+                    name: "Your Platform",
+
+                    description: "Campaign Promotion",
+
+                    order_id: promotion.razorpay_order_id,
+
+                    callback_url:
+                        window.location.origin +
+                        "/api/campaign-promotion/razorpay-callback/",
+
+                    prefill: {
+                        name: promotion.user_name || "",
+                        email: promotion.user_email || "",
+                        contact: promotion.user_mobile || ""
+                    },
+
+                    notes: {
+                        promotion_uuid: promotion.promotion_uuid
+                    },
+
+                    theme: {
+                        color: "#198754"
+                    },
+
+                    modal: {
+                        confirm_close: true,
+                        escape: false,
+                        backdropclose: false,
+                        animation: true
+                    },
+
+                    retry: {
+                        enabled: true,
+                        max_count: 4
+                    }
+                };
+
+                const razorpay = new Razorpay(options);
+
+                razorpay.on("payment.failed", function(response) {
+
+                    console.error(
+                        "Razorpay payment failed:",
+                        response
+                    );
+
+                    showMessage(
+                        "Payment failed. Please try again.",
+                        "danger"
+                    );
+
+                    payButton.disabled = false;
+                    payButton.innerText = "Proceed to Payment";
+                });
+
+                razorpay.open();
+            }
+
+
+            /*
+            ============================================================
+            VERIFY PROMOTION PAYMENT
+            ============================================================
+            */
+
+            async function verifyPromotionPayment(
+                promotion,
+                paymentResponse
+            ) {
+
+                try {
+
+                    const response =
+                        await fetch(
+                            `${API_BASE}/api/campaign-promotion/verify-payment/`,
+                            {
+                                method: "POST",
+
+                                headers: {
+
+                                    "Content-Type":
+                                        "application/json",
+
+                                    Authorization:
+                                        "Bearer " +
+                                        accessToken
+
+                                },
+
+                                body: JSON.stringify({
+
+                                    promotion_uuid:
+                                        promotion.promotion_uuid,
+
+                                    razorpay_payment_id:
+                                        paymentResponse.razorpay_payment_id,
+
+                                    razorpay_order_id:
+                                        paymentResponse.razorpay_order_id,
+
+                                    razorpay_signature:
+                                        paymentResponse.razorpay_signature
+
+                                })
+
+                            }
+                        );
+
+
+                    const result =
+                        await response.json();
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            result.message ||
+                            "Payment verification failed."
+                        );
+
+                    }
+
+
+                    /*
+                    ----------------------------------------------------
+                    PAYMENT VERIFIED
+                    ----------------------------------------------------
+                    */
+
+                    showMessage(
+                        "Payment successful! Your campaign promotion has been activated.",
+                        "success"
+                    );
+
+
+                    payButton.innerText =
+                        "Payment Successful";
+
+
+                    payButton.disabled =
+                        true;
+
+
+                    /*
+                    ----------------------------------------------------
+                    REDIRECT
+                    ----------------------------------------------------
+                    */
+
+                    setTimeout(
+                        function() {
+
+                            window.location.href =
+                                `/campaigns/my-campaign?slug=${encodeURIComponent(
+                                    campaignSlug
+                                )}`;
+
+                        },
+                        2000
+                    );
+
+                }
+                catch (error) {
+
+                    console.error(
+                        "Payment verification error:",
+                        error
+                    );
+
+
+                    showMessage(
+                        error.message ||
+                        "Payment was completed but verification failed. Please contact support.",
+                        "danger"
+                    );
+
+
+                    payButton.disabled =
+                        false;
+
+
+                    payButton.innerText =
+                        "Retry Payment";
+                }
+
+            }
+
+
+            /*
+            ============================================================
+            INITIALIZE PAGE
+            ============================================================
+            */
+
+            document.addEventListener(
+                "DOMContentLoaded",
+                function() {
+
+                    loadCampaign();
+
+                    loadServices();
+
+                }
+            );
+    </script>
+
+    <!-- RAZORPAY CHECKOUT -->
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  </body>
+</html>

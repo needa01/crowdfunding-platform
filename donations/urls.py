@@ -33,6 +33,12 @@ urlpatterns = [
         views.download_receipt,
         name="download_receipt"
     ),
+    
+    path(
+            "success/<uuid:donation_uuid>/",
+            views.donation_success,
+            name="donation_success",
+        ),
 
     # path(
     #     "<uuid:donation_uuid>/receipt",

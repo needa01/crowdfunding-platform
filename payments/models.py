@@ -1,8 +1,16 @@
 from django.db import models
 from django_enum.fields import EnumField
 import uuid
-from crowdfunding.enums import Currency, PaymentGateway, PaymentMethod, TransactionStatus, TransactionType, WithdrawalStatus
+from crowdfunding.enums import (
+    Currency,
+    PaymentGateway,
+    PaymentMethod,
+    TransactionStatus,
+    TransactionType,
+    WithdrawalStatus,
+)
 from crowdfunding.utils import generate_withdrawal_reference
+
 
 class Withdrawal(models.Model):
 
@@ -18,7 +26,7 @@ class Withdrawal(models.Model):
         default=generate_withdrawal_reference,
         editable=False,
     )
-    
+
     campaign = models.ForeignKey(
         "campaigns.Campaign",
         on_delete=models.CASCADE,
@@ -36,9 +44,7 @@ class Withdrawal(models.Model):
         decimal_places=2,
     )
 
-    currency = EnumField(
-        Currency
-    )
+    currency = EnumField(Currency)
 
     status = EnumField(
         WithdrawalStatus,
@@ -82,20 +88,18 @@ class Withdrawal(models.Model):
 
     def __str__(self):
         return f"{self.campaign.title} - ₹{self.amount}"
-    
+
 
 class PaymentTransaction(models.Model):
-    
+
     uuid = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
         editable=False,
     )
 
-    transaction_type = EnumField(
-        TransactionType
-    )
-    
+    transaction_type = EnumField(TransactionType)
+
     campaign_service = models.ForeignKey(
         "campaigns.CampaignPromotionService",
         on_delete=models.CASCADE,
@@ -103,15 +107,15 @@ class PaymentTransaction(models.Model):
         blank=True,
         null=True,
     )
-    
+
     donation = models.OneToOneField(
         "donations.Donation",
         on_delete=models.CASCADE,
         related_name="transaction",
         blank=True,
-        null=True
+        null=True,
     )
-    
+
     withdrawal = models.ForeignKey(
         "Withdrawal",
         on_delete=models.CASCADE,
@@ -120,9 +124,7 @@ class PaymentTransaction(models.Model):
         null=True,
     )
 
-    gateway = EnumField(
-        PaymentGateway
-    )
+    gateway = EnumField(PaymentGateway)
 
     gateway_order_id = models.CharField(
         max_length=255,
@@ -131,12 +133,6 @@ class PaymentTransaction(models.Model):
     )
 
     gateway_payment_id = models.CharField(
-        max_length=255,
-        blank=True,
-        null=True,
-    )
-
-    gateway_reference_id = models.CharField(
         max_length=255,
         blank=True,
         null=True,
@@ -159,15 +155,26 @@ class PaymentTransaction(models.Model):
         decimal_places=2,
     )
 
-    currency = EnumField(
-        Currency
+    gateway_fee = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        blank=True,
+        null=True,
+    )
+
+    currency = EnumField(Currency)
+
+    gateway_fee = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        blank=True,
+        null=True,
     )
 
     status = EnumField(
         TransactionStatus,
         default=TransactionStatus.PENDING,
     )
-        
 
     failure_code = models.CharField(
         max_length=100,
@@ -239,7 +246,9 @@ class PaymentTransaction(models.Model):
                 raise ValidationError(
                     "Withdrawal transaction must reference only a withdrawal."
                 )
-                
-    def __str__(self):
-        return f"{self.donation.donation_number} - {self.status}"
 
+    def __str__(self):
+        if self.donation:
+            return f"{self.donation.unique_donation_number} - {self.status}"
+
+        return f"{self.uuid} - {self.status}"

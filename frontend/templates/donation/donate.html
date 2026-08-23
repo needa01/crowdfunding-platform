@@ -3,9 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>Donate</title>
 
+    <!-- Razorpay Standard Checkout -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
     <style>
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         font-family: Arial, sans-serif;
         background: #f5f5f5;
@@ -16,7 +24,7 @@
       .container {
         max-width: 600px;
         margin: auto;
-        background: #fff;
+        background: white;
         padding: 30px;
         border-radius: 12px;
         box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
@@ -39,44 +47,62 @@
         margin-top: 8px;
         border: 1px solid #ccc;
         border-radius: 6px;
-        box-sizing: border-box;
       }
 
       textarea {
-        resize: vertical;
         height: 90px;
+        resize: vertical;
       }
 
       button {
         margin-top: 25px;
         padding: 12px 25px;
         border: none;
+        border-radius: 6px;
         background: #0d6efd;
         color: white;
-        border-radius: 6px;
         cursor: pointer;
+        font-size: 15px;
       }
 
-      button:hover {
-        background: #0b5ed7;
+      button:disabled {
+        background: #999;
+        cursor: not-allowed;
+      }
+
+      .payment-info {
+        margin-top: 25px;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #fafafa;
+      }
+
+      .success {
+        margin-top: 25px;
+        padding: 15px;
+        border-radius: 8px;
+        background: #e8f7ee;
+        color: green;
+        font-weight: bold;
+      }
+
+      .error {
+        margin-top: 25px;
+        padding: 15px;
+        border-radius: 8px;
+        background: #ffeaea;
+        color: #c00;
+        font-weight: bold;
       }
 
       .hidden {
         display: none;
       }
 
-      .payment-box {
-        margin-top: 30px;
-        border: 1px solid #ddd;
-        padding: 20px;
-        border-radius: 8px;
-        background: #fafafa;
-      }
-
-      .success {
-        color: green;
+      .amount-display {
+        font-size: 20px;
         font-weight: bold;
-        margin-top: 20px;
       }
     </style>
   </head>
@@ -85,114 +111,311 @@
     <div class="container">
       <h2>Donate to Campaign</h2>
 
-      <label>Donation Amount (₹)</label>
-      <input type="number" id="amount" placeholder="100" />
+      <!-- ============================= -->
+      <!-- DONATION DETAILS -->
+      <!-- ============================= -->
 
-      <label>Message</label>
-      <textarea id="message"></textarea>
+      <label for="amount"> Donation Amount (₹) </label>
+
+      <input type="number" id="amount" min="1" step="0.01" placeholder="100" />
+
+      <label for="message"> Message </label>
+
+      <textarea
+        id="message"
+        placeholder="Write an optional message..."
+      ></textarea>
 
       <label>
         <input type="checkbox" id="anonymous" />
         Donate anonymously
       </label>
 
-      <button type="button" onclick="createDonation()">Donate Now</button>
+      <button id="donateButton" onclick="createDonation()">Donate Now</button>
 
-      <div class="payment-box hidden" id="paymentSection">
-        <h3>Demo Payment</h3>
+      <!-- ============================= -->
+      <!-- PAYMENT INFORMATION -->
+      <!-- ============================= -->
 
-        <p><b>Bank :</b> HDFC Bank</p>
+      <div id="paymentInfo" class="payment-info hidden">
+        <h3>Payment Details</h3>
 
-        <p><b>Account :</b> 123456789012</p>
+        <div id="amountDisplay" class="amount-display"></div>
 
-        <p><b>IFSC :</b> HDFC0000123</p>
-
-        <hr />
-
-        <label>Reference Number / UTR</label>
-
-        <input
-          type="text"
-          id="reference_number"
-          placeholder="Enter UTR Number"
-        />
-
-        <button type="button" onclick="verifyPayment()">Verify Payment</button>
+        <button id="payButton" onclick="openRazorpayCheckout()">
+          Pay with Razorpay
+        </button>
       </div>
 
-      <div id="result" class="success"></div>
+      <!-- ============================= -->
+      <!-- RESULT -->
+      <!-- ============================= -->
+
+      <div id="result" class="hidden"></div>
     </div>
 
     <script>
+      // =========================================================
+      // GLOBAL VARIABLES
+      // =========================================================
+
       let transactionUUID = null;
+      let razorpayOrderID = null;
+      let razorpayKeyID = null;
+
+      let donationAmount = null;
+      let donationAmountPaise = null;
+
       const campaignSlug = "{{ campaign_slug }}";
 
       const token = sessionStorage.getItem("access_token");
 
-      async function createDonation() {
-        const response = await fetch("/api/donations/create-donation", {
-          method: "POST",
+      // =========================================================
+      // RESULT HELPERS
+      // =========================================================
 
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
-          },
+      function showError(message) {
+        const result = document.getElementById("result");
 
-          body: JSON.stringify({
-            campaign_slug: campaignSlug,
-            amount: document.getElementById("amount").value,
+        result.className = "error";
+        result.innerHTML = message;
 
-            message: document.getElementById("message").value,
-
-            is_anonymous: document.getElementById("anonymous").checked,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!data.success) {
-          alert(data.message);
-
-          return;
-        }
-
-        transactionUUID = data.data.transaction_uuid;
-
-        document.getElementById("paymentSection").classList.remove("hidden");
-
-        alert("Donation created. Complete demo payment.");
+        result.classList.remove("hidden");
       }
 
-      async function verifyPayment() {
-        const response = await fetch("/api/payments/verify", {
-          method: "POST",
+      function showSuccess(message) {
+        const result = document.getElementById("result");
 
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
-          },
+        result.className = "success";
+        result.innerHTML = message;
 
-          body: JSON.stringify({
-            transaction_uuid: transactionUUID,
+        result.classList.remove("hidden");
+      }
 
-            reference_number: document.getElementById("reference_number").value,
-          }),
-        });
+      // =========================================================
+      // STEP 1
+      // CREATE DONATION
+      // =========================================================
 
-        const data = await response.json();
+      async function createDonation() {
+        const amount = document.getElementById("amount").value;
 
-        if (!data.success) {
-          alert(data.message);
+        const message = document.getElementById("message").value;
+
+        const isAnonymous = document.getElementById("anonymous").checked;
+
+        // -----------------------------------------
+        // Validate amount
+        // -----------------------------------------
+
+        if (!amount) {
+          showError("Please enter donation amount.");
 
           return;
         }
 
-        document.getElementById("result").innerHTML =
-          "🎉 Donation Successful.<br><br>" +
-          "Donation No : " +
-          data.data.donation_number +
-          "<br>Receipt No : " +
-          data.data.receipt_number;
+        if (Number(amount) < 1) {
+          showError("Minimum donation amount is ₹1.");
+
+          return;
+        }
+
+        // -----------------------------------------
+        // Disable button
+        // -----------------------------------------
+
+        const button = document.getElementById("donateButton");
+
+        button.disabled = true;
+        button.innerText = "Creating payment...";
+
+        try {
+          // -----------------------------------------
+          // Call Django API
+          // -----------------------------------------
+
+          const response = await fetch("/api/donations/create-donation", {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + token,
+            },
+
+            body: JSON.stringify({
+              campaign_slug: campaignSlug,
+
+              amount: amount,
+
+              message: message,
+
+              is_anonymous: isAnonymous,
+            }),
+          });
+
+          const data = await response.json();
+
+          console.log("CREATE DONATION RESPONSE:", data);
+
+          // -----------------------------------------
+          // API error
+          // -----------------------------------------
+
+          if (!response.ok || !data.success) {
+            showError(data.message || "Unable to create donation.");
+
+            return;
+          }
+
+          // -----------------------------------------
+          // Save transaction information
+          // -----------------------------------------
+
+          transactionUUID = data.data.transaction_uuid;
+
+          razorpayOrderID = data.data.razorpay_order_id;
+
+          razorpayKeyID = data.data.razorpay_key_id;
+
+          donationAmount = data.data.amount;
+
+          donationAmountPaise = data.data.amount_in_paise;
+
+          console.log("TRANSACTION UUID:", transactionUUID);
+
+          console.log("RAZORPAY ORDER:", razorpayOrderID);
+
+          console.log("RAZORPAY KEY:", razorpayKeyID);
+
+          console.log("AMOUNT:", donationAmountPaise);
+
+          // -----------------------------------------
+          // Show payment section
+          // -----------------------------------------
+
+          document.getElementById("amountDisplay").innerText =
+            "₹" + Number(donationAmount).toFixed(2);
+
+          document.getElementById("paymentInfo").classList.remove("hidden");
+        } catch (error) {
+          console.error("CREATE DONATION ERROR:", error);
+
+          showError("Unable to create donation.");
+        } finally {
+          button.disabled = false;
+
+          button.innerText = "Donate Now";
+        }
+      }
+
+      // =========================================================
+      // STEP 2
+      // OPEN RAZORPAY STANDARD CHECKOUT
+      // =========================================================
+
+      function openRazorpayCheckout() {
+        console.log("========== RAZORPAY ==========");
+
+        console.log("Key:", razorpayKeyID);
+        console.log("Order:", razorpayOrderID);
+        console.log("Amount:", donationAmountPaise);
+        console.log("Currency:", "INR");
+
+        console.log("==============================");
+
+        // -----------------------------------------
+        // Validate Razorpay data
+        // -----------------------------------------
+
+        if (!razorpayKeyID) {
+          showError("Razorpay key is missing.");
+
+          return;
+        }
+
+        if (!razorpayOrderID) {
+          showError("Razorpay order ID is missing.");
+
+          return;
+        }
+
+        if (!donationAmountPaise) {
+          showError("Donation amount is missing.");
+
+          return;
+        }
+
+        // -----------------------------------------
+        // Razorpay Standard Checkout
+        // -----------------------------------------
+        const options = {
+          key: razorpayKeyID,
+          amount: Number(donationAmountPaise),
+          currency: "INR",
+
+          name: "Your Platform",
+          description: "Campaign Donation",
+
+          order_id: razorpayOrderID,
+
+          callback_url:
+            window.location.origin + "/api/payments/razorpay-callback/",
+
+          prefill: {
+            name: "",
+            email: "",
+            contact: "",
+          },
+
+          notes: {
+            transaction_uuid: transactionUUID,
+          },
+
+          theme: {
+            color: "#3399cc",
+          },
+
+          modal: {
+            confirm_close: true,
+            escape: false,
+            backdropclose: false,
+            animation: true,
+          },
+
+          retry: {
+            enabled: true,
+            max_count: 4,
+          },
+        };
+
+        const rzp = new Razorpay(options);
+
+        rzp.on("payment.failed", function (response) {
+          console.error("Payment failed:", response.error);
+        });
+
+        rzp.open();
+      }
+
+      // =========================================================
+      // STEP 4
+      // SUCCESS UI
+      // =========================================================
+
+      function showDonationSuccess(data) {
+        showSuccess(
+          "🎉 Donation Successful!" +
+            "<br><br>" +
+            "Donation No: " +
+            data.donation_number +
+            "<br>" +
+            "Receipt No: " +
+            (data.receipt_number || "Generating..."),
+        );
+
+        document.getElementById("payButton").disabled = true;
+
+        document.getElementById("donateButton").disabled = true;
       }
     </script>
   </body>

@@ -1094,8 +1094,21 @@
             const data = await response.json();
 
             if (!response.ok) {
-              alert(data.message || "Unable to save draft");
+              let errorMessage = "Unable to save draft";
 
+              if (data.message) {
+                errorMessage = data.message;
+              } else if (data.errors) {
+                errorMessage = Object.entries(data.errors)
+                  .map(([field, messages]) => {
+                    return Array.isArray(messages)
+                      ? messages.join("\n")
+                      : messages;
+                  })
+                  .join("\n");
+              }
+
+              alert(errorMessage);
               return;
             }
             console.log(data);
@@ -1277,7 +1290,6 @@
             number.value = "";
             file.value = "";
 
-
             alert("Document uploaded successfully.");
           } catch (error) {
             console.log(error);
@@ -1318,20 +1330,17 @@
                           to PENDING VERIFICATION
                       */
 
-            const response = await fetch(
-              `/api/verification/campaign/submit`,
-              {
-                method: "POST",
+            const response = await fetch(`/api/verification/campaign/submit`, {
+              method: "POST",
 
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  campaign_slug: createdCampaignSlug,
-                }),
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
               },
-            );
+              body: JSON.stringify({
+                campaign_slug: createdCampaignSlug,
+              }),
+            });
 
             const data = await response.json();
 

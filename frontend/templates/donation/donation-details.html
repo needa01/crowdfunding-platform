@@ -244,40 +244,53 @@
       }
       function setupReceipt(receipt) {
         const receiptNumber = document.getElementById("receipt-number");
-
         const receiptAction = document.getElementById("receipt-action");
 
-        // No receipt record
-        if (!receipt.available) {
-          receiptNumber.innerText = "Not Available";
+        // =========================================================
+        // NO RECEIPT RECORD YET
+        // =========================================================
 
-          receiptAction.style.display = "none";
+        if (!receipt.available) {
+          receiptNumber.innerText = "Not Generated";
+
+          receiptAction.style.display = "inline-block";
+          receiptAction.innerText = "Generate Receipt";
+          receiptAction.disabled = false;
+          receiptAction.onclick = generateReceipt;
 
           return;
         }
 
-        // Receipt record exists
-        receiptNumber.innerText = receipt.receipt_number;
+        // =========================================================
+        // RECEIPT RECORD EXISTS
+        // =========================================================
+
+        receiptNumber.innerText = receipt.receipt_number || "Not Generated";
 
         receiptAction.style.display = "inline-block";
+        receiptAction.disabled = false;
 
-        // PDF does NOT exist
+        // =========================================================
+        // RECEIPT PDF DOES NOT EXIST
+        // =========================================================
+
         if (!receipt.has_receipt_file) {
           receiptAction.innerText = "Generate Receipt";
-
           receiptAction.onclick = generateReceipt;
         }
 
-        // PDF already exists
+        // =========================================================
+        // RECEIPT PDF EXISTS
+        // =========================================================
         else {
           receiptAction.innerText = "Download Receipt";
-
           receiptAction.onclick = downloadReceipt;
         }
       }
 
       async function generateReceipt() {
         const button = document.getElementById("receipt-action");
+        const receiptNumber = document.getElementById("receipt-number");
 
         button.disabled = true;
         button.innerText = "Generating...";
@@ -287,7 +300,6 @@
             `/api/donations/${donationUUID}/generate-receipt/`,
             {
               method: "POST",
-
               headers: {
                 Authorization: `Bearer ${token}`,
               },
@@ -296,8 +308,8 @@
 
           const result = await response.json();
 
-          if (!result.success) {
-            alert(result.message);
+          if (!response.ok || !result.success) {
+            alert(result.message || "Unable to generate receipt.");
 
             button.disabled = false;
             button.innerText = "Generate Receipt";
@@ -305,13 +317,24 @@
             return;
           }
 
-          // PDF has now been generated
+          // =======================================================
+          // GET NEWLY GENERATED RECEIPT DATA
+          // =======================================================
+
+          const receipt = result.data;
+
+          // Display newly generated receipt number
+          receiptNumber.innerText = receipt.receipt_number;
+
+          // =======================================================
+          // PDF HAS BEEN GENERATED
+          // =======================================================
+
           button.disabled = false;
           button.innerText = "Download Receipt";
-
           button.onclick = downloadReceipt;
         } catch (error) {
-          console.error(error);
+          console.error("Receipt generation error:", error);
 
           alert("Unable to generate receipt.");
 

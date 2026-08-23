@@ -9,6 +9,7 @@ from rest_framework.decorators import api_view, permission_classes
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from django.core.paginator import Paginator
+from rest_framework.permissions import AllowAny
 
 from campaigns.models import Campaign
 from crowdfunding.enums import (
@@ -22,13 +23,15 @@ from crowdfunding.enums import (
     VerificationStatus,
     VerificationType,
 )
-from crowdfunding.permissions import CanDonate, IsActiveAccount, IsDonor
+from crowdfunding.permissions import CanDonate, IsActiveAccount, IsDonor, IsCampaignCreator
 from crowdfunding.utils import generate_receipt_number
 from donations.models import Donation, DonationReceipt
 from donations.serializers import CreateDonationSerializer
 from donations.services import generate_donation_receipt
 from payments.models import PaymentTransaction
+from payments.services import create_razorpay_order
 from verification.models import EntityVerificationRequest
+from django.conf import settings
 
 
 # Create your views here.
@@ -37,96 +40,135 @@ from verification.models import EntityVerificationRequest
 @transaction.atomic
 def create_campaign_donation(request):
 
+    # ========================================================
+    # REQUEST DATA
+    # ========================================================
+
     campaign_slug = request.data.get("campaign_slug")
+
     amount = request.data.get("amount")
+
     message = request.data.get("message", "")
+
     is_anonymous = request.data.get("is_anonymous", False)
 
-    # ----------------------------
-    # Validate Campaign Slug
-    # ----------------------------
+    # ========================================================
+    # CAMPAIGN SLUG
+    # ========================================================
+
     if not campaign_slug:
+
         return Response(
-            {"success": False, "message": "Campaign slug is required."},
+            {
+                "success": False,
+                "message": "Campaign slug is required.",
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # ----------------------------
-    # Validate Amount
-    # ----------------------------
+    # ========================================================
+    # AMOUNT
+    # ========================================================
+
     if amount is None:
+
         return Response(
-            {"success": False, "message": "Donation amount is required."},
+            {
+                "success": False,
+                "message": "Donation amount is required.",
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     try:
-        amount = Decimal(amount)
+
+        amount = Decimal(str(amount))
+
     except Exception:
+
         return Response(
-            {"success": False, "message": "Invalid donation amount."},
+            {
+                "success": False,
+                "message": "Invalid donation amount.",
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    if amount <= 0:
+    if amount < Decimal("1"):
+
         return Response(
-            {"success": False, "message": "Donation amount must be greater than zero."},
+            {
+                "success": False,
+                "message": "Minimum donation amount is ₹1.",
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    if amount < 10:
-        return Response(
-            {"success": False, "message": "Minimum donation amount is ₹10."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+    # ========================================================
+    # CAMPAIGN
+    # ========================================================
 
-    # ----------------------------
-    # Get Campaign
-    # ----------------------------
     campaign = Campaign.objects.filter(
         campaign_slug=campaign_slug,
         is_deleted=False,
     ).first()
 
     if not campaign:
-        return Response(
-            {"success": False, "message": "Campaign not found."},
-            status=status.HTTP_404_NOT_FOUND,
-        )
-    # ----------------------------
-    # Campaign Expiry Check
-    # ----------------------------
 
-    if campaign.end_date <= timezone.localdate():
         return Response(
             {
                 "success": False,
-                "message": "This campaign has expired and is no longer accepting donations.",
+                "message": "Campaign not found.",
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    # ========================================================
+    # EXPIRY
+    # ========================================================
+
+    if campaign.end_date <= timezone.localdate():
+
+        return Response(
+            {
+                "success": False,
+                "message": "This campaign has expired "
+                "and is no longer accepting donations.",
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-    
-    # ----------------------------
-    # Cannot Donate Own Campaign
-    # ----------------------------
+
+    # ========================================================
+    # OWN CAMPAIGN
+    # ========================================================
 
     if campaign.created_by_id == request.user.uuid:
+
         return Response(
-            {"success": False, "message": "You cannot donate to your own campaign."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-    # ----------------------------
-    # Campaign Status Check
-    # ----------------------------
-    if campaign.campaign_status != CampaignStatus.ACTIVE:
-        return Response(
-            {"success": False, "message": "This campaign is not accepting donations."},
+            {
+                "success": False,
+                "message": "You cannot donate to your own campaign.",
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # ----------------------------
-    # Campaign Verification Check
-    # ----------------------------
+    # ========================================================
+    # CAMPAIGN STATUS
+    # ========================================================
+
+    if campaign.campaign_status != CampaignStatus.ACTIVE:
+
+        return Response(
+            {
+                "success": False,
+                "message": "This campaign is not accepting donations.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # ========================================================
+    # CAMPAIGN VERIFICATION
+    # ========================================================
 
     verification = EntityVerificationRequest.objects.filter(
         campaign=campaign,
@@ -134,29 +176,43 @@ def create_campaign_donation(request):
     ).first()
 
     if not verification:
+
         return Response(
-            {"success": False, "message": "Campaign verification not found."},
+            {
+                "success": False,
+                "message": "Campaign verification not found.",
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     if verification.status != VerificationStatus.APPROVED:
+
         return Response(
-            {"success": False, "message": "This campaign is not accepting donations."},
+            {
+                "success": False,
+                "message": "This campaign is not accepting donations.",
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # ----------------------------
-    # Wallet Check
-    # ----------------------------
+    # ========================================================
+    # WALLET
+    # ========================================================
+
     if not hasattr(campaign, "wallet"):
+
         return Response(
-            {"success": False, "message": "Campaign wallet is not configured."},
+            {
+                "success": False,
+                "message": "Campaign wallet is not configured.",
+            },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-    # ----------------------------
-    # Create Donation
-    # ----------------------------
+    # ========================================================
+    # CREATE DONATION
+    # ========================================================
+
     donation = Donation.objects.create(
         donation_type=DonationType.CAMPAIGN,
         campaign=campaign,
@@ -168,32 +224,256 @@ def create_campaign_donation(request):
         status=DonationStatus.PENDING,
     )
 
-    # ----------------------------
-    # Create Payment Transaction
-    # ----------------------------
+    # ========================================================
+    # CREATE RAZORPAY ORDER
+    # ========================================================
+
+    try:
+
+        razorpay_order = create_razorpay_order(donation=donation)
+
+    except Exception as exc:
+
+        donation.delete()
+
+        return Response(
+            {
+                "success": False,
+                "message": "Unable to create Razorpay order.",
+                "error": str(exc),
+            },
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
+    # ========================================================
+    # PAYMENT TRANSACTION
+    # ========================================================
+
     payment_transaction = PaymentTransaction.objects.create(
         transaction_type=TransactionType.DONATION,
         donation=donation,
-        gateway=PaymentGateway.MANUAL,  # Demo only
+        gateway=PaymentGateway.RAZORPAY,
+        gateway_order_id=razorpay_order["id"],
         amount=amount,
         currency=Currency.INR,
         status=TransactionStatus.PENDING,
+        gateway_response={
+            "razorpay_order": razorpay_order,
+        },
     )
 
-    # ----------------------------
-    # Return Demo Payment Details
-    # ----------------------------
+    # ========================================================
+    # RESPONSE
+    # ========================================================
+
     return Response(
         {
             "success": True,
             "message": "Donation initiated successfully.",
             "data": {
-                "donation_uuid": donation.uuid,
-                "transaction_uuid": payment_transaction.uuid,
+                "donation_uuid": str(donation.uuid),
+                "transaction_uuid": str(payment_transaction.uuid),
                 "donation_number": donation.unique_donation_number,
-                "amount": donation.amount,
+                "razorpay_key_id": settings.RAZORPAY_KEY_ID,
+                "razorpay_order_id": razorpay_order["id"],
+                "amount": str(donation.amount),
+                "amount_in_paise": int(donation.amount * Decimal("100")),
                 "currency": donation.currency.value,
                 "payment_status": payment_transaction.status.value,
+            },
+        },
+        status=status.HTTP_201_CREATED,
+    )
+
+
+
+
+@api_view(["POST"])
+@permission_classes([IsCampaignCreator])
+@transaction.atomic
+def create_campaign_promotion_payment(request):
+
+    campaign_uuid = request.data.get("campaign_uuid")
+    promotion_service_uuid = request.data.get(
+        "promotion_service_uuid"
+    )
+
+    # =========================================================
+    # 1. VALIDATE INPUT
+    # =========================================================
+
+    if not campaign_uuid:
+        return Response(
+            {
+                "success": False,
+                "message": "campaign_uuid is required.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if not promotion_service_uuid:
+        return Response(
+            {
+                "success": False,
+                "message": (
+                    "promotion_service_uuid is required."
+                ),
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # =========================================================
+    # 2. GET CAMPAIGN
+    # =========================================================
+
+    try:
+        campaign = Campaign.objects.get(
+            uuid=campaign_uuid
+        )
+    except Campaign.DoesNotExist:
+        return Response(
+            {
+                "success": False,
+                "message": "Campaign not found.",
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    # =========================================================
+    # 3. CHECK CAMPAIGN OWNER
+    # =========================================================
+
+    if campaign.created_by != request.user:
+        return Response(
+            {
+                "success": False,
+                "message": (
+                    "You are not allowed to promote this campaign."
+                ),
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # =========================================================
+    # 4. GET PROMOTION SERVICE
+    # =========================================================
+
+    try:
+        promotion_service = (
+            CampaignPromotionService.objects.get(
+                uuid=promotion_service_uuid,
+                is_active=True,
+            )
+        )
+    except CampaignPromotionService.DoesNotExist:
+        return Response(
+            {
+                "success": False,
+                "message": (
+                    "Promotion service not found or inactive."
+                ),
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    # =========================================================
+    # 5. GET PRICE
+    # =========================================================
+
+    amount = promotion_service.price
+
+    # =========================================================
+    # 6. CREATE PROMOTION
+    # =========================================================
+
+    promotion = CampaignPromotion.objects.create(
+        campaign=campaign,
+        promotion_service=promotion_service,
+        amount=amount,
+        status=PromotionStatus.PAYMENT_PENDING,
+    )
+
+    # =========================================================
+    # 7. CREATE PAYMENT TRANSACTION
+    # =========================================================
+
+    payment_transaction = PaymentTransaction.objects.create(
+        transaction_type=TransactionType.CAMPAIGN_PROMOTION,
+        campaign_promotion=promotion,
+        amount=amount,
+        status=TransactionStatus.PENDING,
+    )
+
+    # =========================================================
+    # 8. CREATE RAZORPAY ORDER
+    # =========================================================
+
+    try:
+
+        razorpay_order = razorpay_client.order.create(
+            {
+                "amount": int(amount * Decimal("100")),
+                "currency": "INR",
+                "receipt": str(
+                    payment_transaction.uuid
+                ),
+            }
+        )
+
+    except Exception as exc:
+
+        print(
+            "RAZORPAY ORDER CREATION ERROR:",
+            exc,
+        )
+
+        return Response(
+            {
+                "success": False,
+                "message": (
+                    "Unable to create Razorpay order."
+                ),
+            },
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
+    # =========================================================
+    # 9. SAVE RAZORPAY ORDER ID
+    # =========================================================
+
+    payment_transaction.gateway_order_id = (
+        razorpay_order["id"]
+    )
+
+    payment_transaction.save(
+        update_fields=[
+            "gateway_order_id",
+        ]
+    )
+
+    # =========================================================
+    # 10. RESPONSE
+    # =========================================================
+
+    return Response(
+        {
+            "success": True,
+            "message": (
+                "Promotion payment order created."
+            ),
+            "data": {
+                "promotion_uuid": str(
+                    promotion.uuid
+                ),
+                "transaction_uuid": str(
+                    payment_transaction.uuid
+                ),
+                "razorpay_order_id": (
+                    razorpay_order["id"]
+                ),
+                "amount": amount,
+                "currency": "INR",
+                "razorpay_key": settings.RAZORPAY_KEY_ID,
             },
         },
         status=status.HTTP_201_CREATED,
@@ -383,18 +663,29 @@ def get_my_donations(request):
 @permission_classes([CanDonate])
 def generate_receipt(request, donation_uuid):
 
+    # =========================================================
+    # 1. GET DONATION
+    # =========================================================
+
     try:
         donation = Donation.objects.select_related("campaign", "donor").get(
-            uuid=donation_uuid, donor=request.user
+            uuid=donation_uuid,
+            donor=request.user,
         )
 
     except Donation.DoesNotExist:
         return Response(
-            {"success": False, "message": "Donation not found."},
+            {
+                "success": False,
+                "message": "Donation not found.",
+            },
             status=status.HTTP_404_NOT_FOUND,
         )
 
-    # Receipt can only be generated for successful donations
+    # =========================================================
+    # 2. RECEIPT CAN ONLY BE GENERATED FOR SUCCESSFUL DONATION
+    # =========================================================
+
     if donation.status != DonationStatus.SUCCESS:
         return Response(
             {
@@ -404,41 +695,90 @@ def generate_receipt(request, donation_uuid):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    # =========================================================
+    # 3. GET OR CREATE RECEIPT
+    #
+    # Receipt row is created ONLY here.
+    # =========================================================
+
     try:
-        receipt = donation.receipt
+        with transaction.atomic():
 
-    except DonationReceipt.DoesNotExist:
-        return Response(
-            {"success": False, "message": "Receipt record not found."},
-            status=status.HTTP_404_NOT_FOUND,
-        )
+            receipt, created = DonationReceipt.objects.get_or_create(donation=donation)
 
-    # Don't generate the PDF again
-    if receipt.receipt_file:
+            # =================================================
+            # 4. IF PDF ALREADY EXISTS
+            # =================================================
+
+            if receipt.receipt_file:
+                return Response(
+                    {
+                        "success": True,
+                        "message": "Receipt already generated.",
+                        "data": {
+                            "receipt_uuid": str(receipt.uuid),
+                            "receipt_number": receipt.receipt_num,
+                            "receipt_url": receipt.receipt_file.url,
+                        },
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+            # =================================================
+            # 5. GENERATE PDF
+            # =================================================
+
+            generate_donation_receipt(receipt)
+
+            # Refresh from database in case the service updated
+            # the receipt_file / other fields.
+            receipt.refresh_from_db()
+
+            # =================================================
+            # 6. VERIFY PDF WAS CREATED
+            # =================================================
+
+            if not receipt.receipt_file:
+                return Response(
+                    {
+                        "success": False,
+                        "message": "Receipt record was created but PDF generation failed.",
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+            # =================================================
+            # 7. RETURN RECEIPT
+            # =================================================
+
+            return Response(
+                {
+                    "success": True,
+                    "message": (
+                        "Receipt generated successfully."
+                        if created
+                        else "Receipt generated successfully."
+                    ),
+                    "data": {
+                        "receipt_uuid": str(receipt.uuid),
+                        "receipt_number": receipt.receipt_num,
+                        "receipt_url": receipt.receipt_file.url,
+                    },
+                },
+                status=status.HTTP_200_OK,
+            )
+
+    except Exception as exc:
+
+        print("RECEIPT GENERATION ERROR:", exc)
+
         return Response(
             {
-                "success": True,
-                "message": "Receipt already generated.",
-                "receipt_uuid": str(receipt.uuid),
-                "receipt_number": receipt.receipt_num,
-                "receipt_url": receipt.receipt_file.url,
+                "success": False,
+                "message": "Unable to generate receipt.",
             },
-            status=status.HTTP_200_OK,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-
-    # Generate PDF
-    generate_donation_receipt(receipt)
-
-    return Response(
-        {
-            "success": True,
-            "message": "Receipt generated successfully.",
-            "receipt_uuid": str(receipt.uuid),
-            "receipt_number": receipt.receipt_num,
-            "receipt_url": receipt.receipt_file.url,
-        },
-        status=status.HTTP_200_OK,
-    )
 
 
 @api_view(["GET"])
@@ -467,4 +807,34 @@ def download_receipt(request, donation_uuid):
         as_attachment=True,
         filename=f"{receipt.receipt_num}.pdf",
         content_type="application/pdf",
+    )
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def donation_success(request, donation_uuid):
+
+    try:
+        donation = Donation.objects.get(uuid=donation_uuid)
+
+    except Donation.DoesNotExist:
+        return Response(
+            {"success": False, "message": "Donation not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    receipt = DonationReceipt.objects.filter(donation=donation).first()
+
+    return Response(
+        {
+            "success": True,
+            "data": {
+                "donation_uuid": str(donation.uuid),
+                "donation_number": donation.unique_donation_number,
+                "receipt_number": (receipt.receipt_number if receipt else None),
+                "amount": str(donation.amount),
+                "status": donation.status.value,
+            },
+        },
+        status=status.HTTP_200_OK,
     )

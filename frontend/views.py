@@ -57,6 +57,11 @@ def my_campaign_detail(request):
     return render(request, 'campaigns/my-campaign-detail.html')
 
 
+def campaign_promotion_view(request, campaign_slug):
+    return render(request, 'campaigns/campaign-promotion.html',
+        {
+            "campaign_slug": campaign_slug,
+        })
 
 #register views
 def register_fundraiser(request):
@@ -103,6 +108,10 @@ def get_donation_details(request, donation_uuid):
             "donation_uuid": donation_uuid,
         },
     )
+    
+#payment views
+def donation_success_page(request):
+    return render(request, "payments/payment_success.html")
 
 #admin views
 def admin_login_view(request):

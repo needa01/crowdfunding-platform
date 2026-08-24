@@ -50,6 +50,11 @@ urlpatterns = [
         name="create_campaign_donation",
     ),
     path(
+        "platform/donate",
+        views.create_platform_donation,
+        name="create_platform_donation",
+    ),
+    path(
         "my-donations",
         views.my_donations,
         name="my_donations",

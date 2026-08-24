@@ -88,13 +88,18 @@ def create_ngo_csr_campaign_view(request):
 
 #donation views
 def create_campaign_donation(request, campaign_slug):
-    print("Frontend view")
     return render(
         request,
         "donation/donate.html",
         {
             "campaign_slug": campaign_slug,
         },
+    )
+
+def create_platform_donation(request):
+    return render(
+        request,
+        "donation/platform-donate.html"
     )
     
 def my_donations(request):

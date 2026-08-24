@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Support Our Platform</title>
+
+    <!-- Razorpay Standard Checkout -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        background: #f5f7fb;
+        margin: 0;
+        padding: 40px;
+      }
+
+      .container {
+        max-width: 650px;
+        margin: 40px auto;
+        background: white;
+        padding: 35px;
+        border-radius: 15px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .icon {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto 15px;
+        border-radius: 50%;
+        background: #e8f7ee;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 34px;
+      }
+
+      h2 {
+        margin: 0;
+        color: #222;
+      }
+
+      .subtitle {
+        color: #777;
+        margin-top: 10px;
+        line-height: 1.6;
+      }
+
+      .impact-box {
+        background: #f8faf9;
+        border-left: 4px solid #00a859;
+        padding: 15px;
+        margin: 25px 0;
+        border-radius: 8px;
+        color: #555;
+        line-height: 1.6;
+      }
+
+      label {
+        display: block;
+        margin-top: 20px;
+        font-weight: bold;
+        color: #333;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 13px;
+        margin-top: 8px;
+        border: 1px solid #ccc;
+        border-radius: 7px;
+        font-size: 15px;
+      }
+
+      textarea {
+        height: 100px;
+        resize: vertical;
+      }
+
+      .anonymous-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: normal;
+        cursor: pointer;
+      }
+
+      .anonymous-label input {
+        width: auto;
+        margin: 0;
+      }
+
+      button {
+        width: 100%;
+        margin-top: 25px;
+        padding: 14px 25px;
+        border: none;
+        border-radius: 8px;
+        background: #00a859;
+        color: white;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      button:hover {
+        background: #008b48;
+      }
+
+      button:disabled {
+        background: #999;
+        cursor: not-allowed;
+      }
+
+      .payment-info {
+        margin-top: 25px;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        background: #fafafa;
+      }
+
+      .payment-info h3 {
+        margin-top: 0;
+      }
+
+      .amount-display {
+        font-size: 26px;
+        font-weight: bold;
+        color: #00a859;
+        margin: 15px 0;
+      }
+
+      .success {
+        margin-top: 25px;
+        padding: 15px;
+        border-radius: 8px;
+        background: #e8f7ee;
+        color: #087a3d;
+        font-weight: bold;
+        line-height: 1.7;
+      }
+
+      .error {
+        margin-top: 25px;
+        padding: 15px;
+        border-radius: 8px;
+        background: #ffeaea;
+        color: #c00;
+        font-weight: bold;
+        line-height: 1.5;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .secure {
+        text-align: center;
+        margin-top: 20px;
+        color: #777;
+        font-size: 13px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+
+      <!-- ============================= -->
+      <!-- HEADER -->
+      <!-- ============================= -->
+
+      <div class="header">
+
+        <div class="icon">
+          ❤️
+        </div>
+
+        <h2>Support Our Crowdfunding Platform</h2>
+
+        <p class="subtitle">
+          Your contribution helps us keep the platform running,
+          support verified campaigns, improve donor experience,
+          and help more people raise funds for genuine causes.
+        </p>
+
+      </div>
+
+      <!-- ============================= -->
+      <!-- IMPACT -->
+      <!-- ============================= -->
+
+      <div class="impact-box">
+        <strong>Where does your contribution go?</strong>
+        <br />
+        Your platform donation supports the operation and development
+        of our crowdfunding platform, including technology,
+        verification, security, and platform maintenance.
+      </div>
+
+      <!-- ============================= -->
+      <!-- DONATION DETAILS -->
+      <!-- ============================= -->
+
+      <label for="amount">
+        Donation Amount (₹)
+      </label>
+
+      <input
+        type="number"
+        id="amount"
+        min="1"
+        step="0.01"
+        placeholder="100"
+      />
+
+      <label for="message">
+        Message
+      </label>
+
+      <textarea
+        id="message"
+        placeholder="Write an optional message..."
+      ></textarea>
+
+      <label class="anonymous-label">
+        <input type="checkbox" id="anonymous" />
+        Donate anonymously
+      </label>
+
+      <!-- ============================= -->
+      <!-- CREATE DONATION -->
+      <!-- ============================= -->
+
+      <button
+        id="donateButton"
+        onclick="createPlatformDonation()"
+      >
+        ❤️ Support Crowdfunding
+      </button>
+
+      <!-- ============================= -->
+      <!-- PAYMENT INFORMATION -->
+      <!-- ============================= -->
+
+      <div id="paymentInfo" class="payment-info hidden">
+
+        <h3>Payment Details</h3>
+
+        <div id="amountDisplay" class="amount-display"></div>
+
+        <p>
+          You are about to make a platform donation.
+        </p>
+
+        <button
+          id="payButton"
+          onclick="openRazorpayCheckout()"
+        >
+          Pay with Razorpay
+        </button>
+
+      </div>
+
+      <!-- ============================= -->
+      <!-- RESULT -->
+      <!-- ============================= -->
+
+      <div id="result" class="hidden"></div>
+
+      <div class="secure">
+        🔒 Secure payment powered by Razorpay
+      </div>
+
+    </div>
+
+    <script>
+
+      // =========================================================
+      // GLOBAL VARIABLES
+      // =========================================================
+
+      let transactionUUID = null;
+      let razorpayOrderID = null;
+      let razorpayKeyID = null;
+
+      let donationAmount = null;
+      let donationAmountPaise = null;
+
+      const token = sessionStorage.getItem("access_token");
+
+
+      // =========================================================
+      // AUTHENTICATION
+      // =========================================================
+
+      if (!token) {
+        window.location.href = "/frontend/login";
+      }
+
+
+      // =========================================================
+      // RESULT HELPERS
+      // =========================================================
+
+      function showError(message) {
+
+        const result = document.getElementById("result");
+
+        result.className = "error";
+
+        result.innerHTML = message;
+
+        result.classList.remove("hidden");
+      }
+
+
+      function showSuccess(message) {
+
+        const result = document.getElementById("result");
+
+        result.className = "success";
+
+        result.innerHTML = message;
+
+        result.classList.remove("hidden");
+      }
+
+
+      // =========================================================
+      // STEP 1
+      // CREATE PLATFORM DONATION
+      // =========================================================
+
+      async function createPlatformDonation() {
+
+        const amount =
+          document.getElementById("amount").value;
+
+        const message =
+          document.getElementById("message").value;
+
+        const isAnonymous =
+          document.getElementById("anonymous").checked;
+
+
+        // -----------------------------------------
+        // Validate amount
+        // -----------------------------------------
+
+        if (!amount) {
+
+          showError(
+            "Please enter donation amount."
+          );
+
+          return;
+        }
+
+
+        if (Number(amount) < 1) {
+
+          showError(
+            "Minimum platform donation amount is ₹1."
+          );
+
+          return;
+        }
+
+
+        // -----------------------------------------
+        // Disable button
+        // -----------------------------------------
+
+        const button =
+          document.getElementById("donateButton");
+
+        button.disabled = true;
+
+        button.innerText =
+          "Creating payment...";
+
+
+        try {
+
+          // -----------------------------------------
+          // Call Platform Donation API
+          // -----------------------------------------
+
+          const response = await fetch(
+            "/api/donations/create-platform-donation",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type": "application/json",
+
+                Authorization:
+                  "Bearer " + token,
+              },
+
+              body: JSON.stringify({
+
+                amount: amount,
+
+                message: message,
+
+                is_anonymous: isAnonymous,
+
+              }),
+            }
+          );
+
+
+          const data =
+            await response.json();
+
+
+          console.log(
+            "CREATE PLATFORM DONATION RESPONSE:",
+            data
+          );
+
+
+          // -----------------------------------------
+          // API ERROR
+          // -----------------------------------------
+
+          if (!response.ok || !data.success) {
+
+            showError(
+              data.message ||
+              "Unable to create platform donation."
+            );
+
+            return;
+          }
+
+
+          // -----------------------------------------
+          // SAVE PAYMENT INFORMATION
+          // -----------------------------------------
+
+          transactionUUID =
+            data.data.transaction_uuid;
+
+          razorpayOrderID =
+            data.data.razorpay_order_id;
+
+          razorpayKeyID =
+            data.data.razorpay_key_id;
+
+          donationAmount =
+            data.data.amount;
+
+          donationAmountPaise =
+            data.data.amount_in_paise;
+
+
+          console.log(
+            "TRANSACTION UUID:",
+            transactionUUID
+          );
+
+          console.log(
+            "RAZORPAY ORDER:",
+            razorpayOrderID
+          );
+
+          console.log(
+            "RAZORPAY KEY:",
+            razorpayKeyID
+          );
+
+          console.log(
+            "AMOUNT:",
+            donationAmountPaise
+          );
+
+
+          // -----------------------------------------
+          // SHOW PAYMENT SECTION
+          // -----------------------------------------
+
+          document.getElementById(
+            "amountDisplay"
+          ).innerText =
+            "₹" +
+            Number(donationAmount).toFixed(2);
+
+
+          document.getElementById(
+            "paymentInfo"
+          ).classList.remove("hidden");
+
+        }
+
+        catch (error) {
+
+          console.error(
+            "CREATE PLATFORM DONATION ERROR:",
+            error
+          );
+
+          showError(
+            "Unable to create platform donation."
+          );
+
+        }
+
+        finally {
+
+          button.disabled = false;
+
+          button.innerText =
+            "❤️ Support Crowdfunding";
+        }
+      }
+
+
+      // =========================================================
+      // STEP 2
+      // OPEN RAZORPAY CHECKOUT
+      // =========================================================
+
+      function openRazorpayCheckout() {
+
+        console.log(
+          "========== PLATFORM RAZORPAY =========="
+        );
+
+        console.log(
+          "Key:",
+          razorpayKeyID
+        );
+
+        console.log(
+          "Order:",
+          razorpayOrderID
+        );
+
+        console.log(
+          "Amount:",
+          donationAmountPaise
+        );
+
+        console.log(
+          "Currency:",
+          "INR"
+        );
+
+        console.log(
+          "======================================="
+        );
+
+
+        // -----------------------------------------
+        // Validate Razorpay data
+        // -----------------------------------------
+
+        if (!razorpayKeyID) {
+
+          showError(
+            "Razorpay key is missing."
+          );
+
+          return;
+        }
+
+
+        if (!razorpayOrderID) {
+
+          showError(
+            "Razorpay order ID is missing."
+          );
+
+          return;
+        }
+
+
+        if (!donationAmountPaise) {
+
+          showError(
+            "Donation amount is missing."
+          );
+
+          return;
+        }
+
+
+        // -----------------------------------------
+        // Razorpay Options
+        // -----------------------------------------
+
+        const options = {
+
+          key: razorpayKeyID,
+
+          amount:
+            Number(donationAmountPaise),
+
+          currency: "INR",
+
+          name:
+            "Crowdfunding Platform",
+
+          description:
+            "Platform Support Donation",
+
+          order_id:
+            razorpayOrderID,
+
+
+          // ---------------------------------------
+          // PLATFORM CALLBACK
+          // ---------------------------------------
+
+          callback_url:
+            window.location.origin +
+            "/api/payments/razorpay-callback/platform-donation",
+
+
+          prefill: {
+
+            name: "",
+
+            email: "",
+
+            contact: "",
+
+          },
+
+
+          notes: {
+
+            transaction_uuid:
+              transactionUUID,
+
+            donation_type:
+              "PLATFORM",
+
+          },
+
+
+          theme: {
+
+            color: "#00a859",
+
+          },
+
+
+          modal: {
+
+            confirm_close: true,
+
+            escape: false,
+
+            backdropclose: false,
+
+            animation: true,
+
+          },
+
+
+          retry: {
+
+            enabled: true,
+
+            max_count: 4,
+
+          },
+
+        };
+
+
+        // -----------------------------------------
+        // CREATE RAZORPAY INSTANCE
+        // -----------------------------------------
+
+        const rzp =
+          new Razorpay(options);
+
+
+        // -----------------------------------------
+        // PAYMENT FAILED
+        // -----------------------------------------
+
+        rzp.on(
+          "payment.failed",
+          function (response) {
+
+            console.error(
+              "Platform payment failed:",
+              response.error
+            );
+
+            showError(
+              response.error.description ||
+              "Payment failed. Please try again."
+            );
+
+          }
+        );
+
+
+        // -----------------------------------------
+        // OPEN CHECKOUT
+        // -----------------------------------------
+
+        rzp.open();
+      }
+
+
+      // =========================================================
+      // OPTIONAL SUCCESS UI
+      // =========================================================
+
+      function showDonationSuccess(data) {
+
+        showSuccess(
+
+          "🎉 Platform Donation Successful!" +
+
+          "<br><br>" +
+
+          "Donation No: " +
+
+          data.donation_number +
+
+          "<br>" +
+
+          "Receipt No: " +
+
+          (
+            data.receipt_number ||
+            "Generating..."
+          )
+
+        );
+
+
+        document.getElementById(
+          "payButton"
+        ).disabled = true;
+
+
+        document.getElementById(
+          "donateButton"
+        ).disabled = true;
+      }
+
+    </script>
+
+  </body>
+</html>

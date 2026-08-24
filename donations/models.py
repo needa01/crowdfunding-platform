@@ -4,6 +4,13 @@ from django_enum.fields import EnumField
 import uuid
 from crowdfunding.enums import Currency, DonationStatus, DonationType
 from crowdfunding.utils import generate_donation_number, generate_receipt_number
+from decimal import Decimal
+
+# Razorpay platform/payment gateway fee percentage
+RAZORPAY_FEE_PERCENTAGE = Decimal("2.00")
+
+# GST percentage applicable to the Razorpay fee
+GST_PERCENTAGE = Decimal("18.00")
 
 
 class Donation(models.Model):
@@ -44,6 +51,10 @@ class Donation(models.Model):
         max_digits=12,
         decimal_places=2
     )
+    
+    fee = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    
+    tax = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
 
     currency = EnumField(
         Currency,

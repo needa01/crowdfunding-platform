@@ -16,6 +16,7 @@ from crowdfunding.enums import (
     DonationStatus,
     TransactionStatus,
     TransactionType,
+    DonationType,
     PaymentMethod,
     PromotionStatus,
 )
@@ -693,7 +694,6 @@ def platform_donation_razorpay_callback(request):
             payment_transaction = (
                 PaymentTransaction.objects
                 .select_for_update()
-                .select_related("donation")
                 .get(
                     uuid=payment_transaction.uuid
                 )
@@ -741,8 +741,7 @@ def platform_donation_razorpay_callback(request):
             if not donation:
 
                 raise ValueError(
-                    "Payment transaction is not linked "
-                    "to a donation."
+                    "Payment transaction is not linked to a donation."
                 )
 
             # ---------------------------------------------

@@ -12,7 +12,13 @@ from django.shortcuts import redirect
 from django.conf import settings
 import json
 from crowdfunding.permissions import CanDonate
-from crowdfunding.enums import DonationStatus, TransactionStatus, TransactionType, PaymentMethod
+from crowdfunding.enums import (
+    DonationStatus,
+    TransactionStatus,
+    TransactionType,
+    PaymentMethod,
+    PromotionStatus,
+)
 from payments.models import PaymentTransaction
 
 from .services import (
@@ -718,8 +724,6 @@ def donation_razorpay_callback(request):
                     status=status.HTTP_200_OK,
                 )
 
-           
-
             # =========================================================
             # SAVE RAZORPAY PAYMENT DETAILS
             # =========================================================
@@ -740,8 +744,7 @@ def donation_razorpay_callback(request):
             }
 
             payment_transaction.payment_method = payment_method_map.get(
-                razorpay_method,
-                PaymentMethod.OTHER
+                razorpay_method, PaymentMethod.OTHER
             )
 
             # Save complete Razorpay PAYMENT response
@@ -750,12 +753,27 @@ def donation_razorpay_callback(request):
             # Razorpay returns monetary values in paise
             razorpay_fee = razorpay_payment.get("fee")
             razorpay_tax = razorpay_payment.get("tax")
+            
+            
+            # =================================================
+            # GET DONATION
+            # =================================================
 
+
+            donation = payment_transaction.donation
+
+
+            if not donation:
+                raise ValueError("Payment transaction is not linked to a donation.")
+            
+            
             if razorpay_fee is not None:
-                payment_transaction.gateway_fee = Decimal(razorpay_fee) / Decimal("100")
+                donation.fee = Decimal(razorpay_fee) / Decimal("100")
 
             if razorpay_tax is not None:
-                payment_transaction.gateway_tax = Decimal(razorpay_tax) / Decimal("100")
+                donation.tax = Decimal(razorpay_tax) / Decimal("100")
+
+
 
             payment_transaction.status = TransactionStatus.SUCCESS
             payment_transaction.processed_at = timezone.now()
@@ -771,14 +789,6 @@ def donation_razorpay_callback(request):
                 ]
             )
 
-            # =================================================
-            # GET DONATION
-            # =================================================
-
-            donation = payment_transaction.donation
-
-            if not donation:
-                raise ValueError("Payment transaction is not linked to a donation.")
 
             # =================================================
             # MARK DONATION SUCCESS
@@ -902,7 +912,6 @@ def campaign_promotion_razorpay_callback(request):
     print("========================================")
     print("CAMPAIGN PROMOTION RAZORPAY CALLBACK")
     print("========================================")
-
     print("REQUEST DATA:")
     print(request.data)
 
@@ -910,17 +919,9 @@ def campaign_promotion_razorpay_callback(request):
     # 1. GET RAZORPAY DATA
     # =========================================================
 
-    razorpay_payment_id = request.data.get(
-        "razorpay_payment_id"
-    )
-
-    razorpay_order_id = request.data.get(
-        "razorpay_order_id"
-    )
-
-    razorpay_signature = request.data.get(
-        "razorpay_signature"
-    )
+    razorpay_payment_id = request.data.get("razorpay_payment_id")
+    razorpay_order_id = request.data.get("razorpay_order_id")
+    razorpay_signature = request.data.get("razorpay_signature")
 
     # =========================================================
     # 2. VALIDATE
@@ -929,28 +930,19 @@ def campaign_promotion_razorpay_callback(request):
     missing_fields = []
 
     if not razorpay_payment_id:
-        missing_fields.append(
-            "razorpay_payment_id"
-        )
+        missing_fields.append("razorpay_payment_id")
 
     if not razorpay_order_id:
-        missing_fields.append(
-            "razorpay_order_id"
-        )
+        missing_fields.append("razorpay_order_id")
 
     if not razorpay_signature:
-        missing_fields.append(
-            "razorpay_signature"
-        )
+        missing_fields.append("razorpay_signature")
 
     if missing_fields:
-
         return Response(
             {
                 "success": False,
-                "message": (
-                    "Required payment fields are missing."
-                ),
+                "message": "Required payment fields are missing.",
                 "errors": {
                     "missing_fields": missing_fields
                 },
@@ -963,28 +955,17 @@ def campaign_promotion_razorpay_callback(request):
     # =========================================================
 
     try:
-
-        payment_transaction = (
-            PaymentTransaction.objects
-            .select_related(
-                "campaign_promotion",
-            )
-            .get(
-                gateway_order_id=razorpay_order_id,
-                transaction_type=(
-                    TransactionType.CAMPAIGN_PROMOTION
-                ),
-            )
+        payment_transaction = PaymentTransaction.objects.get(
+            gateway_order_id=razorpay_order_id,
+            transaction_type=TransactionType.CAMPAIGN_PROMOTION,
         )
 
     except PaymentTransaction.DoesNotExist:
-
         return Response(
             {
                 "success": False,
                 "message": (
-                    "Campaign promotion payment "
-                    "transaction not found."
+                    "Campaign promotion payment transaction not found."
                 ),
             },
             status=status.HTTP_404_NOT_FOUND,
@@ -994,21 +975,19 @@ def campaign_promotion_razorpay_callback(request):
     # 4. CHECK ALREADY PROCESSED
     # =========================================================
 
-    if (
-        payment_transaction.status
-        == TransactionStatus.SUCCESS
-    ):
+    if payment_transaction.status == TransactionStatus.SUCCESS:
 
-        promotion = (
-            payment_transaction.campaign_promotion
+        promotions = (
+            payment_transaction
+            .campaign_promotion_services
+            .all()
         )
 
         return Response(
             {
                 "success": True,
                 "message": (
-                    "Promotion payment has already "
-                    "been verified."
+                    "Promotion payment has already been verified."
                 ),
                 "data": {
                     "payment_id": (
@@ -1020,9 +999,10 @@ def campaign_promotion_razorpay_callback(request):
                     "transaction_uuid": str(
                         payment_transaction.uuid
                     ),
-                    "promotion_uuid": str(
-                        promotion.uuid
-                    ),
+                    "promotion_uuids": [
+                        str(promotion.uuid)
+                        for promotion in promotions
+                    ],
                 },
             },
             status=status.HTTP_200_OK,
@@ -1033,18 +1013,11 @@ def campaign_promotion_razorpay_callback(request):
     # =========================================================
 
     try:
-
         razorpay_client.utility.verify_payment_signature(
             {
-                "razorpay_order_id": (
-                    razorpay_order_id
-                ),
-                "razorpay_payment_id": (
-                    razorpay_payment_id
-                ),
-                "razorpay_signature": (
-                    razorpay_signature
-                ),
+                "razorpay_order_id": razorpay_order_id,
+                "razorpay_payment_id": razorpay_payment_id,
+                "razorpay_signature": razorpay_signature,
             }
         )
 
@@ -1069,7 +1042,6 @@ def campaign_promotion_razorpay_callback(request):
     # =========================================================
 
     try:
-
         razorpay_payment = (
             razorpay_client.payment.fetch(
                 razorpay_payment_id
@@ -1106,7 +1078,6 @@ def campaign_promotion_razorpay_callback(request):
         razorpay_payment.get("order_id")
         != razorpay_order_id
     ):
-
         return Response(
             {
                 "success": False,
@@ -1121,9 +1092,7 @@ def campaign_promotion_razorpay_callback(request):
     # 8. CHECK CAPTURED
     # =========================================================
 
-    razorpay_status = razorpay_payment.get(
-        "status"
-    )
+    razorpay_status = razorpay_payment.get("status")
 
     if razorpay_status != "captured":
 
@@ -1150,12 +1119,13 @@ def campaign_promotion_razorpay_callback(request):
 
         with transaction.atomic():
 
+            # -------------------------------------------------
+            # LOCK PAYMENT TRANSACTION
+            # -------------------------------------------------
+
             payment_transaction = (
                 PaymentTransaction.objects
                 .select_for_update()
-                .select_related(
-                    "campaign_promotion",
-                )
                 .get(
                     uuid=payment_transaction.uuid
                 )
@@ -1170,23 +1140,45 @@ def campaign_promotion_razorpay_callback(request):
                 == TransactionStatus.SUCCESS
             ):
 
-                promotion = (
-                    payment_transaction.campaign_promotion
+                promotions = (
+                    payment_transaction
+                    .campaign_promotion_services
+                    .all()
                 )
 
                 return Response(
                     {
                         "success": True,
                         "message": (
-                            "Promotion payment already processed."
+                            "Promotion payment "
+                            "already processed."
                         ),
                         "data": {
-                            "promotion_uuid": str(
-                                promotion.uuid
-                            ),
+                            "promotion_uuids": [
+                                str(promotion.uuid)
+                                for promotion in promotions
+                            ]
                         },
                     },
                     status=status.HTTP_200_OK,
+                )
+
+            # =================================================
+            # GET ALL PROMOTIONS
+            # =================================================
+
+            promotions = (
+                payment_transaction
+                .campaign_promotion_services
+                .all()
+            )
+
+            # QuerySet must use exists()
+            if not promotions.exists():
+
+                raise ValueError(
+                    "Payment transaction is not linked "
+                    "to any campaign promotion."
                 )
 
             # =================================================
@@ -1210,17 +1202,11 @@ def campaign_promotion_razorpay_callback(request):
             )
 
             payment_method_map = {
-
                 "card": PaymentMethod.CARD,
-
                 "upi": PaymentMethod.UPI,
-
                 "netbanking": PaymentMethod.NETBANKING,
-
                 "wallet": PaymentMethod.WALLET,
-
                 "emi": PaymentMethod.EMI,
-
                 "bank_transfer": PaymentMethod.BANK_TRANSFER,
             }
 
@@ -1232,7 +1218,7 @@ def campaign_promotion_razorpay_callback(request):
             )
 
             # =================================================
-            # SAVE COMPLETE RESPONSE
+            # SAVE COMPLETE RAZORPAY RESPONSE
             # =================================================
 
             payment_transaction.gateway_response = (
@@ -1240,30 +1226,16 @@ def campaign_promotion_razorpay_callback(request):
             )
 
             # =================================================
-            # FEE / TAX
+            # RAZORPAY FEE / TAX
             # =================================================
 
-            razorpay_fee = razorpay_payment.get(
-                "fee"
+            razorpay_fee = (
+                razorpay_payment.get("fee")
             )
 
-            razorpay_tax = razorpay_payment.get(
-                "tax"
+            razorpay_tax = (
+                razorpay_payment.get("tax")
             )
-
-            if razorpay_fee is not None:
-
-                payment_transaction.gateway_fee = (
-                    Decimal(razorpay_fee)
-                    / Decimal("100")
-                )
-
-            if razorpay_tax is not None:
-
-                payment_transaction.gateway_tax = (
-                    Decimal(razorpay_tax)
-                    / Decimal("100")
-                )
 
             # =================================================
             # MARK TRANSACTION SUCCESS
@@ -1283,38 +1255,17 @@ def campaign_promotion_razorpay_callback(request):
                     "gateway_signature",
                     "payment_method",
                     "gateway_response",
-                    "gateway_fee",
-                    "gateway_tax",
                     "status",
                     "processed_at",
                 ]
             )
 
             # =================================================
-            # GET PROMOTION
+            # MARK ALL PROMOTIONS ACTIVE
             # =================================================
 
-            promotion = (
-                payment_transaction.campaign_promotion
-            )
-
-            if not promotion:
-
-                raise ValueError(
-                    "Payment transaction is not "
-                    "linked to a campaign promotion."
-                )
-
-            # =================================================
-            # MARK PROMOTION PAID
-            # =================================================
-
-            promotion.status = PromotionStatus.PAID
-
-            promotion.save(
-                update_fields=[
-                    "status",
-                ]
+            promotions.update(
+                promotion_status=PromotionStatus.ACTIVE
             )
 
     except PaymentTransaction.DoesNotExist:
@@ -1323,7 +1274,8 @@ def campaign_promotion_razorpay_callback(request):
             {
                 "success": False,
                 "message": (
-                    "Payment transaction no longer exists."
+                    "Payment transaction "
+                    "no longer exists."
                 ),
             },
             status=status.HTTP_404_NOT_FOUND,
@@ -1332,7 +1284,8 @@ def campaign_promotion_razorpay_callback(request):
     except Exception as exc:
 
         print(
-            "CAMPAIGN PROMOTION PAYMENT PROCESSING ERROR:",
+            "CAMPAIGN PROMOTION PAYMENT "
+            "PROCESSING ERROR:",
             exc,
         )
 
@@ -1364,14 +1317,17 @@ def campaign_promotion_razorpay_callback(request):
                 "transaction_uuid": str(
                     payment_transaction.uuid
                 ),
-                "promotion_uuid": str(
-                    promotion.uuid
-                ),
+                "promotion_uuids": [
+                    str(promotion.uuid)
+                    for promotion in promotions
+                ],
                 "payment_status": "SUCCESS",
             },
         },
         status=status.HTTP_200_OK,
     )
+
+
 
 
 

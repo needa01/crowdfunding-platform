@@ -4,7 +4,7 @@ from django.db import models
 import datetime
 import secrets
 from ssl import Purpose
-
+from decimal import Decimal
 from django.db import models
 
 import uuid
@@ -27,9 +27,18 @@ from crowdfunding.enums import (
     UserType,
     UserType,
     Currency,
+    VerificationType,
+    VerificationStatus,
 )
 from organizations.models import NGOProfile
 from django.core.exceptions import ValidationError
+
+
+# Razorpay platform/payment gateway fee percentage
+RAZORPAY_FEE_PERCENTAGE = Decimal("2.00")
+
+# GST percentage applicable to the Razorpay fee
+GST_PERCENTAGE = Decimal("18.00")
 
 
 class Campaign(models.Model):
@@ -119,6 +128,18 @@ class Campaign(models.Model):
 
     def __str__(self):
         return self.campaign_name
+    
+    
+    def is_verified(self):
+            verification = self.verification_requests.filter(
+                verification_type=VerificationType.CAMPAIGN
+            ).first()
+    
+            return (
+                verification is not None
+                and verification.status == VerificationStatus.APPROVED
+            )
+
 
     def clean(self):
         # CSR users cannot create campaigns
@@ -365,7 +386,7 @@ class Campaign(models.Model):
 
 
 class PromotionServicePricing(models.Model):
-    
+
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     service_type = EnumField(ServiceType, unique=True)
@@ -376,9 +397,10 @@ class PromotionServicePricing(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
-        db_table="campaign_promotion_services_pricing"
+        db_table = "campaign_promotion_services_pricing"
+
 
 class CampaignPromotionService(models.Model):
 
@@ -395,21 +417,25 @@ class CampaignPromotionService(models.Model):
     )
 
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    fee = models.DecimalField( max_digits=10, decimal_places=2)
+    
+    tax = models.DecimalField(max_digits=10, decimal_places=2)
 
     currency = EnumField(Currency, default=Currency.INR)
 
     promotion_status = EnumField(PromotionStatus, default=PromotionStatus.PENDING)
 
-    start_date = models.DateTimeField()
-
-    end_date = models.DateTimeField()
+    user_notes = models.TextField(blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table="campaign_promotion_services"
+        db_table = "campaign_promotion_services"
+
+    
 
     def clean(self):
 
@@ -420,18 +446,17 @@ class CampaignPromotionService(models.Model):
                 raise ValidationError(
                     {
                         "campaign": (
-                            "Promotional services are available only "
-                            "for crowdfunding campaigns."
+                            "Promotional services are available only for crowdfunding campaigns."
                         )
                     }
                 )
 
-            if self.campaign.campaign_status != CampaignStatus.VERIFIED:
+            # Campaign must be verified
+            if not self.campaign.is_verified():
                 raise ValidationError(
                     {
                         "campaign": (
-                            "Promotional services are available only "
-                            "for verified campaigns."
+                            "Promotional services are available only for verified campaigns."
                         )
                     }
                 )
@@ -440,40 +465,6 @@ class CampaignPromotionService(models.Model):
         if self.amount <= 0:
             raise ValidationError(
                 {"amount": "Promotion amount must be greater than zero."}
-            )
-
-        # Date validation
-        if self.start_date and self.end_date:
-            if self.end_date <= self.start_date:
-                raise ValidationError(
-                    {"end_date": ("End date must be greater than start date.")}
-                )
-
-        overlapping = (
-            CampaignPromotionService.objects.filter(
-                campaign=self.campaign,
-                service_type=self.service_type,
-                promotion_status__in=[
-                    PromotionStatus.PAID,
-                    PromotionStatus.SCHEDULED,
-                    PromotionStatus.ACTIVE,
-                ],
-            )
-            .exclude(uuid=self.uuid)
-            .filter(
-                start_date__lt=self.end_date,
-                end_date__gt=self.start_date,
-            )
-        )
-
-        if overlapping.exists():
-            raise ValidationError(
-                {
-                    "start_date": (
-                        "This campaign already has an overlapping "
-                        "promotion for this service."
-                    )
-                }
             )
 
     def save(self, *args, **kwargs):

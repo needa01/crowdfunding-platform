@@ -9,6 +9,7 @@ from campaigns.views import (
     my_campaign_detail,
     update_campaign,
     get_promotion_services,
+    create_campaign_promotion_payment,
 )
 
 urlpatterns = [
@@ -18,6 +19,11 @@ urlpatterns = [
         "get-campaign-services", get_promotion_services, name="get_promotion_services"
     ),
     path("create-campaign", create_campaign, name="create-campaign"),
+    path(
+        "create-campaign-promotion",
+        create_campaign_promotion_payment,
+        name="create_campaign_promotion_payment",
+    ),
     path(
         "update-campaigns/<slug:campaign_slug>",
         update_campaign,

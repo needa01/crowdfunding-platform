@@ -509,7 +509,7 @@ class PromotionServicePricingSerializer(serializers.ModelSerializer):
     class Meta:
         model = PromotionServicePricing
         fields = [
-            "uuid"
+            "uuid",
             "service_type",
             "minimum_amount",
         ]

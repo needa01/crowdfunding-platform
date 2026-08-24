@@ -6,17 +6,21 @@ from rest_framework.decorators import (
     permission_classes,
     authentication_classes,
 )
+from campaigns.models import RAZORPAY_FEE_PERCENTAGE, GST_PERCENTAGE
+from decimal import Decimal
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import OuterRef, Subquery
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from campaigns.models import Campaign
+from campaigns.models import Campaign, PromotionServicePricing, CampaignPromotionService
 from campaigns.serializers import (
     CampaignDetailSerializer,
     CampaignListSerializer,
     MyCampaignDetailSerializer,
     MyCampaignListSerializer,
+    PromotionServicePricingSerializer,
 )
 from crowdfunding.enums import (
     BeneficiaryGroupType,
@@ -29,13 +33,29 @@ from crowdfunding.enums import (
     UserType,
     VerificationStatus,
     VerificationType,
+    TransactionType,
+    PaymentGateway,
+    TransactionStatus,
+    Currency,
+    PromotionStatus,
 )
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from crowdfunding.permissions import IsCampaignCreator
 from donations.models import Donation
 from organizations.models import NGOProfile
+from payments.models import PaymentTransaction
 from verification.models import EntityVerificationRequest
+import razorpay
+from django.conf import settings
+
+
+razorpay_client = razorpay.Client(
+    auth=(
+        settings.RAZORPAY_KEY_ID,
+        settings.RAZORPAY_KEY_SECRET,
+    )
+)
 
 
 @api_view(["GET"])
@@ -400,6 +420,330 @@ def create_campaign(request):
     )
 
 
+@api_view(["POST"])
+@permission_classes([IsCampaignCreator])
+@transaction.atomic
+def create_campaign_promotion_payment(request):
+
+    campaign_slug = request.data.get("campaign_slug")
+    services_data = request.data.get("services")
+
+    # =========================================================
+    # 1. VALIDATE BASIC INPUT
+    # =========================================================
+
+    if not campaign_slug:
+        return Response(
+            {
+                "success": False,
+                "message": "campaign_slug is required.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if not services_data:
+        return Response(
+            {
+                "success": False,
+                "message": "services is required.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if not isinstance(services_data, list):
+        return Response(
+            {
+                "success": False,
+                "message": "services must be an array.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if len(services_data) == 0:
+        return Response(
+            {
+                "success": False,
+                "message": "At least one promotion service is required.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # =========================================================
+    # 2. GET CAMPAIGN
+    # =========================================================
+
+    try:
+        campaign = Campaign.objects.get(campaign_slug=campaign_slug)
+    except Campaign.DoesNotExist:
+
+        return Response(
+            {
+                "success": False,
+                "message": "Campaign not found.",
+            },
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    # =========================================================
+    # 3. CHECK CAMPAIGN OWNER
+    # =========================================================
+
+    if campaign.created_by != request.user:
+
+        return Response(
+            {
+                "success": False,
+                "message": "You are not allowed to promote this campaign.",
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # =========================================================
+    # 4. CHECK CAMPAIGN STATUS
+    # =========================================================
+
+    verification = EntityVerificationRequest.objects.filter(
+        campaign=campaign,
+        verification_type=VerificationType.CAMPAIGN,
+    ).first()
+
+    if not verification or verification.status != VerificationStatus.APPROVED:
+        return Response(
+            {
+                "success": False,
+                "message": "Only verified campaigns can be promoted.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # =========================================================
+    # 5. VALIDATE SERVICES
+    # =========================================================
+    validated_services = []
+
+    service_total = Decimal("0.00")
+    total_fee = Decimal("0.00")
+    total_tax = Decimal("0.00")
+
+    for item in services_data:
+
+        service_id = item.get("service_id")
+        amount = item.get("amount")
+        user_notes = item.get("user_notes", "")
+
+        if not service_id:
+            return Response(
+                {
+                    "success": False,
+                    "message": "service_id is required for every service.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if amount is None:
+            return Response(
+                {
+                    "success": False,
+                    "message": f"Amount is required for service {service_id}.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # -----------------------------------------------------
+        # GET PRICING MASTER
+        # -----------------------------------------------------
+
+        try:
+            pricing = PromotionServicePricing.objects.get(
+                uuid=service_id,
+                is_active=True,
+            )
+        except PromotionServicePricing.DoesNotExist:
+            return Response(
+                {
+                    "success": False,
+                    "message": (
+                        f"Promotion service {service_id} " "not found or inactive."
+                    ),
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # -----------------------------------------------------
+        # VALIDATE AMOUNT
+        # -----------------------------------------------------
+
+        try:
+            amount = Decimal(str(amount)).quantize(Decimal("0.01"))
+        except (InvalidOperation, TypeError, ValueError):
+
+            return Response(
+                {
+                    "success": False,
+                    "message": (
+                        f"Invalid amount for " f"{pricing.service_type.value}."
+                    ),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if amount <= 0:
+            return Response(
+                {
+                    "success": False,
+                    "message": "Amount must be greater than zero.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if amount < pricing.minimum_amount:
+            return Response(
+                {
+                    "success": False,
+                    "message": (
+                        f"Minimum budget for "
+                        f"{pricing.service_type.value} is "
+                        f"₹{pricing.minimum_amount}."
+                    ),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # -----------------------------------------------------
+        # CALCULATE RAZORPAY FEE
+        # -----------------------------------------------------
+
+        fee = (amount * RAZORPAY_FEE_PERCENTAGE / Decimal("100")).quantize(
+            Decimal("0.01")
+        )
+
+        # -----------------------------------------------------
+        # CALCULATE GST
+        # GST is calculated on the fee
+        # -----------------------------------------------------
+
+        tax = (fee * GST_PERCENTAGE / Decimal("100")).quantize(Decimal("0.01"))
+
+        # -----------------------------------------------------
+        # STORE VALIDATED SERVICE
+        # -----------------------------------------------------
+
+        validated_services.append(
+            {
+                "pricing": pricing,
+                "amount": amount,
+                "fee": fee,
+                "tax": tax,
+                "user_notes": user_notes,
+            }
+        )
+
+        service_total += amount
+        total_fee += fee
+        total_tax += tax
+
+    # =========================================================
+    # 6. CREATE PAYMENT TRANSACTION
+    # =========================================================
+
+    final_total = (service_total + total_fee + total_tax).quantize(Decimal("0.01"))
+    payment_transaction = PaymentTransaction.objects.create(
+        transaction_type=TransactionType.CAMPAIGN_PROMOTION,
+        amount=final_total,
+        status=TransactionStatus.PENDING,
+        gateway=PaymentGateway.RAZORPAY,
+        currency=Currency.INR,
+    )
+
+    # =========================================================
+    # 7. CREATE RAZORPAY ORDER
+    # =========================================================
+
+    try:
+
+        razorpay_order = razorpay_client.order.create(
+            {
+                "amount": int(final_total * Decimal("100")),
+                "currency": "INR",
+                "receipt": str(payment_transaction.uuid),
+            }
+        )
+
+    except Exception as exc:
+
+        print(
+            "RAZORPAY ORDER CREATION ERROR:",
+            exc,
+        )
+
+        raise
+
+    # =========================================================
+    # 8. SAVE RAZORPAY ORDER ID
+    # =========================================================
+
+    payment_transaction.gateway_order_id = razorpay_order["id"]
+
+    payment_transaction.save(
+        update_fields=[
+            "gateway_order_id",
+        ]
+    )
+    
+    # =========================================================
+    # 9. CREATE PROMOTION SERVICE RECORDS
+    # =========================================================
+
+    created_services = []
+
+    for item in validated_services:
+
+        promotion_service = CampaignPromotionService.objects.create(
+            campaign=campaign,
+            service_type=item["pricing"],
+            amount=item["amount"],
+            fee=item["fee"],
+            tax=item["tax"],
+            currency=Currency.INR,
+            promotion_status=PromotionStatus.PENDING,
+            user_notes=item["user_notes"],
+        )
+
+        created_services.append(promotion_service)
+
+
+    # =========================================================
+    # 10. LINK SERVICES TO PAYMENT TRANSACTION
+    # =========================================================
+
+    payment_transaction.campaign_promotion_services.set(
+        created_services
+    )
+    return Response(
+        {
+            "success": True,
+            "message": "Promotion payment order created.",
+            "data": {
+                "transaction_uuid": str(payment_transaction.uuid),
+                "razorpay_order_id": (razorpay_order["id"]),
+                "amount": final_total,
+                "amount_in_paise": int(final_total * Decimal("100")),
+                "currency": "INR",
+                "razorpay_key_id": (settings.RAZORPAY_KEY_ID),
+                "services": [
+                    {
+                        "promotion_service_uuid": str(service.uuid),
+                        "service_type": (service.service_type.service_type.value),
+                        "amount": service.amount,
+                    }
+                    for service in created_services
+                ],
+            },
+        },
+        status=status.HTTP_201_CREATED,
+    )
+
+
 @api_view(["PATCH"])
 @permission_classes([IsAuthenticated, IsCampaignCreator])
 def update_campaign(request, campaign_slug):
@@ -698,9 +1042,9 @@ def get_campaign_donations(request, campaign_slug):
 @permission_classes([AllowAny])
 def get_promotion_services(request):
 
-    services = PromotionServicePricing.objects.filter(
-        is_active=True
-    ).order_by("service_type")
+    services = PromotionServicePricing.objects.filter(is_active=True).order_by(
+        "service_type"
+    )
 
     serializer = PromotionServicePricingSerializer(services, many=True)
 
@@ -710,5 +1054,5 @@ def get_promotion_services(request):
             "message": "Promotion services retrieved successfully.",
             "data": serializer.data,
         },
-        status=status.HTTP_200_OK
+        status=status.HTTP_200_OK,
     )

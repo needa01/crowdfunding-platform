@@ -100,12 +100,10 @@ class PaymentTransaction(models.Model):
 
     transaction_type = EnumField(TransactionType)
 
-    campaign_service = models.ForeignKey(
+    campaign_promotion_services = models.ManyToManyField(
         "campaigns.CampaignPromotionService",
-        on_delete=models.CASCADE,
-        related_name="transactions",
-        blank=True,
-        null=True,
+        related_name="payment_transactions",
+        blank=True
     )
 
     donation = models.OneToOneField(
@@ -155,21 +153,7 @@ class PaymentTransaction(models.Model):
         decimal_places=2,
     )
 
-    gateway_fee = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        blank=True,
-        null=True,
-    )
-
     currency = EnumField(Currency)
-
-    gateway_fee = models.DecimalField(
-        max_digits=12,
-        decimal_places=2,
-        blank=True,
-        null=True,
-    )
 
     status = EnumField(
         TransactionStatus,

@@ -10,11 +10,7 @@ urlpatterns = [
         name="create_campaign_donation",
     ),
     
-    path(
-        "create-campaign-promotion",
-        views.create_campaign_promotion_payment,
-        name="create_campaign_promotion_payment"
-        ),
+    
 
     path(
         "my-donations",

@@ -88,9 +88,11 @@ class CanDonate(BasePermission):
             return True
 
         return user.profile_status in [
+            ProfileStatus.BASIC_INFO,
             ProfileStatus.PROFILE_COMPLETED,
             ProfileStatus.VERIFIED,
             ProfileStatus.VERIFICATION_PENDING,
+            ProfileStatus.VERIFICATION_REJECTED,
         ]
 
 

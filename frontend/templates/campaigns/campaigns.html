@@ -357,6 +357,25 @@
       .has-submenu:hover .submenu {
         display: block;
       }
+      .platform-donation-btn {
+        margin-top: 28px;
+        padding: 14px 28px;
+        border: none;
+        border-radius: 50px;
+        background: #ffc107;
+        color: #212529;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        transition: all 0.3s ease;
+      }
+
+      .platform-donation-btn:hover {
+        transform: translateY(-3px);
+        background: #ffca2c;
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+      }
     </style>
   </head>
 
@@ -387,6 +406,14 @@
       <h1>Discover Campaigns That Change Lives</h1>
 
       <p>Support NGOs, Individuals & Social Causes</p>
+
+      <button class="platform-donation-btn" onclick="goToPlatformDonation()">
+        💚 Support Crowdfunding
+      </button>
+
+      <div class="platform-donation-note">
+        Help us keep the platform running
+      </div>
     </div>
 
     <div class="container">
@@ -409,6 +436,19 @@
         profileMenu.style.display = "none";
       }
 
+      function goToPlatformDonation() {
+        const token = sessionStorage.getItem("access_token");
+
+        if (token) {
+          // User is already logged in
+          window.location.href = "/frontend/platform-donation";
+        } else {
+          // User is not logged in
+          // Send them to donor login/signup
+          window.location.href =
+            "/frontend/login?next=/frontend/platform-donation";
+        }
+      }
       // =========================
       // Profile Dropdown
       // =========================

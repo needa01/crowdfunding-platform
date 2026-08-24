@@ -350,14 +350,14 @@ def donation_razorpay_callback(request):
             # GET CAMPAIGN
             # =================================================
             if donation.donation_type != DonationType.CAMPAIGN:
-                raise ValueError(
-                    "This payment is not a campaign donation."
-                )
+    raise ValueError(
+        "This payment is not a campaign donation."
+    )
 
-            if donation.campaign_id is None:
-                raise ValueError(
-                    "Campaign donation has no campaign."
-                )
+if donation.campaign_id is None:
+    raise ValueError(
+        "Campaign donation has no campaign."
+    )
             campaign = donation.campaign
 
             # =================================================

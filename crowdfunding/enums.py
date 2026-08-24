@@ -14,6 +14,7 @@ class UserType(Enum):
     ADMIN = "Admin"
     SUPER_ADMIN = "Super Admin"
     DONOR = "Donor"
+    PLATFORM_OWNER="Platform Owner"
 
 class Status(Enum):
     ACTIVE = "Active"

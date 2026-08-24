@@ -29,7 +29,7 @@ from donations.models import Donation, DonationReceipt
 from donations.serializers import CreateDonationSerializer
 from donations.services import generate_donation_receipt
 from payments.models import PaymentTransaction
-from payments.services import create_razorpay_order
+from payments.services import create_razorpay_order, create_platform_razorpay_order
 from verification.models import EntityVerificationRequest
 from django.conf import settings
 
@@ -233,14 +233,13 @@ def create_campaign_donation(request):
         razorpay_order = create_razorpay_order(donation=donation)
 
     except Exception as exc:
-
-        donation.delete()
+        donation.status = DonationStatus.FAILED
+        donation.save(update_fields=["status", "updated_at"])
 
         return Response(
             {
                 "success": False,
                 "message": "Unable to create Razorpay order.",
-                "error": str(exc),
             },
             status=status.HTTP_502_BAD_GATEWAY,
         )
@@ -284,6 +283,139 @@ def create_campaign_donation(request):
         },
         status=status.HTTP_201_CREATED,
     )
+
+
+
+@api_view(["POST"])
+@permission_classes([CanDonate])
+@transaction.atomic
+def create_platform_donation(request):
+
+    # ========================================================
+    # REQUEST DATA
+    # ========================================================
+
+    amount = request.data.get("amount")
+    message = request.data.get("message", "")
+    is_anonymous = request.data.get("is_anonymous", False)
+
+    # ========================================================
+    # AMOUNT
+    # ========================================================
+
+    if amount is None:
+        return Response(
+            {
+                "success": False,
+                "message": "Donation amount is required.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        amount = Decimal(str(amount))
+    except Exception:
+        return Response(
+            {
+                "success": False,
+                "message": "Invalid donation amount.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if amount < Decimal("1"):
+        return Response(
+            {
+                "success": False,
+                "message": "Minimum platform donation amount is ₹1.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # ========================================================
+    # CREATE PLATFORM DONATION
+    # ========================================================
+
+    donation = Donation.objects.create(
+        donation_type=DonationType.PLATFORM,
+        campaign=None,
+        donor=request.user,
+        amount=amount,
+        currency=Currency.INR,
+        message=message,
+        is_anonymous=is_anonymous,
+        status=DonationStatus.PENDING,
+    )
+
+    # ========================================================
+    # CREATE RAZORPAY ORDER
+    # ========================================================
+
+    try:
+        razorpay_order = create_platform_razorpay_order(
+            donation=donation
+        )
+
+    except Exception as exc:
+        donation.status = DonationStatus.FAILED
+        donation.save(update_fields=["status", "updated_at"])
+
+        return Response(
+            {
+                "success": False,
+                "message": "Unable to create Razorpay order.",
+            },
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+    # ========================================================
+    # PAYMENT TRANSACTION
+    # ========================================================
+
+    payment_transaction = PaymentTransaction.objects.create(
+        transaction_type=TransactionType.DONATION,
+        donation=donation,
+        gateway=PaymentGateway.RAZORPAY,
+        gateway_order_id=razorpay_order["id"],
+        amount=amount,
+        currency=Currency.INR,
+        status=TransactionStatus.PENDING,
+        gateway_response={
+            "razorpay_order": razorpay_order,
+        },
+    )
+
+    # ========================================================
+    # RESPONSE
+    # ========================================================
+
+    return Response(
+        {
+            "success": True,
+            "message": "Platform donation initiated successfully.",
+            "data": {
+                "donation_uuid": str(donation.uuid),
+                "transaction_uuid": str(payment_transaction.uuid),
+                "donation_number": donation.unique_donation_number,
+
+                "razorpay_key_id": settings.RAZORPAY_KEY_ID,
+
+                "razorpay_order_id": razorpay_order["id"],
+
+                "amount": str(donation.amount),
+
+                "amount_in_paise": int(
+                    donation.amount * Decimal("100")
+                ),
+
+                "currency": donation.currency.value,
+
+                "payment_status":
+                    payment_transaction.status.value,
+            },
+        },
+        status=status.HTTP_201_CREATED,
+    )
+
 
 
 @api_view(["GET"])

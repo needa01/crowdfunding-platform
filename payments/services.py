@@ -58,7 +58,32 @@ def create_razorpay_order(*, donation):
 
     return razorpay_order
 
+def create_platform_razorpay_order(donation):
 
+    client = razorpay.Client(
+        auth=(
+            settings.RAZORPAY_KEY_ID,
+            settings.RAZORPAY_KEY_SECRET,
+        )
+    )
+
+    amount_in_paise = int(
+        donation.amount * Decimal("100")
+    )
+
+    order_data = {
+        "amount": amount_in_paise,
+        "currency": donation.currency.value,
+        "receipt": donation.unique_donation_number,
+        "notes": {
+            "donation_uuid": str(donation.uuid),
+            "donation_number": donation.unique_donation_number,
+            "donation_type": donation.donation_type.value,
+            "donor_uuid": str(donation.donor.uuid),
+        },
+    }
+
+    return client.order.create(data=order_data)
 # ============================================================
 # VERIFY CHECKOUT SIGNATURE
 # ============================================================

@@ -29,7 +29,9 @@ class Donation(models.Model):
     campaign = models.ForeignKey(
         "campaigns.Campaign",
         on_delete=models.CASCADE,
-        related_name="donations"
+        related_name="donations",
+        null=True,
+        blank=True
     )
 
     donor = models.ForeignKey(

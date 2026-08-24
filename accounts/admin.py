@@ -245,3 +245,141 @@ class IndividualProfileAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = ("uuid",)
+
+
+from django.contrib import admin
+
+from .models import BankAccount
+
+
+@admin.register(BankAccount)
+class BankAccountAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "account_holder_name",
+        "bank_name",
+        "display_account_number",
+        "display_account_type",
+        "ifsc_code",
+        "display_verification_status",
+        "verified_by",
+        "verified_at",
+        "created_at",
+    )
+
+    list_filter = (
+        "account_type",
+        "verification_status",
+        "bank_name",
+        "created_at",
+        "verified_at",
+    )
+
+    search_fields = (
+        "account_holder_name",
+        "bank_name",
+        "account_number",
+        "ifsc_code",
+        "branch_name",
+        "user__fullname",
+        "user__email",
+        "user__mobile",
+        "remarks",
+    )
+
+    autocomplete_fields = (
+        "user",
+        "verified_by",
+    )
+
+    readonly_fields = (
+        "uuid",
+        "created_at",
+        "updated_at",
+    )
+
+    ordering = (
+        "-created_at",
+    )
+
+    fieldsets = (
+        (
+            "Account Holder",
+            {
+                "fields": (
+                    "uuid",
+                    "user",
+                    "account_holder_name",
+                )
+            },
+        ),
+        (
+            "Bank Details",
+            {
+                "fields": (
+                    "bank_name",
+                    "account_number",
+                    "account_type",
+                    "ifsc_code",
+                    "branch_name",
+                    "cancelled_cheque",
+                )
+            },
+        ),
+        (
+            "Verification",
+            {
+                "fields": (
+                    "verification_status",
+                    "verified_by",
+                    "verified_at",
+                    "remarks",
+                )
+            },
+        ),
+        (
+            "Timestamps",
+            {
+                "fields": (
+                    "created_at",
+                    "updated_at",
+                )
+            },
+        ),
+    )
+
+    @admin.display(description="Account Number")
+    def display_account_number(self, obj):
+        if not obj.account_number:
+            return "-"
+
+        account_number = str(obj.account_number)
+
+        if len(account_number) <= 4:
+            return "****"
+
+        return f"{'*' * (len(account_number) - 4)}{account_number[-4:]}"
+
+    @admin.display(description="Account Type")
+    def display_account_type(self, obj):
+        value = obj.account_type
+
+        if value is None:
+            return "-"
+
+        if hasattr(value, "value"):
+            return value.value
+
+        return str(value)
+
+    @admin.display(description="Verification Status")
+    def display_verification_status(self, obj):
+        value = obj.verification_status
+
+        if value is None:
+            return "-"
+
+        if hasattr(value, "value"):
+            return value.value
+
+        return str(value)

@@ -111,6 +111,9 @@ def get_donation_details(request, donation_uuid):
     
 #payment views
 def donation_success_page(request):
+    return render(request, "payments/donation_success.html")
+
+def payment_success_page(request):
     return render(request, "payments/payment_success.html")
 
 #admin views

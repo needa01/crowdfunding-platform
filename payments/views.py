@@ -901,7 +901,7 @@ def donation_razorpay_callback(request):
     #     status=status.HTTP_200_OK,
     # )
 
-    return redirect(f"/frontend/payment/success?donation_uuid={donation.uuid}")
+    return redirect(f"/frontend/donation/success?donation_uuid={donation.uuid}")
 
 
 
@@ -1304,28 +1304,7 @@ def campaign_promotion_razorpay_callback(request):
     # 10. SUCCESS RESPONSE
     # =========================================================
 
-    return Response(
-        {
-            "success": True,
-            "message": (
-                "Campaign promotion payment "
-                "processed successfully."
-            ),
-            "data": {
-                "payment_id": razorpay_payment_id,
-                "order_id": razorpay_order_id,
-                "transaction_uuid": str(
-                    payment_transaction.uuid
-                ),
-                "promotion_uuids": [
-                    str(promotion.uuid)
-                    for promotion in promotions
-                ],
-                "payment_status": "SUCCESS",
-            },
-        },
-        status=status.HTTP_200_OK,
-    )
+    return redirect(f"/frontend/payment/success")
 
 
 

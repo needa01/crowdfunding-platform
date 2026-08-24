@@ -61,10 +61,17 @@ urlpatterns = [
     ),
     # payment urls
     path(
-        "payment/success",
+        "donation/success",
         views.donation_success_page,
         name="donation_success",
     ),
+    path(
+            "payment/success",
+            views.payment_success_page,
+            name="payment_success",
+        ),
+        
+    
     # admin urls
     path("admin/login", views.admin_login_view, name="admin_login"),
     path("admin/dashboard", views.admin_dashboard_view, name="admin_dashboard"),

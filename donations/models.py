@@ -52,10 +52,6 @@ class Donation(models.Model):
         decimal_places=2
     )
     
-    fee = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    
-    tax = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-
     currency = EnumField(
         Currency,
         default=Currency.INR

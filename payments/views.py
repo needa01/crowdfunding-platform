@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from django.views.decorators.csrf import (
     csrf_exempt,
 )
+from django.http import HttpResponseRedirect
 from django.utils import timezone
 from django.shortcuts import redirect
 from django.conf import settings
@@ -295,9 +296,6 @@ def donation_razorpay_callback(request):
             # Save complete Razorpay PAYMENT response
             payment_transaction.gateway_response = dict(razorpay_payment)
 
-            # Razorpay returns monetary values in paise
-            razorpay_fee = razorpay_payment.get("fee")
-            razorpay_tax = razorpay_payment.get("tax")
             
             
             # =================================================
@@ -311,12 +309,6 @@ def donation_razorpay_callback(request):
             if not donation:
                 raise ValueError("Payment transaction is not linked to a donation.")
             
-            
-            if razorpay_fee is not None:
-                donation.fee = Decimal(razorpay_fee) / Decimal("100")
-
-            if razorpay_tax is not None:
-                donation.tax = Decimal(razorpay_tax) / Decimal("100")
 
 
 
@@ -340,10 +332,14 @@ def donation_razorpay_callback(request):
             # =================================================
 
             donation.status = DonationStatus.SUCCESS
+            
+            donation.donated_at = timezone.now()
 
             donation.save(
                 update_fields=[
                     "status",
+                    "updated_at",
+                    "donated_at",
                 ]
             )
 
@@ -815,24 +811,6 @@ def platform_donation_razorpay_callback(request):
                 razorpay_payment
             )
 
-            # =================================================
-            # RAZORPAY FEE / TAX
-            # =================================================
-
-            razorpay_fee = razorpay_payment.get("fee")
-            razorpay_tax = razorpay_payment.get("tax")
-
-            if razorpay_fee is not None:
-                donation.fee = (
-                    Decimal(razorpay_fee)
-                    / Decimal("100")
-                )
-
-            if razorpay_tax is not None:
-                donation.tax = (
-                    Decimal(razorpay_tax)
-                    / Decimal("100")
-                )
 
             # =================================================
             # MARK PAYMENT SUCCESS
@@ -868,8 +846,6 @@ def platform_donation_razorpay_callback(request):
                 update_fields=[
                     "status",
                     "donated_at",
-                    "fee",
-                    "tax",
                     "updated_at",
                 ]
             )
@@ -940,29 +916,8 @@ def platform_donation_razorpay_callback(request):
     # =========================================================
     # 11. SUCCESS RESPONSE
     # =========================================================
-
-    return Response(
-        {
-            "success": True,
-            "message": (
-                "Platform donation verified and "
-                "processed successfully."
-            ),
-            "data": {
-                "payment_id": razorpay_payment_id,
-                "order_id": razorpay_order_id,
-                "transaction_uuid": str(
-                    payment_transaction.uuid
-                ),
-                "donation_uuid": str(
-                    donation.uuid
-                ),
-                "donation_number":
-                    donation.unique_donation_number,
-                "payment_status": "SUCCESS",
-            },
-        },
-        status=status.HTTP_200_OK,
+    return HttpResponseRedirect(
+        f"/frontend/donation/success?donation_uuid={donation.uuid}"
     )
 
 

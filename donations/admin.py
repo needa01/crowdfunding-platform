@@ -142,9 +142,7 @@ class DonationReceiptAdmin(admin.ModelAdmin):
         "receipt_num",
         "donation",
         "display_donation_number",
-        "generated_by",
         "generated_at",
-        "email_sent_at",
     )
 
     search_fields = (
@@ -153,25 +151,20 @@ class DonationReceiptAdmin(admin.ModelAdmin):
         "donation__campaign__campaign_name",
         "donation__donor__fullname",
         "donation__donor__email",
-        "generated_by__fullname",
-        "generated_by__email",
     )
 
     list_filter = (
         "generated_at",
-        "email_sent_at",
     )
 
     autocomplete_fields = (
         "donation",
-        "generated_by",
     )
 
     readonly_fields = (
         "uuid",
         "receipt_num",
         "generated_at",
-        "email_sent_at",
     )
 
     ordering = (
@@ -194,16 +187,7 @@ class DonationReceiptAdmin(admin.ModelAdmin):
             "Generation",
             {
                 "fields": (
-                    "generated_by",
                     "generated_at",
-                )
-            },
-        ),
-        (
-            "Email",
-            {
-                "fields": (
-                    "email_sent_at",
                 )
             },
         ),

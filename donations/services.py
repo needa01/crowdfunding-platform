@@ -130,7 +130,7 @@ def generate_donation_receipt(receipt):
         ),
         (
             "Amount",
-            f"{donation.currency} {donation.amount}"
+            f"{donation.amount} {donation.currency.value}"
         ),
         (
             "Campaign",

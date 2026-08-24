@@ -118,24 +118,10 @@ class DonationReceipt(models.Model):
         null=True,
         blank=True,
     )
-    
-
-    email_sent_at = models.DateTimeField(
-        blank=True,
-        null=True
-    )
 
     generated_at = models.DateTimeField(
         null=True,
         blank=True
-    )
-
-    generated_by = models.ForeignKey(
-        "accounts.CustomUser",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="generated_receipts"
     )
 
     class Meta:

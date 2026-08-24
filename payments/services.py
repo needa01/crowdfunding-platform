@@ -374,9 +374,7 @@ def complete_donation_payment(
 
     receipt, _ = DonationReceipt.objects.get_or_create(
         donation=donation,
-        defaults={
-            "generated_by": verified_by,
-        },
+        
     )
 
     # --------------------------------------------------------

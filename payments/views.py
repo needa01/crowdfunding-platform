@@ -20,6 +20,7 @@ from crowdfunding.enums import (
     DonationType,
     PaymentMethod,
     PromotionStatus,
+    PaymentGateway,
 )
 from payments.models import PaymentTransaction
 
@@ -59,22 +60,16 @@ razorpay_client = razorpay.Client(
 )
 
 
-
-
-
-
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def donation_razorpay_callback(request):
 
     # =========================================================
-    # 1. GET RAZORPAY CALLBACK DATA
+    # 1. GET CALLBACK DATA
     # =========================================================
 
     razorpay_payment_id = request.data.get("razorpay_payment_id")
-
     razorpay_order_id = request.data.get("razorpay_order_id")
-
     razorpay_signature = request.data.get("razorpay_signature")
 
     # =========================================================
@@ -93,12 +88,13 @@ def donation_razorpay_callback(request):
         missing_fields.append("razorpay_signature")
 
     if missing_fields:
-
         return Response(
             {
                 "success": False,
                 "message": "Required payment fields are missing.",
-                "errors": {"missing_fields": missing_fields},
+                "errors": {
+                    "missing_fields": missing_fields,
+                },
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
@@ -109,21 +105,38 @@ def donation_razorpay_callback(request):
 
     try:
         payment_transaction = PaymentTransaction.objects.get(
-            gateway_order_id=razorpay_order_id
+            gateway_order_id=razorpay_order_id,
+            gateway=PaymentGateway.RAZORPAY,
         )
 
     except PaymentTransaction.DoesNotExist:
-
         return Response(
             {
                 "success": False,
                 "message": "Payment transaction not found.",
+                "errors": {
+                    "razorpay_order_id": razorpay_order_id,
+                },
             },
             status=status.HTTP_404_NOT_FOUND,
         )
 
+    except PaymentTransaction.MultipleObjectsReturned:
+        print(
+            "MULTIPLE PAYMENT TRANSACTIONS FOUND:",
+            razorpay_order_id,
+        )
+
+        return Response(
+            {
+                "success": False,
+                "message": "Multiple payment transactions found for this order.",
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
     # =========================================================
-    # 4. CHECK IF ALREADY PROCESSED
+    # 4. CHECK ALREADY PROCESSED
     # =========================================================
 
     if payment_transaction.status == TransactionStatus.SUCCESS:
@@ -136,6 +149,7 @@ def donation_razorpay_callback(request):
                     "payment_id": payment_transaction.gateway_payment_id,
                     "order_id": payment_transaction.gateway_order_id,
                     "transaction_uuid": str(payment_transaction.uuid),
+                    "payment_status": TransactionStatus.SUCCESS.value,
                 },
             },
             status=status.HTTP_200_OK,
@@ -157,25 +171,39 @@ def donation_razorpay_callback(request):
 
     except razorpay.errors.SignatureVerificationError:
 
-        print("RAZORPAY SIGNATURE VERIFICATION FAILED")
+        print(
+            "RAZORPAY SIGNATURE VERIFICATION FAILED:",
+            razorpay_order_id,
+        )
 
         return Response(
             {
                 "success": False,
                 "message": "Invalid Razorpay payment signature.",
+                "errors": {
+                    "signature": "Signature verification failed.",
+                },
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    except Exception as exc:
+
+        print(
+            "RAZORPAY SIGNATURE ERROR:",
+            exc,
+        )
+
+        return Response(
+            {
+                "success": False,
+                "message": "Unable to verify Razorpay payment signature.",
+            },
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
     # =========================================================
     # 6. FETCH PAYMENT FROM RAZORPAY
-    # =========================================================
-    #
-    # Signature verification proves that the callback
-    # parameters are authentic.
-    #
-    # We additionally fetch the payment from Razorpay
-    # and check its status before updating our database.
     # =========================================================
 
     try:
@@ -184,20 +212,46 @@ def donation_razorpay_callback(request):
 
     except Exception as exc:
 
-        print("RAZORPAY PAYMENT FETCH ERROR:", exc)
+        print(
+            "RAZORPAY PAYMENT FETCH ERROR:",
+            exc,
+        )
 
         return Response(
             {
                 "success": False,
-                "message": "Unable to fetch payment from Razorpay.",
+                "message": "Unable to fetch payment details from Razorpay.",
             },
             status=status.HTTP_502_BAD_GATEWAY,
         )
 
-    print("RAZORPAY PAYMENT:", razorpay_payment)
+    if not razorpay_payment:
+        return Response(
+            {
+                "success": False,
+                "message": "Razorpay returned an empty payment response.",
+            },
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
 
     # =========================================================
-    # 7. VERIFY PAYMENT BELONGS TO OUR ORDER
+    # 7. VERIFY PAYMENT ID
+    # =========================================================
+
+    fetched_payment_id = razorpay_payment.get("id")
+
+    if fetched_payment_id != razorpay_payment_id:
+
+        return Response(
+            {
+                "success": False,
+                "message": "Payment ID mismatch.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # =========================================================
+    # 8. VERIFY ORDER ID
     # =========================================================
 
     fetched_order_id = razorpay_payment.get("order_id")
@@ -213,12 +267,10 @@ def donation_razorpay_callback(request):
         )
 
     # =========================================================
-    # 8. CHECK RAZORPAY PAYMENT STATUS
+    # 9. VERIFY PAYMENT STATUS
     # =========================================================
 
     razorpay_status = razorpay_payment.get("status")
-
-    print("RAZORPAY PAYMENT STATUS:", razorpay_status)
 
     if razorpay_status != "captured":
 
@@ -236,24 +288,60 @@ def donation_razorpay_callback(request):
         )
 
     # =========================================================
-    # 9. PROCESS PAYMENT ATOMICALLY
+    # 10. VERIFY PAYMENT AMOUNT
+    # =========================================================
+
+    razorpay_amount = razorpay_payment.get("amount")
+
+    if razorpay_amount is None:
+
+        return Response(
+            {
+                "success": False,
+                "message": "Payment amount was not returned by Razorpay.",
+            },
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
+    expected_amount = int(payment_transaction.amount * Decimal("100"))
+
+    if int(razorpay_amount) != expected_amount:
+
+        print(
+            "PAYMENT AMOUNT MISMATCH:",
+            "expected=",
+            expected_amount,
+            "received=",
+            razorpay_amount,
+        )
+
+        return Response(
+            {
+                "success": False,
+                "message": "Payment amount does not match the donation amount.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # =========================================================
+    # 11. PROCESS PAYMENT ATOMICALLY
     # =========================================================
 
     try:
 
         with transaction.atomic():
 
-            # ---------------------------------------------
-            # Lock transaction row
-            # ---------------------------------------------
+            # -------------------------------------------------
+            # Lock payment transaction
+            # -------------------------------------------------
 
             payment_transaction = PaymentTransaction.objects.select_for_update().get(
                 uuid=payment_transaction.uuid
             )
 
-            # ---------------------------------------------
+            # -------------------------------------------------
             # Prevent duplicate processing
-            # ---------------------------------------------
+            # -------------------------------------------------
 
             if payment_transaction.status == TransactionStatus.SUCCESS:
 
@@ -262,22 +350,62 @@ def donation_razorpay_callback(request):
                         "success": True,
                         "message": "Payment already processed.",
                         "data": {
-                            "payment_id": razorpay_payment_id,
-                            "order_id": razorpay_order_id,
+                            "payment_id": payment_transaction.gateway_payment_id,
+                            "order_id": payment_transaction.gateway_order_id,
                             "transaction_uuid": str(payment_transaction.uuid),
                         },
                     },
                     status=status.HTTP_200_OK,
                 )
 
-            # =========================================================
+            # -------------------------------------------------
+            # Get donation
+            # -------------------------------------------------
+
+            donation = payment_transaction.donation
+
+            if not donation:
+
+                raise ValueError("Payment transaction is not linked to a donation.")
+
+            # -------------------------------------------------
+            # Verify donation type
+            # -------------------------------------------------
+
+            if donation.donation_type != DonationType.CAMPAIGN:
+
+                raise ValueError("This payment is not a campaign donation.")
+
+            # -------------------------------------------------
+            # Verify campaign
+            # -------------------------------------------------
+
+            if donation.campaign_id is None:
+
+                raise ValueError("Campaign donation has no campaign.")
+
+            campaign = donation.campaign
+
+            if not campaign:
+
+                raise ValueError("Campaign associated with donation was not found.")
+
+            # -------------------------------------------------
+            # Get wallet with row lock
+            # -------------------------------------------------
+
+            try:
+
+                wallet = Wallet.objects.select_for_update().get(campaign=campaign)
+
+            except Wallet.DoesNotExist:
+
+                raise ValueError("Campaign wallet not found.")
+
+            # =================================================
             # SAVE RAZORPAY PAYMENT DETAILS
-            # =========================================================
+            # =================================================
 
-            payment_transaction.gateway_payment_id = razorpay_payment_id
-            payment_transaction.gateway_signature = razorpay_signature
-
-            # Payment method: upi / card / netbanking / wallet etc.
             razorpay_method = razorpay_payment.get("method")
 
             payment_method_map = {
@@ -289,30 +417,19 @@ def donation_razorpay_callback(request):
                 "bank_transfer": PaymentMethod.BANK_TRANSFER,
             }
 
+            payment_transaction.gateway_payment_id = razorpay_payment_id
+
+            payment_transaction.gateway_signature = razorpay_signature
+
             payment_transaction.payment_method = payment_method_map.get(
-                razorpay_method, PaymentMethod.OTHER
+                razorpay_method,
+                PaymentMethod.OTHER,
             )
 
-            # Save complete Razorpay PAYMENT response
             payment_transaction.gateway_response = dict(razorpay_payment)
 
-            
-            
-            # =================================================
-            # GET DONATION
-            # =================================================
-
-
-            donation = payment_transaction.donation
-
-
-            if not donation:
-                raise ValueError("Payment transaction is not linked to a donation.")
-            
-
-
-
             payment_transaction.status = TransactionStatus.SUCCESS
+
             payment_transaction.processed_at = timezone.now()
 
             payment_transaction.save(
@@ -326,13 +443,11 @@ def donation_razorpay_callback(request):
                 ]
             )
 
-
             # =================================================
             # MARK DONATION SUCCESS
             # =================================================
 
             donation.status = DonationStatus.SUCCESS
-            
             donation.donated_at = timezone.now()
 
             donation.save(
@@ -342,20 +457,6 @@ def donation_razorpay_callback(request):
                     "donated_at",
                 ]
             )
-
-            # =================================================
-            # GET CAMPAIGN
-            # =================================================
-            if donation.donation_type != DonationType.CAMPAIGN:
-                raise ValueError(
-                    "This payment is not a campaign donation."
-                )
-
-            if donation.campaign_id is None:
-                raise ValueError(
-                    "Campaign donation has no campaign."
-                )
-            campaign = donation.campaign
 
             # =================================================
             # UPDATE CAMPAIGN RAISED AMOUNT
@@ -373,8 +474,6 @@ def donation_razorpay_callback(request):
             # UPDATE CAMPAIGN WALLET
             # =================================================
 
-            wallet = Wallet.objects.select_for_update().get(campaign=campaign)
-
             wallet.balance = wallet.balance + donation.amount
 
             wallet.save(
@@ -384,19 +483,19 @@ def donation_razorpay_callback(request):
             )
 
             # =================================================
-            # RECEIPT
+            # CREATE RECEIPT
             # =================================================
+
+            # IMPORTANT:
+            # Do not generate the PDF here if you want
+            # receipt generation to be a separate API.
             #
-            # If your existing project generates the receipt
-            # here, call that service/function.
+            # Instead, create the receipt record here if
+            # your business logic requires it:
             #
-            # Example:
-            #
-            # create_donation_receipt(donation)
-            #
-            # Do NOT create duplicate receipts if one already
-            # exists.
-            # =================================================
+            # DonationReceipt.objects.get_or_create(
+            #     donation=donation
+            # )
 
     except PaymentTransaction.DoesNotExist:
 
@@ -408,19 +507,27 @@ def donation_razorpay_callback(request):
             status=status.HTTP_404_NOT_FOUND,
         )
 
-    except Wallet.DoesNotExist:
+    except ValueError as exc:
+
+        print(
+            "PAYMENT VALIDATION ERROR:",
+            exc,
+        )
 
         return Response(
             {
                 "success": False,
-                "message": "Campaign wallet not found.",
+                "message": str(exc),
             },
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     except Exception as exc:
 
-        print("PAYMENT PROCESSING ERROR:", exc)
+        print(
+            "PAYMENT PROCESSING ERROR:",
+            exc,
+        )
 
         return Response(
             {
@@ -431,27 +538,10 @@ def donation_razorpay_callback(request):
         )
 
     # =========================================================
-    # 10. RETURN REST RESPONSE
+    # 12. SUCCESS RESPONSE
     # =========================================================
 
-    # return Response(
-    #     {
-    #         "success": True,
-    #         "message": "Payment verified and donation processed successfully.",
-    #         "data": {
-    #             "payment_id": razorpay_payment_id,
-    #             "order_id": razorpay_order_id,
-    #             "transaction_uuid": str(payment_transaction.uuid),
-    #             "donation_uuid": str(donation.uuid),
-    #             "donation_number": donation.unique_donation_number,
-    #             "payment_status": "SUCCESS",
-    #         },
-    #     },
-    #     status=status.HTTP_200_OK,
-    # )
-
     return redirect(f"/frontend/donation/success?donation_uuid={donation.uuid}")
-
 
 
 @api_view(["POST"])
@@ -486,9 +576,7 @@ def platform_donation_razorpay_callback(request):
             {
                 "success": False,
                 "message": "Required payment fields are missing.",
-                "errors": {
-                    "missing_fields": missing_fields
-                },
+                "errors": {"missing_fields": missing_fields},
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
@@ -498,9 +586,7 @@ def platform_donation_razorpay_callback(request):
     # =========================================================
 
     try:
-        payment_transaction = PaymentTransaction.objects.select_related(
-            "donation"
-        ).get(
+        payment_transaction = PaymentTransaction.objects.select_related("donation").get(
             gateway_order_id=razorpay_order_id
         )
 
@@ -560,14 +646,9 @@ def platform_donation_razorpay_callback(request):
                 "data": {
                     "payment_id": payment_transaction.gateway_payment_id,
                     "order_id": payment_transaction.gateway_order_id,
-                    "transaction_uuid": str(
-                        payment_transaction.uuid
-                    ),
-                    "donation_uuid": str(
-                        donation.uuid
-                    ),
-                    "donation_number":
-                        donation.unique_donation_number,
+                    "transaction_uuid": str(payment_transaction.uuid),
+                    "donation_uuid": str(donation.uuid),
+                    "donation_number": donation.unique_donation_number,
                     "payment_status": "SUCCESS",
                 },
             },
@@ -590,10 +671,7 @@ def platform_donation_razorpay_callback(request):
 
     except razorpay.errors.SignatureVerificationError:
 
-        print(
-            "PLATFORM DONATION RAZORPAY SIGNATURE "
-            "VERIFICATION FAILED"
-        )
+        print("PLATFORM DONATION RAZORPAY SIGNATURE " "VERIFICATION FAILED")
 
         return Response(
             {
@@ -609,16 +687,11 @@ def platform_donation_razorpay_callback(request):
 
     try:
 
-        razorpay_payment = razorpay_client.payment.fetch(
-            razorpay_payment_id
-        )
+        razorpay_payment = razorpay_client.payment.fetch(razorpay_payment_id)
 
     except Exception as exc:
 
-        print(
-            "RAZORPAY PLATFORM PAYMENT FETCH ERROR:",
-            exc
-        )
+        print("RAZORPAY PLATFORM PAYMENT FETCH ERROR:", exc)
 
         return Response(
             {
@@ -628,10 +701,7 @@ def platform_donation_razorpay_callback(request):
             status=status.HTTP_502_BAD_GATEWAY,
         )
 
-    print(
-        "RAZORPAY PLATFORM PAYMENT:",
-        razorpay_payment
-    )
+    print("RAZORPAY PLATFORM PAYMENT:", razorpay_payment)
 
     # =========================================================
     # 8. VERIFY PAYMENT BELONGS TO OUR ORDER
@@ -655,10 +725,7 @@ def platform_donation_razorpay_callback(request):
 
     razorpay_status = razorpay_payment.get("status")
 
-    print(
-        "RAZORPAY PLATFORM PAYMENT STATUS:",
-        razorpay_status
-    )
+    print("RAZORPAY PLATFORM PAYMENT STATUS:", razorpay_status)
 
     if razorpay_status != "captured":
 
@@ -687,22 +754,15 @@ def platform_donation_razorpay_callback(request):
             # Lock transaction
             # ---------------------------------------------
 
-            payment_transaction = (
-                PaymentTransaction.objects
-                .select_for_update()
-                .get(
-                    uuid=payment_transaction.uuid
-                )
+            payment_transaction = PaymentTransaction.objects.select_for_update().get(
+                uuid=payment_transaction.uuid
             )
 
             # ---------------------------------------------
             # Prevent duplicate processing
             # ---------------------------------------------
 
-            if (
-                payment_transaction.status
-                == TransactionStatus.SUCCESS
-            ):
+            if payment_transaction.status == TransactionStatus.SUCCESS:
 
                 donation = payment_transaction.donation
 
@@ -711,18 +771,12 @@ def platform_donation_razorpay_callback(request):
                         "success": True,
                         "message": "Platform donation already processed.",
                         "data": {
-                            "payment_id":
-                                payment_transaction.gateway_payment_id,
-                            "order_id":
-                                payment_transaction.gateway_order_id,
-                            "transaction_uuid":
-                                str(payment_transaction.uuid),
-                            "donation_uuid":
-                                str(donation.uuid),
-                            "donation_number":
-                                donation.unique_donation_number,
-                            "payment_status":
-                                "SUCCESS",
+                            "payment_id": payment_transaction.gateway_payment_id,
+                            "order_id": payment_transaction.gateway_order_id,
+                            "transaction_uuid": str(payment_transaction.uuid),
+                            "donation_uuid": str(donation.uuid),
+                            "donation_number": donation.unique_donation_number,
+                            "payment_status": "SUCCESS",
                         },
                     },
                     status=status.HTTP_200_OK,
@@ -736,93 +790,60 @@ def platform_donation_razorpay_callback(request):
 
             if not donation:
 
-                raise ValueError(
-                    "Payment transaction is not linked to a donation."
-                )
+                raise ValueError("Payment transaction is not linked to a donation.")
 
             # ---------------------------------------------
             # Verify donation type again
             # ---------------------------------------------
 
-            if (
-                donation.donation_type
-                != DonationType.PLATFORM
-            ):
+            if donation.donation_type != DonationType.PLATFORM:
 
-                raise ValueError(
-                    "Payment is not a platform donation."
-                )
+                raise ValueError("Payment is not a platform donation.")
 
             if donation.campaign_id is not None:
 
-                raise ValueError(
-                    "Platform donation cannot be linked "
-                    "to a campaign."
-                )
+                raise ValueError("Platform donation cannot be linked " "to a campaign.")
 
             # =================================================
             # SAVE RAZORPAY PAYMENT DETAILS
             # =================================================
 
-            payment_transaction.gateway_payment_id = (
-                razorpay_payment_id
-            )
+            payment_transaction.gateway_payment_id = razorpay_payment_id
 
-            payment_transaction.gateway_signature = (
-                razorpay_signature
-            )
+            payment_transaction.gateway_signature = razorpay_signature
 
             # ---------------------------------------------
             # Payment method
             # ---------------------------------------------
 
-            razorpay_method = razorpay_payment.get(
-                "method"
-            )
+            razorpay_method = razorpay_payment.get("method")
 
             payment_method_map = {
-
                 "card": PaymentMethod.CARD,
-
                 "upi": PaymentMethod.UPI,
-
                 "netbanking": PaymentMethod.NETBANKING,
-
                 "wallet": PaymentMethod.WALLET,
-
                 "emi": PaymentMethod.EMI,
-
-                "bank_transfer":
-                    PaymentMethod.BANK_TRANSFER,
+                "bank_transfer": PaymentMethod.BANK_TRANSFER,
             }
 
-            payment_transaction.payment_method = (
-                payment_method_map.get(
-                    razorpay_method,
-                    PaymentMethod.OTHER
-                )
+            payment_transaction.payment_method = payment_method_map.get(
+                razorpay_method, PaymentMethod.OTHER
             )
 
             # ---------------------------------------------
             # Save complete Razorpay response
             # ---------------------------------------------
 
-            payment_transaction.gateway_response = dict(
-                razorpay_payment
-            )
-
+            payment_transaction.gateway_response = dict(razorpay_payment)
 
             # =================================================
             # MARK PAYMENT SUCCESS
             # =================================================
 
-            payment_transaction.status = (
-                TransactionStatus.SUCCESS
-            )
+            payment_transaction.status = TransactionStatus.SUCCESS
 
-            payment_transaction.processed_at = (
-                timezone.now()
-            )
+            payment_transaction.processed_at = timezone.now()
 
             payment_transaction.save(
                 update_fields=[
@@ -897,18 +918,12 @@ def platform_donation_razorpay_callback(request):
 
     except Exception as exc:
 
-        print(
-            "PLATFORM DONATION PAYMENT PROCESSING ERROR:",
-            exc
-        )
+        print("PLATFORM DONATION PAYMENT PROCESSING ERROR:", exc)
 
         return Response(
             {
                 "success": False,
-                "message": (
-                    "Payment was verified but could not "
-                    "be processed."
-                ),
+                "message": ("Payment was verified but could not " "be processed."),
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
@@ -919,7 +934,6 @@ def platform_donation_razorpay_callback(request):
     return HttpResponseRedirect(
         f"/frontend/donation/success?donation_uuid={donation.uuid}"
     )
-
 
 
 @api_view(["POST"])
@@ -960,9 +974,7 @@ def campaign_promotion_razorpay_callback(request):
             {
                 "success": False,
                 "message": "Required payment fields are missing.",
-                "errors": {
-                    "missing_fields": missing_fields
-                },
+                "errors": {"missing_fields": missing_fields},
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
@@ -981,9 +993,7 @@ def campaign_promotion_razorpay_callback(request):
         return Response(
             {
                 "success": False,
-                "message": (
-                    "Campaign promotion payment transaction not found."
-                ),
+                "message": ("Campaign promotion payment transaction not found."),
             },
             status=status.HTTP_404_NOT_FOUND,
         )
@@ -994,31 +1004,18 @@ def campaign_promotion_razorpay_callback(request):
 
     if payment_transaction.status == TransactionStatus.SUCCESS:
 
-        promotions = (
-            payment_transaction
-            .campaign_promotion_services
-            .all()
-        )
+        promotions = payment_transaction.campaign_promotion_services.all()
 
         return Response(
             {
                 "success": True,
-                "message": (
-                    "Promotion payment has already been verified."
-                ),
+                "message": ("Promotion payment has already been verified."),
                 "data": {
-                    "payment_id": (
-                        payment_transaction.gateway_payment_id
-                    ),
-                    "order_id": (
-                        payment_transaction.gateway_order_id
-                    ),
-                    "transaction_uuid": str(
-                        payment_transaction.uuid
-                    ),
+                    "payment_id": (payment_transaction.gateway_payment_id),
+                    "order_id": (payment_transaction.gateway_order_id),
+                    "transaction_uuid": str(payment_transaction.uuid),
                     "promotion_uuids": [
-                        str(promotion.uuid)
-                        for promotion in promotions
+                        str(promotion.uuid) for promotion in promotions
                     ],
                 },
             },
@@ -1040,16 +1037,12 @@ def campaign_promotion_razorpay_callback(request):
 
     except razorpay.errors.SignatureVerificationError:
 
-        print(
-            "RAZORPAY SIGNATURE VERIFICATION FAILED"
-        )
+        print("RAZORPAY SIGNATURE VERIFICATION FAILED")
 
         return Response(
             {
                 "success": False,
-                "message": (
-                    "Invalid Razorpay payment signature."
-                ),
+                "message": ("Invalid Razorpay payment signature."),
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
@@ -1059,11 +1052,7 @@ def campaign_promotion_razorpay_callback(request):
     # =========================================================
 
     try:
-        razorpay_payment = (
-            razorpay_client.payment.fetch(
-                razorpay_payment_id
-            )
-        )
+        razorpay_payment = razorpay_client.payment.fetch(razorpay_payment_id)
 
     except Exception as exc:
 
@@ -1075,9 +1064,7 @@ def campaign_promotion_razorpay_callback(request):
         return Response(
             {
                 "success": False,
-                "message": (
-                    "Unable to fetch payment from Razorpay."
-                ),
+                "message": ("Unable to fetch payment from Razorpay."),
             },
             status=status.HTTP_502_BAD_GATEWAY,
         )
@@ -1091,16 +1078,11 @@ def campaign_promotion_razorpay_callback(request):
     # 7. VERIFY ORDER ID
     # =========================================================
 
-    if (
-        razorpay_payment.get("order_id")
-        != razorpay_order_id
-    ):
+    if razorpay_payment.get("order_id") != razorpay_order_id:
         return Response(
             {
                 "success": False,
-                "message": (
-                    "Payment does not belong to this order."
-                ),
+                "message": ("Payment does not belong to this order."),
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
@@ -1116,9 +1098,7 @@ def campaign_promotion_razorpay_callback(request):
         return Response(
             {
                 "success": False,
-                "message": (
-                    "Payment has not been captured."
-                ),
+                "message": ("Payment has not been captured."),
                 "data": {
                     "payment_id": razorpay_payment_id,
                     "order_id": razorpay_order_id,
@@ -1140,40 +1120,25 @@ def campaign_promotion_razorpay_callback(request):
             # LOCK PAYMENT TRANSACTION
             # -------------------------------------------------
 
-            payment_transaction = (
-                PaymentTransaction.objects
-                .select_for_update()
-                .get(
-                    uuid=payment_transaction.uuid
-                )
+            payment_transaction = PaymentTransaction.objects.select_for_update().get(
+                uuid=payment_transaction.uuid
             )
 
             # -------------------------------------------------
             # DUPLICATE CHECK
             # -------------------------------------------------
 
-            if (
-                payment_transaction.status
-                == TransactionStatus.SUCCESS
-            ):
+            if payment_transaction.status == TransactionStatus.SUCCESS:
 
-                promotions = (
-                    payment_transaction
-                    .campaign_promotion_services
-                    .all()
-                )
+                promotions = payment_transaction.campaign_promotion_services.all()
 
                 return Response(
                     {
                         "success": True,
-                        "message": (
-                            "Promotion payment "
-                            "already processed."
-                        ),
+                        "message": ("Promotion payment " "already processed."),
                         "data": {
                             "promotion_uuids": [
-                                str(promotion.uuid)
-                                for promotion in promotions
+                                str(promotion.uuid) for promotion in promotions
                             ]
                         },
                     },
@@ -1184,39 +1149,28 @@ def campaign_promotion_razorpay_callback(request):
             # GET ALL PROMOTIONS
             # =================================================
 
-            promotions = (
-                payment_transaction
-                .campaign_promotion_services
-                .all()
-            )
+            promotions = payment_transaction.campaign_promotion_services.all()
 
             # QuerySet must use exists()
             if not promotions.exists():
 
                 raise ValueError(
-                    "Payment transaction is not linked "
-                    "to any campaign promotion."
+                    "Payment transaction is not linked " "to any campaign promotion."
                 )
 
             # =================================================
             # SAVE RAZORPAY DETAILS
             # =================================================
 
-            payment_transaction.gateway_payment_id = (
-                razorpay_payment_id
-            )
+            payment_transaction.gateway_payment_id = razorpay_payment_id
 
-            payment_transaction.gateway_signature = (
-                razorpay_signature
-            )
+            payment_transaction.gateway_signature = razorpay_signature
 
             # =================================================
             # PAYMENT METHOD
             # =================================================
 
-            razorpay_method = (
-                razorpay_payment.get("method")
-            )
+            razorpay_method = razorpay_payment.get("method")
 
             payment_method_map = {
                 "card": PaymentMethod.CARD,
@@ -1227,44 +1181,32 @@ def campaign_promotion_razorpay_callback(request):
                 "bank_transfer": PaymentMethod.BANK_TRANSFER,
             }
 
-            payment_transaction.payment_method = (
-                payment_method_map.get(
-                    razorpay_method,
-                    PaymentMethod.OTHER,
-                )
+            payment_transaction.payment_method = payment_method_map.get(
+                razorpay_method,
+                PaymentMethod.OTHER,
             )
 
             # =================================================
             # SAVE COMPLETE RAZORPAY RESPONSE
             # =================================================
 
-            payment_transaction.gateway_response = (
-                dict(razorpay_payment)
-            )
+            payment_transaction.gateway_response = dict(razorpay_payment)
 
             # =================================================
             # RAZORPAY FEE / TAX
             # =================================================
 
-            razorpay_fee = (
-                razorpay_payment.get("fee")
-            )
+            razorpay_fee = razorpay_payment.get("fee")
 
-            razorpay_tax = (
-                razorpay_payment.get("tax")
-            )
+            razorpay_tax = razorpay_payment.get("tax")
 
             # =================================================
             # MARK TRANSACTION SUCCESS
             # =================================================
 
-            payment_transaction.status = (
-                TransactionStatus.SUCCESS
-            )
+            payment_transaction.status = TransactionStatus.SUCCESS
 
-            payment_transaction.processed_at = (
-                timezone.now()
-            )
+            payment_transaction.processed_at = timezone.now()
 
             payment_transaction.save(
                 update_fields=[
@@ -1281,19 +1223,14 @@ def campaign_promotion_razorpay_callback(request):
             # MARK ALL PROMOTIONS ACTIVE
             # =================================================
 
-            promotions.update(
-                promotion_status=PromotionStatus.ACTIVE
-            )
+            promotions.update(promotion_status=PromotionStatus.ACTIVE)
 
     except PaymentTransaction.DoesNotExist:
 
         return Response(
             {
                 "success": False,
-                "message": (
-                    "Payment transaction "
-                    "no longer exists."
-                ),
+                "message": ("Payment transaction " "no longer exists."),
             },
             status=status.HTTP_404_NOT_FOUND,
         )
@@ -1301,8 +1238,7 @@ def campaign_promotion_razorpay_callback(request):
     except Exception as exc:
 
         print(
-            "CAMPAIGN PROMOTION PAYMENT "
-            "PROCESSING ERROR:",
+            "CAMPAIGN PROMOTION PAYMENT " "PROCESSING ERROR:",
             exc,
         )
 
@@ -1310,8 +1246,7 @@ def campaign_promotion_razorpay_callback(request):
             {
                 "success": False,
                 "message": (
-                    "Payment was verified but "
-                    "promotion could not be processed."
+                    "Payment was verified but " "promotion could not be processed."
                 ),
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -1322,8 +1257,3 @@ def campaign_promotion_razorpay_callback(request):
     # =========================================================
 
     return redirect(f"/frontend/payment/success")
-
-
-
-
-

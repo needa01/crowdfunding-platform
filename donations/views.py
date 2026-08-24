@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
 from django.http import FileResponse
@@ -65,12 +65,21 @@ def create_campaign_donation(request):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
+    
+    if not isinstance(campaign_slug, str) or not campaign_slug.strip():
+        return Response(
+            {
+                "success": False,
+                "message": "Invalid campaign slug.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     # ========================================================
     # AMOUNT
     # ========================================================
 
-    if amount is None:
+    if amount is None or amount == "":
 
         return Response(
             {
@@ -84,8 +93,16 @@ def create_campaign_donation(request):
 
         amount = Decimal(str(amount))
 
-    except Exception:
-
+    except (InvalidOperation, ValueError, TypeError):
+        return Response(
+            {
+                "success": False,
+                "message": "Invalid donation amount.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+    if not amount.is_finite():
         return Response(
             {
                 "success": False,
@@ -103,6 +120,58 @@ def create_campaign_donation(request):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
+        
+    
+    if amount.as_tuple().exponent < -2:
+        return Response(
+            {
+                "success": False,
+                "message": "Donation amount can have at most 2 decimal places.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+    if message is None:
+        message = ""
+
+    if not isinstance(message, str):
+        return Response(
+            {
+                "success": False,
+                "message": "Invalid donation message.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    message = message.strip()
+
+    # ========================================================
+    # 7. VALIDATE ANONYMOUS FLAG
+    # ========================================================
+
+    if isinstance(is_anonymous, str):
+        if is_anonymous.lower() == "true":
+            is_anonymous = True
+        elif is_anonymous.lower() == "false":
+            is_anonymous = False
+        else:
+            return Response(
+                {
+                    "success": False,
+                    "message": "is_anonymous must be true or false.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    elif not isinstance(is_anonymous, bool):
+        return Response(
+            {
+                "success": False,
+                "message": "is_anonymous must be true or false.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
 
     # ========================================================
     # CAMPAIGN
@@ -132,8 +201,7 @@ def create_campaign_donation(request):
         return Response(
             {
                 "success": False,
-                "message": "This campaign has expired "
-                "and is no longer accepting donations.",
+                "message": "This campaign has expired and is no longer accepting donations.",
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
@@ -213,53 +281,125 @@ def create_campaign_donation(request):
     # CREATE DONATION
     # ========================================================
 
-    donation = Donation.objects.create(
-        donation_type=DonationType.CAMPAIGN,
-        campaign=campaign,
-        donor=request.user,
-        amount=amount,
-        currency=Currency.INR,
-        message=message,
-        is_anonymous=is_anonymous,
-        status=DonationStatus.PENDING,
-    )
+    try:
+        donation = Donation.objects.create(
+            donation_type=DonationType.CAMPAIGN,
+            campaign=campaign,
+            donor=request.user,
+            amount=amount,
+            currency=Currency.INR,
+            message=message,
+            is_anonymous=is_anonymous,
+            status=DonationStatus.PENDING,
+        )
+
+    except IntegrityError:
+        return Response(
+            {
+                "success": False,
+                "message": "Unable to create donation.",
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    except Exception as exc:
+        print("DONATION CREATION ERROR:", exc)
+
+        return Response(
+            {
+                "success": False,
+                "message": "An unexpected error occurred while creating the donation.",
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
     # ========================================================
     # CREATE RAZORPAY ORDER
     # ========================================================
 
     try:
+        razorpay_order = create_razorpay_order(
+            donation=donation
+        )
 
-        razorpay_order = create_razorpay_order(donation=donation)
+        if not razorpay_order:
+            raise ValueError("Empty Razorpay order response.")
+
+        razorpay_order_id = razorpay_order.get("id")
+
+        if not razorpay_order_id:
+            raise ValueError("Razorpay order ID was not returned.")
 
     except Exception as exc:
+
+        print("RAZORPAY ORDER ERROR:", exc)
+
         donation.status = DonationStatus.FAILED
-        donation.save(update_fields=["status", "updated_at"])
+        donation.save(
+            update_fields=["status", "updated_at"]
+        )
 
         return Response(
             {
                 "success": False,
-                "message": "Unable to create Razorpay order.",
+                "message": "Unable to create Razorpay order. Please try again.",
             },
             status=status.HTTP_502_BAD_GATEWAY,
         )
+
 
     # ========================================================
     # PAYMENT TRANSACTION
     # ========================================================
 
-    payment_transaction = PaymentTransaction.objects.create(
-        transaction_type=TransactionType.DONATION,
-        donation=donation,
-        gateway=PaymentGateway.RAZORPAY,
-        gateway_order_id=razorpay_order["id"],
-        amount=amount,
-        currency=Currency.INR,
-        status=TransactionStatus.PENDING,
-        gateway_response={
-            "razorpay_order": razorpay_order,
-        },
-    )
+    try:
+
+        payment_transaction = PaymentTransaction.objects.create(
+            transaction_type=TransactionType.DONATION,
+            donation=donation,
+            gateway=PaymentGateway.RAZORPAY,
+            gateway_order_id=razorpay_order_id,
+            amount=amount,
+            currency=Currency.INR,
+            status=TransactionStatus.PENDING,
+            gateway_response={
+                "razorpay_order": razorpay_order,
+            },
+        )
+
+    except IntegrityError as exc:
+
+        print("PAYMENT TRANSACTION INTEGRITY ERROR:", exc)
+
+        donation.status = DonationStatus.FAILED
+        donation.save(
+            update_fields=["status", "updated_at"]
+        )
+
+        return Response(
+            {
+                "success": False,
+                "message": "Unable to initialize payment transaction.",
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    except Exception as exc:
+
+        print("PAYMENT TRANSACTION ERROR:", exc)
+
+        donation.status = DonationStatus.FAILED
+        donation.save(
+            update_fields=["status", "updated_at"]
+        )
+
+        return Response(
+            {
+                "success": False,
+                "message": "Unable to initialize payment transaction.",
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
     # ========================================================
     # RESPONSE
@@ -274,9 +414,11 @@ def create_campaign_donation(request):
                 "transaction_uuid": str(payment_transaction.uuid),
                 "donation_number": donation.unique_donation_number,
                 "razorpay_key_id": settings.RAZORPAY_KEY_ID,
-                "razorpay_order_id": razorpay_order["id"],
+                "razorpay_order_id": razorpay_order_id,
                 "amount": str(donation.amount),
-                "amount_in_paise": int(donation.amount * Decimal("100")),
+                "amount_in_paise": int(
+                    donation.amount * Decimal("100")
+                ),
                 "currency": donation.currency.value,
                 "payment_status": payment_transaction.status.value,
             },
@@ -623,6 +765,15 @@ def generate_receipt(request, donation_uuid):
     # =========================================================
     # 2. RECEIPT CAN ONLY BE GENERATED FOR SUCCESSFUL DONATION
     # =========================================================
+    
+    if donation.donor != request.user:
+        return Response(
+            {
+                "success": False,
+                "message": "You are not authorized to generate the receipt for this donation.",
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
 
     if donation.status != DonationStatus.SUCCESS:
         return Response(

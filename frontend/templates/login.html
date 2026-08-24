@@ -57,31 +57,31 @@
       <h2>Login</h2>
 
       <form id="loginForm">
+        <div style="text-align: center; margin-bottom: 20px">
+          <span>Don't have an account?</span>
+          <a
+            href="/frontend/signup/donor"
+            id="signupLink"
+            style="
+              color: #007bff;
+              text-decoration: none;
+              font-weight: bold;
+              margin-left: 5px;
+            "
+          >
+            Sign Up
+          </a>
+        </div>
         <input type="email" id="email" placeholder="Email" required />
 
         <input type="password" id="password" placeholder="Password" required />
-
+        
         <button type="submit">Login</button>
       </form>
 
       <br />
 
       <div id="message"></div>
-      <div style="text-align: center; margin-top: 20px">
-        <span>Don't have an account?</span>
-        <a
-          href="/frontend/signup/donor"
-          id="signupLink"
-          style="
-            color: #007bff;
-            text-decoration: none;
-            font-weight: bold;
-            margin-left: 5px;
-          "
-        >
-          Sign Up
-        </a>
-      </div>
     </div>
 
     <script>
@@ -100,7 +100,7 @@
           if (nextUrl) {
             document.getElementById("signupLink").href =
               "/frontend/signup/donor?next=" + encodeURIComponent(nextUrl);
-          };
+          }
           try {
             const response = await fetch("/api/accounts/login", {
               method: "POST",

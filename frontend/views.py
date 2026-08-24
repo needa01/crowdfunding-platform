@@ -8,6 +8,9 @@ def home(request):
 def login_page(request):
     return render(request, 'login.html')
 
+def change_password(request):
+    return render(request, 'change-password.html')
+
 def campaigns(request):
     return render(request, 'campaigns/campaigns.html')
 

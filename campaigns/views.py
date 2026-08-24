@@ -107,7 +107,6 @@ def campaign_list(request):
         )
         .distinct()
         .order_by(
-            "-is_featured",
             "-created_at",
         )
     )

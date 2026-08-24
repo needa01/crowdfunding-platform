@@ -89,7 +89,7 @@ class Withdrawal(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.campaign.title} - ₹{self.amount}"
+        return f"{self.campaign.campaign_name} - ₹{self.amount}"
 
 
 class PaymentTransaction(models.Model):

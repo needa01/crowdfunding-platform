@@ -67,6 +67,21 @@
       <br />
 
       <div id="message"></div>
+      <div style="text-align: center; margin-top: 20px">
+        <span>Don't have an account?</span>
+        <a
+          href="/frontend/signup/donor"
+          id="signupLink"
+          style="
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+            margin-left: 5px;
+          "
+        >
+          Sign Up
+        </a>
+      </div>
     </div>
 
     <script>
@@ -80,6 +95,12 @@
             password: document.getElementById("password").value,
           };
 
+          const urlParams = new URLSearchParams(window.location.search);
+          const nextUrl = urlParams.get("next");
+          if (nextUrl) {
+            document.getElementById("signupLink").href =
+              "/frontend/signup/donor?next=" + encodeURIComponent(nextUrl);
+          };
           try {
             const response = await fetch("/api/accounts/login", {
               method: "POST",
@@ -128,7 +149,11 @@
                 ) {
                   window.location.href = "/frontend/register/csr";
                 } else {
-                  window.location.href = "/frontend/campaigns";
+                  if (nextUrl) {
+                    window.location.href = nextUrl;
+                  } else {
+                    window.location.href = "/campaigns";
+                  }
                 }
               }, 1000);
             } else {

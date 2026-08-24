@@ -5,7 +5,8 @@ from campaigns.models import Campaign
 from crowdfunding.enums import CampaignStatus
 from verification.models import Document, EntityVerificationRequest
 
-from .models import PromotionServicePricing
+from .models import CampaignPromotionServiceTypes
+
 
 class CampaignListSerializer(serializers.ModelSerializer):
     organizer = serializers.SerializerMethodField()
@@ -36,15 +37,15 @@ class CampaignListSerializer(serializers.ModelSerializer):
             "days_left",
             "organizer",
         ]
-        
+
     def get_campaign_status(self, obj):
         if (
-                obj.end_date
-                and obj.end_date < timezone.localdate()
-                and obj.campaign_status == CampaignStatus.ACTIVE
+            obj.end_date
+            and obj.end_date < timezone.localdate()
+            and obj.campaign_status == CampaignStatus.ACTIVE
         ):
             return "Expired"
-    
+
         return obj.campaign_status.value
 
     def get_cover_photo(self, obj):
@@ -114,6 +115,7 @@ class MyCampaignListSerializer(serializers.ModelSerializer):
     verification_status = serializers.SerializerMethodField()
     verification_remarks = serializers.CharField(read_only=True)
     campaign_status = serializers.SerializerMethodField()
+
     class Meta:
         model = Campaign
         fields = [
@@ -142,6 +144,7 @@ class MyCampaignListSerializer(serializers.ModelSerializer):
             return "Expired"
 
         return obj.campaign_status.value
+
     def get_verification_status(self, obj):
         return obj.verification_status.value if obj.verification_status else None
 
@@ -217,7 +220,7 @@ class CampaignCreatorSerializer(serializers.Serializer):
             return request.build_absolute_uri(obj.profile_picture.url)
 
         return obj.profile_picture.url
-    
+
     def get_user_type(self, obj):
         return obj.user_type.value
 
@@ -301,7 +304,7 @@ class CampaignDetailSerializer(serializers.ModelSerializer):
             return "Expired"
 
         return obj.campaign_status.value
-    
+
     def get_verification(self, obj):
         verification = (
             obj.verification_requests.select_related("reviewed_by")
@@ -364,8 +367,7 @@ class CampaignDetailSerializer(serializers.ModelSerializer):
             "contact_person_name": ngo.contact_person_name,
             "contact_person_designation": ngo.contact_person_designation,
         }
-    
-    
+
     def get_wallet_balance(self, obj):
         if hasattr(obj, "wallet") and obj.wallet:
             return obj.wallet.balance
@@ -436,17 +438,17 @@ class MyCampaignDetailSerializer(serializers.ModelSerializer):
             "documents",
             "verification",
         ]
-        
+
     def get_campaign_status(self, obj):
-            if (
-                obj.end_date
-                and obj.end_date < timezone.localdate()
-                and obj.campaign_status == CampaignStatus.ACTIVE
-            ):
-                return "Expired"
-    
-            return obj.campaign_status.value
-        
+        if (
+            obj.end_date
+            and obj.end_date < timezone.localdate()
+            and obj.campaign_status == CampaignStatus.ACTIVE
+        ):
+            return "Expired"
+
+        return obj.campaign_status.value
+
     def get_verification(self, obj):
         verification = (
             obj.verification_requests.select_related("reviewed_by")
@@ -501,13 +503,11 @@ class MyCampaignDetailSerializer(serializers.ModelSerializer):
         }
 
 
-
-
-class PromotionServicePricingSerializer(serializers.ModelSerializer):
+class CampaignPromotionServiceTypesSerializer(serializers.ModelSerializer):
     service_type = serializers.CharField(source="service_type.value")
 
     class Meta:
-        model = PromotionServicePricing
+        model = CampaignPromotionServiceTypes
         fields = [
             "uuid",
             "service_type",

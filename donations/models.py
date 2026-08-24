@@ -75,6 +75,8 @@ class Donation(models.Model):
 
     class Meta:
         db_table = "donation"
+        verbose_name = "Donation"
+        verbose_name_plural = "Donations"
         ordering = ["-created_at"]
 
     def __str__(self):
@@ -129,6 +131,8 @@ class DonationReceipt(models.Model):
 
     class Meta:
         db_table = "donation_receipt"
+        verbose_name = "Donation Receipt"
+        verbose_name_plural = "Donation Receipts"
         ordering = ["-generated_at"]
 
     def __str__(self):

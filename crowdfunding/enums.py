@@ -111,10 +111,7 @@ class AccountType(Enum):
         SAVINGS = "Savings"
         CURRENT = "Current"
 
-class ServiceType(Enum):
-        FEATURED = "Featured"
-        GOOGLE_ADS = "Google Ads"
-        SOCIAL_MEDIA = "Social Media"
+
 
 class PromotionStatus(Enum):
     PENDING = "Pending"

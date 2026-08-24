@@ -44,7 +44,9 @@ class Wallet(models.Model):
     )
 
     class Meta:
-        db_table = "wallets"
+        db_table = "wallet"
+        verbose_name = "Wallet"
+        verbose_name_plural = "Wallets"
         ordering = ["-created_at"]
 
     def clean(self):
@@ -147,7 +149,9 @@ class WalletTransaction(models.Model):
     )
 
     class Meta:
-        db_table = "wallet_transactions"
+        db_table = "wallet_transaction"
+        verbose_name = "Wallet Transaction"
+        verbose_name_plural = "Wallet Transactions"
         ordering = ["-created_at"]
 
     def clean(self):

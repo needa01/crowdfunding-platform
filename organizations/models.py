@@ -124,6 +124,8 @@ class CSRProfile(models.Model):
 
     class Meta:
         db_table = "csr_profile"
+        verbose_name = "CSR Profile"
+        verbose_name_plural = "CSR Profiles"
 
     def __str__(self):
         return self.csr_name

@@ -23,7 +23,6 @@ from crowdfunding.enums import (
     CampaignType,
     KYC_Status,
     PromotionStatus,
-    ServiceType,
     UserType,
     UserType,
     Currency,
@@ -107,8 +106,6 @@ class Campaign(models.Model):
 
     campaign_status = EnumField(CampaignStatus, default=CampaignStatus.DRAFT)
 
-    is_featured = models.BooleanField(default=False)
-
     total_donors = models.PositiveIntegerField(default=0)
 
     total_views = models.PositiveIntegerField(default=0)
@@ -125,6 +122,8 @@ class Campaign(models.Model):
 
     class Meta:
         db_table = "campaign"
+        verbose_name = "Campaign"
+        verbose_name_plural = "Campaigns"
 
     def __str__(self):
         return self.campaign_name
@@ -385,11 +384,11 @@ class Campaign(models.Model):
         super().save(*args, **kwargs)
 
 
-class PromotionServicePricing(models.Model):
+class CampaignPromotionServiceTypes(models.Model):
 
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    service_type = EnumField(ServiceType, unique=True)
+    service_name = models.CharField(max_length=50)
 
     minimum_amount = models.DecimalField(max_digits=10, decimal_places=2)
 
@@ -399,7 +398,12 @@ class PromotionServicePricing(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = "campaign_promotion_services_pricing"
+        db_table = "campaign_promotion_services_type"
+        verbose_name = "Campaign Promotion Services Type"
+        verbose_name_plural = "Campaign Promotion Services Types"
+
+    def __str__(self):
+            return self.service_name
 
 
 class CampaignPromotionService(models.Model):
@@ -411,7 +415,7 @@ class CampaignPromotionService(models.Model):
     )
 
     service_type = models.ForeignKey(
-        PromotionServicePricing,
+        CampaignPromotionServiceTypes,
         on_delete=models.PROTECT,
         related_name="campaign_promotions"
     )
@@ -433,8 +437,12 @@ class CampaignPromotionService(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = "campaign_promotion_services"
+        db_table = "campaign_promotion_service"
+        verbose_name = "Campaign Promotion Service"
+        verbose_name_plural = "Campaign Promotion Services"
 
+    def __str__(self):
+        return f"{self.campaign.campaign_name} ({self.service_type.service_name})"
     
 
     def clean(self):

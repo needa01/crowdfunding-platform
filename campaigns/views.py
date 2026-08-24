@@ -14,13 +14,17 @@ from django.db.models import OuterRef, Subquery
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from campaigns.models import Campaign, PromotionServicePricing, CampaignPromotionService
+from campaigns.models import (
+    Campaign,
+    CampaignPromotionServiceTypes,
+    CampaignPromotionService,
+)
 from campaigns.serializers import (
     CampaignDetailSerializer,
     CampaignListSerializer,
     MyCampaignDetailSerializer,
     MyCampaignListSerializer,
-    PromotionServicePricingSerializer,
+    CampaignPromotionServiceTypesSerializer,
 )
 from crowdfunding.enums import (
     BeneficiaryGroupType,
@@ -554,11 +558,11 @@ def create_campaign_promotion_payment(request):
         # -----------------------------------------------------
 
         try:
-            pricing = PromotionServicePricing.objects.get(
+            pricing = CampaignPromotionServiceTypes.objects.get(
                 uuid=service_id,
                 is_active=True,
             )
-        except PromotionServicePricing.DoesNotExist:
+        except CampaignPromotionServiceTypes.DoesNotExist:
             return Response(
                 {
                     "success": False,
@@ -689,7 +693,7 @@ def create_campaign_promotion_payment(request):
             "gateway_order_id",
         ]
     )
-    
+
     # =========================================================
     # 9. CREATE PROMOTION SERVICE RECORDS
     # =========================================================
@@ -711,14 +715,11 @@ def create_campaign_promotion_payment(request):
 
         created_services.append(promotion_service)
 
-
     # =========================================================
     # 10. LINK SERVICES TO PAYMENT TRANSACTION
     # =========================================================
 
-    payment_transaction.campaign_promotion_services.set(
-        created_services
-    )
+    payment_transaction.campaign_promotion_services.set(created_services)
     return Response(
         {
             "success": True,
@@ -1042,11 +1043,11 @@ def get_campaign_donations(request, campaign_slug):
 @permission_classes([AllowAny])
 def get_promotion_services(request):
 
-    services = PromotionServicePricing.objects.filter(is_active=True).order_by(
-        "service_type"
-    )
+    services = CampaignPromotionServiceTypeseTypeseTypes.objects.filter(
+        is_active=True
+    ).order_by("service_type")
 
-    serializer = PromotionServicePricingSerializer(services, many=True)
+    serializer = CampaignPromotionServiceTypesSerializer(services, many=True)
 
     return Response(
         {

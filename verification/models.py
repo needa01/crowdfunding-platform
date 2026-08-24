@@ -24,6 +24,8 @@ class DocumentType(models.Model):
 
     class Meta:
         db_table = "document_type"
+        verbose_name = "Document Type"
+        verbose_name_plural = "Document Type"
 
         constraints = [
             models.UniqueConstraint(
@@ -94,6 +96,8 @@ class Document(models.Model):
 
     class Meta:
         db_table = "document"
+        verbose_name = "Document"
+        verbose_name_plural = "Documents"
         constraints = [
             models.UniqueConstraint(
                 fields=["user", "document_type", "purpose"],
@@ -203,7 +207,9 @@ class EntityVerificationRequest(models.Model):
     )
 
     class Meta:
-        db_table = "entity_verification_requests"
+        db_table = "verification_requests"
+        verbose_name = "Verification Requests"
+        verbose_name_plural = "Verification Requests"
         ordering = ["-created_at"]
 
         constraints = [
@@ -222,7 +228,7 @@ class EntityVerificationRequest(models.Model):
 
         # Individual / NGO / CSR verification
         if self.verification_type in (
-            VerificationType.INDIVIDUAL,
+            VerificationType.INDIVIDUAL_FUNDRAISER,
             VerificationType.NGO,
             VerificationType.CSR,
         ):

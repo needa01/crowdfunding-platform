@@ -53,10 +53,12 @@ class CustomUser(AbstractUser):
     deleted_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
+        db_table = "User"
+        verbose_name = "User"
         verbose_name_plural = "User"
 
     def __str__(self):
-        return self.mobile
+        return self.fullname
 
     @property
     def display_name(self):
@@ -81,6 +83,11 @@ class DonorProfile(models.Model):
 
     class Meta:
         db_table = "donor_profile"
+        verbose_name = "Donor Profile"
+        verbose_name_plural = "Donor Profiles"
+    
+    def __str__(self):
+        return f"{self.user.fullname ({self.user.user_type})}"
 
 
 class IndividualProfile(models.Model):
@@ -96,6 +103,11 @@ class IndividualProfile(models.Model):
 
     class Meta:
         db_table = "individual_fundraiser_profile"
+        verbose_name = "Indivdual Fundraiser Profile"
+        verbose_name_plural = "Individual Fundraiser Profiles"
+    
+    def __str__(self):
+           return f"{self.user.fullname ({self.user.user_type})}" 
 
 
 class OTP(models.Model):
@@ -120,6 +132,8 @@ class OTP(models.Model):
 
     class Meta:
         db_table = "otp"
+        verbose_name = "OTP"
+        verbose_name_plural = "OTP"
 
     def save(self, *args, **kwargs):
         if not self.expires_at:
@@ -163,13 +177,6 @@ class BankAccount(models.Model):
 
     branch_name = models.CharField(max_length=255, null=True)
 
-    # cancelled_cheque_document = models.ForeignKey(
-    #     "verification.Document",
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     blank=True,
-    #     related_name="bank_verification_documents"
-    # )
 
     cancelled_cheque = models.FileField(
         upload_to="documents/bank/cancelled-cheques/%Y/%m/",
@@ -199,6 +206,8 @@ class BankAccount(models.Model):
 
     class Meta:
         db_table = "bank_account"
+        verbose_name = "Bank Account"
+        verbose_name_plural = "Bank Accounts"
 
     def __str__(self):
         return f"{self.account_holder_name} - {self.bank_name}"

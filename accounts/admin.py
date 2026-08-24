@@ -19,8 +19,8 @@ class CustomUserAdmin(UserAdmin):
         "mobile",
         "fullname",
         "email",
-        "user_type",
-        "status",
+        "display_user_type",
+        "display_status",
         "is_mobile_verified",
         "is_staff",
         "is_active",
@@ -155,7 +155,30 @@ class CustomUserAdmin(UserAdmin):
             },
         ),
     )
+    
+    @admin.display(description="User Type")
+    def display_user_type(self, obj):
+        value = obj.user_type
 
+        if value is None:
+            return "-"
+
+        if hasattr(value, "value"):
+            return value.value
+
+        return str(value)
+
+    @admin.display(description="Status")
+    def display_status(self,obj):
+        value = obj.status
+    
+        if value is None:
+            return "-"
+    
+        if hasattr(value, "value"):
+            return value.value
+    
+        return str(value)
 
 
 

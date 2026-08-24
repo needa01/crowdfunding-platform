@@ -84,6 +84,8 @@ class Withdrawal(models.Model):
 
     class Meta:
         db_table = "withdrawal"
+        verbose_name = "Withdrawal"
+        verbose_name_plural = "Withdrawals"
         ordering = ["-created_at"]
 
     def __str__(self):
@@ -214,6 +216,8 @@ class PaymentTransaction(models.Model):
 
     class Meta:
         db_table = "transaction"
+        verbose_name = "Payment Transaction"
+        verbose_name_plural = "Payment Transactions"
         ordering = ["-created_at"]
 
     def clean(self):

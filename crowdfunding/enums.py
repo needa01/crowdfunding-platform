@@ -61,6 +61,7 @@ class CampaignCause(Enum):
 
 
 class BeneficiaryRelation(Enum):
+    SELF = "Self"
     MOTHER = "Mother"
     FATHER = "Father"
     BROTHER = "Brother"

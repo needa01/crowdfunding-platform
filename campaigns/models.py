@@ -42,7 +42,11 @@ GST_PERCENTAGE = Decimal("18.00")
 
 class Campaign(models.Model):
 
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    uuid = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -52,7 +56,10 @@ class Campaign(models.Model):
         blank=False,
     )
 
-    campaign_type = EnumField(CampaignType, default=CampaignType.CROWDFUNDING)
+    campaign_type = EnumField(
+        CampaignType,
+        default=CampaignType.CROWDFUNDING,
+    )
 
     ngo = models.ForeignKey(
         NGOProfile,
@@ -62,63 +69,143 @@ class Campaign(models.Model):
         related_name="campaigns",
     )
 
-    campaign_name = models.CharField(max_length=255)
+    campaign_name = models.CharField(
+        max_length=255,
+    )
 
-    campaign_slug = models.SlugField(unique=True, max_length=300)
+    campaign_slug = models.SlugField(
+        unique=True,
+        max_length=300,
+    )
 
     campaign_desc = models.TextField()
 
     cover_photo = models.ImageField(
-        upload_to="campaigns/covers/", null=True, blank=True
+        upload_to="campaigns/covers/",
+        null=True,
+        blank=True,
     )
 
-    goal_amount = models.DecimalField(max_digits=15, decimal_places=2)
+    goal_amount = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+    )
 
-    raised_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    raised_amount = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+    )
 
-    total_charges = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_charges = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+    )
 
-    amount_withdrawn = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    amount_withdrawn = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+    )
 
-    beneficiary_type = EnumField(BeneficiaryType)
+    beneficiary_type = EnumField(
+        BeneficiaryType,
+    )
 
-    beneficiary_group_type = EnumField(BeneficiaryGroupType)
+    beneficiary_group_type = EnumField(
+        BeneficiaryGroupType,
+    )
 
-    cause = EnumField(CampaignCause)
+    cause = EnumField(
+        CampaignCause,
+    )
 
-    beneficiary_name = models.CharField(max_length=255, null=True, blank=True)
+    beneficiary_name = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
 
-    beneficiary_relation = EnumField(BeneficiaryRelation, null=True, blank=True)
+    beneficiary_relation = EnumField(
+        BeneficiaryRelation,
+        null=True,
+        blank=True,
+    )
 
-    beneficiary_mobile = models.CharField(max_length=15, null=True, blank=True)
+    beneficiary_mobile = models.CharField(
+        max_length=15,
+        null=True,
+        blank=True,
+    )
 
-    beneficiary_member_count = models.PositiveIntegerField(null=True, blank=True)
+    beneficiary_member_count = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+    )
 
-    beneficiary_location = models.CharField(max_length=255, null=True, blank=True)
+    beneficiary_location = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
 
-    beneficiary_age = models.PositiveIntegerField(null=True, blank=True)
+    beneficiary_age = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+    )
 
-    hospital_name = models.CharField(max_length=255, null=True, blank=True)
+    hospital_name = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
 
-    hospital_location = models.CharField(max_length=255, null=True, blank=True)
+    hospital_location = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+    )
 
-    ailment = models.TextField(null=True, blank=True)
+    ailment = models.TextField(
+        null=True,
+        blank=True,
+    )
 
-    campaign_status = EnumField(CampaignStatus, default=CampaignStatus.DRAFT)
+    campaign_status = EnumField(
+        CampaignStatus,
+        default=CampaignStatus.DRAFT,
+    )
 
-    total_donors = models.PositiveIntegerField(default=0)
+    total_donors = models.PositiveIntegerField(
+        default=0,
+    )
 
-    total_views = models.PositiveIntegerField(default=0)
+    total_views = models.PositiveIntegerField(
+        default=0,
+    )
 
-    start_date = models.DateField(null=True, blank=True)
+    start_date = models.DateField(
+        null=True,
+        blank=True,
+    )
 
-    end_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(
+        null=True,
+        blank=True,
+    )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
 
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
 
-    is_deleted = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(
+        default=False,
+    )
 
     class Meta:
         db_table = "campaign"
@@ -127,53 +214,105 @@ class Campaign(models.Model):
 
     def __str__(self):
         return self.campaign_name
-    
-    
-    def is_verified(self):
-            verification = self.verification_requests.filter(
-                verification_type=VerificationType.CAMPAIGN
-            ).first()
-    
-            return (
-                verification is not None
-                and verification.status == VerificationStatus.APPROVED
-            )
 
+    # =========================================================
+    # CAMPAIGN VERIFICATION
+    # =========================================================
+
+    def is_verified(self):
+
+        verification = self.verification_requests.filter(
+            verification_type=VerificationType.CAMPAIGN
+        ).first()
+
+        return (
+            verification is not None
+            and verification.status == VerificationStatus.APPROVED
+        )
+
+    # =========================================================
+    # MODEL VALIDATION
+    # =========================================================
 
     def clean(self):
+
+        # =====================================================
+        # BASIC USER VALIDATION
+        # =====================================================
+
+        if self.created_by.user_type == UserType.DONOR:
+            raise ValidationError(
+                {"created_by": ("Donors cannot create campaigns.")}
+            )
+        
         # CSR users cannot create campaigns
         if self.created_by.user_type == UserType.CSR:
-            raise ValidationError({"created_by": "CSR users cannot create campaigns."})
-
-        # If user type is ngo then ngo field must be set
-        if self.created_by.user_type == UserType.NGO and not self.ngo:
-            raise ValidationError({"ngo": "NGO users must be associated with an NGO."})
-
-        # Individual campaign should not have NGO
-        if self.created_by.user_type == UserType.INDIVIDUAL_FUNDRAISER and self.ngo:
             raise ValidationError(
-                {"ngo": "Individual campaigns cannot be associated with an NGO."}
+                {"created_by": ("CSR users cannot create campaigns.")}
             )
 
+        # NGO users must have an NGO
+        if self.created_by.user_type == UserType.NGO and not self.ngo:
+            raise ValidationError(
+                {"ngo": ("NGO users must be associated with an NGO.")}
+            )
+
+        # Individual fundraisers cannot have an NGO
+        if self.created_by.user_type == UserType.INDIVIDUAL_FUNDRAISER and self.ngo:
+            raise ValidationError(
+                {"ngo": ("Individual campaigns cannot be associated with an NGO.")}
+            )
+
+        # =====================================================
+        # CSR CAMPAIGN VALIDATION
+        # =====================================================
+
         if self.campaign_type == CampaignType.CSR:
+
             if not self.ngo:
                 raise ValidationError(
-                    {"ngo": "CSR campaigns must be associated with an NGO."}
-                )
-            if self.created_by.user_type != UserType.NGO:
-                raise ValidationError(
-                    {"created_by": "CSR campaigns can only be created by NGO users."}
+                    {"ngo": ("CSR campaigns must be associated with an NGO.")}
                 )
 
+            if self.created_by.user_type != UserType.NGO:
+                raise ValidationError(
+                    {"created_by": ("CSR campaigns can only be created by NGO users.")}
+                )
+
+        # =====================================================
+        # INDIVIDUAL FUNDRAISER VALIDATION
+        # =====================================================
+
         if self.created_by.user_type == UserType.INDIVIDUAL_FUNDRAISER:
-            if self.beneficiary_type == BeneficiaryType.NGO:
+
+            # Individual fundraiser can only create
+            # crowdfunding campaigns
+            if self.campaign_type != CampaignType.CROWDFUNDING:
                 raise ValidationError(
                     {
-                        "beneficiary_type": "Individual fundraisers cannot choose NGO as the beneficiary."
+                        "campaign_type": (
+                            "Individual fundraisers can create only crowdfunding campaigns."
+                        )
                     }
                 )
 
+            # Individual fundraiser cannot select NGO
+            if self.beneficiary_type == BeneficiaryType.NGO:
+                raise ValidationError(
+                    {
+                        "beneficiary_type": (
+                            "Individual fundraisers cannot choose NGO as the beneficiary."
+                        )
+                    }
+                )
+
+        # =====================================================
+        # BENEFICIARY GROUP TYPE
+        # =====================================================
+
         if self.beneficiary_group_type == BeneficiaryGroupType.INDIVIDUAL:
+
+            # Individual beneficiary always has one member
             self.beneficiary_member_count = 1
 
         elif self.beneficiary_group_type == BeneficiaryGroupType.GROUP:
@@ -263,6 +402,7 @@ class Campaign(models.Model):
 
         if self.created_by.user_type == UserType.NGO:
 
+            # NGO cannot select "Me"
             if self.beneficiary_type == BeneficiaryType.ME:
                 raise ValidationError({"beneficiary_type": "NGOs cannot select Me."})
 
@@ -281,6 +421,10 @@ class Campaign(models.Model):
                         "beneficiary_type": "NGOs can only choose NGO, Others, Community, or Institution for CSR campaigns."
                     }
                 )
+
+            # -------------------------------------------------
+            # NGO + CROWDFUNDING
+            # -------------------------------------------------
 
             if (
                 self.campaign_type == CampaignType.CROWDFUNDING
@@ -308,6 +452,10 @@ class Campaign(models.Model):
 
         if self.beneficiary_type == BeneficiaryType.RELATIVE:
 
+            # -------------------------------------------------
+            # Relative MUST have a relation
+            # -------------------------------------------------
+
             if not self.beneficiary_relation:
                 raise ValidationError(
                     {
@@ -318,35 +466,148 @@ class Campaign(models.Model):
                 )
 
         else:
-            # Relation is only applicable for Relative
-            self.beneficiary_relation = None
+
+            # -------------------------------------------------
+            # All other beneficiary types MUST NOT have a
+            # beneficiary relation.
+            #
+            # IMPORTANT:
+            # Do NOT silently set it to None.
+            # Raise an error if the user supplied one.
+            # -------------------------------------------------
+
+            if self.beneficiary_relation is not None:
+                raise ValidationError(
+                    {
+                        "beneficiary_relation": (
+                            "Beneficiary relation is only allowed when beneficiary type is Relative."
+                        )
+                    }
+                )
+
+        # =====================================================
+        # START DATE
+        # =====================================================
+
+        today = timezone.localdate()
+
+        minimum_start_date = today + datetime.timedelta(days=1)
+
+        if self._state.adding:
+
+            if not self.start_date:
+                self.start_date = minimum_start_date
+
+            elif self.start_date < minimum_start_date:
+                raise ValidationError(
+                    {"start_date": ("Start date must be at least tomorrow.")}
+                )
+
+        # =====================================================
+        # END DATE
+        # =====================================================
+
+        if self.end_date:
+
+            if self.end_date < (self.start_date + datetime.timedelta(days=7)):
+                raise ValidationError(
+                    {
+                        "end_date": (
+                            "Campaign must run for at least "
+                            "7 days from the start date."
+                        )
+                    }
+                )
+
+        # =====================================================
+        # MEDICAL CAUSE
+        # =====================================================
+
+        if self.cause == CampaignCause.MEDICAL:
+
+            if not self.hospital_name:
+                raise ValidationError({"hospital_name": ("Hospital name is required.")})
+
+            if not self.hospital_location:
+                raise ValidationError(
+                    {"hospital_location": ("Hospital location is required.")}
+                )
+
+            if not self.ailment:
+                raise ValidationError({"ailment": ("Ailment is required.")})
+
+        else:
+
+            # Medical fields must be NULL for non-medical
+            # campaigns.
+            self.hospital_name = None
+            self.hospital_location = None
+            self.ailment = None
+
+    # =========================================================
+    # SAVE
+    # =========================================================
 
     def save(self, *args, **kwargs):
+
+        # =====================================================
+        # INDIVIDUAL BENEFICIARY
+        # =====================================================
 
         if self.beneficiary_group_type == BeneficiaryGroupType.INDIVIDUAL:
             self.beneficiary_member_count = 1
 
-        # Generate slug only when creating the campaign
+        # =====================================================
+        # GROUP BENEFICIARY
+        # =====================================================
+
+        elif self.beneficiary_group_type == BeneficiaryGroupType.GROUP:
+
+            # Age must ALWAYS be NULL for group beneficiaries.
+            #
+            # This is enforced here as well as in clean()
+            # so that stale age data cannot remain when
+            # changing an existing campaign from Individual
+            # to Group.
+            self.beneficiary_age = None
+
+        # =====================================================
+        # GENERATE CAMPAIGN SLUG
+        # =====================================================
+
         if not self.campaign_slug:
+
             base_slug = slugify(self.campaign_name)
 
             while True:
-                timestamp = timezone.now().strftime("%Y%m%d%H%M%S%f")
-                random_suffix = secrets.token_hex(3)  # 6 random hex characters
 
-                slug = f"{base_slug}-{timestamp}-{random_suffix}"
+                timestamp = timezone.now().strftime("%Y%m%d%H%M%S%f")
+
+                # 6 random hexadecimal characters
+                random_suffix = secrets.token_hex(3)
+
+                slug = f"{base_slug}-" f"{timestamp}-" f"{random_suffix}"
 
                 if not Campaign.objects.filter(campaign_slug=slug).exists():
+
                     self.campaign_slug = slug
                     break
 
+        # =====================================================
+        # INDIVIDUAL FUNDRAISER
+        # =====================================================
+
         if self.created_by.user_type == UserType.INDIVIDUAL_FUNDRAISER:
 
+            # Individual fundraisers can only create
+            # crowdfunding campaigns.
             self.campaign_type = CampaignType.CROWDFUNDING
 
             if self.beneficiary_type == BeneficiaryType.ME:
 
                 self.beneficiary_group_type = BeneficiaryGroupType.INDIVIDUAL
+
+                self.beneficiary_member_count = 1
 
                 self.beneficiary_relation = None
 
@@ -363,23 +624,56 @@ class Campaign(models.Model):
                 if profile:
                     self.beneficiary_location = profile.address
 
-                self.beneficiary_member_count = 1
+        # =====================================================
+        # NGO
+        # =====================================================
 
         if self.created_by.user_type == UserType.NGO:
 
+            # NGO campaigns do not have beneficiary relation
             self.beneficiary_relation = None
+
+        # =====================================================
+        # NON-MEDICAL CAMPAIGN
+        # =====================================================
 
         if self.cause != CampaignCause.MEDICAL:
 
             self.hospital_name = None
             self.hospital_location = None
             self.ailment = None
-        print(self.cause)
-        print(self.hospital_name)
-        print(self.hospital_location)
-        print(self.ailment)
-        # Run model validations
+
+        # =====================================================
+        # GROUP AGE
+        # =====================================================
+
+        if self.beneficiary_group_type == BeneficiaryGroupType.GROUP:
+
+            # Never store age for group beneficiaries.
+            self.beneficiary_age = None
+
+        # =====================================================
+        # RELATION
+        # =====================================================
+
+        if self.beneficiary_type != BeneficiaryType.RELATIVE:
+
+            # Only Relative can have a relation.
+            #
+            # OTHERS -> NULL
+            # FRIEND  -> NULL
+            # ME      -> NULL
+            self.beneficiary_relation = None
+
+        # =====================================================
+        # MODEL VALIDATION
+        # =====================================================
+
         self.full_clean()
+
+        # =====================================================
+        # DATABASE SAVE
+        # =====================================================
 
         super().save(*args, **kwargs)
 
@@ -403,7 +697,7 @@ class CampaignPromotionServiceTypes(models.Model):
         verbose_name_plural = "Campaign Promotion Services Types"
 
     def __str__(self):
-            return self.service_name
+        return self.service_name
 
 
 class CampaignPromotionService(models.Model):
@@ -417,13 +711,13 @@ class CampaignPromotionService(models.Model):
     service_type = models.ForeignKey(
         CampaignPromotionServiceTypes,
         on_delete=models.PROTECT,
-        related_name="campaign_promotions"
+        related_name="campaign_promotions",
     )
 
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    
-    fee = models.DecimalField( max_digits=10, decimal_places=2)
-    
+
+    fee = models.DecimalField(max_digits=10, decimal_places=2)
+
     tax = models.DecimalField(max_digits=10, decimal_places=2)
 
     currency = EnumField(Currency, default=Currency.INR)
@@ -443,7 +737,6 @@ class CampaignPromotionService(models.Model):
 
     def __str__(self):
         return f"{self.campaign.campaign_name} ({self.service_type.service_name})"
-    
 
     def clean(self):
 

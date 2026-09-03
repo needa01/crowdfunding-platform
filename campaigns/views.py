@@ -334,6 +334,15 @@ def create_campaign(request):
 
     beneficiary_type = request.data.get("beneficiary_type")
 
+    if not beneficiary_type:
+        return Response(
+            {
+                "success": False,
+                "message": "beneficiary_type is required.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
     if beneficiary_type != BeneficiaryType.ME.value:
 
         campaign_data["beneficiary_group_type"] = request.data.get(

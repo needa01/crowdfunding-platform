@@ -2,7 +2,6 @@ from django.contrib import admin
 
 from .models import (
     Campaign,
-    CampaignPromotionServiceTypes,
     CampaignPromotionService,
 )
 
@@ -178,50 +177,6 @@ class CampaignAdmin(admin.ModelAdmin):
         return str(value)
 
 
-@admin.register(CampaignPromotionServiceTypes)
-class CampaignPromotionServiceTypesAdmin(admin.ModelAdmin):
-    list_display = (
-        "display_service_name",
-        "minimum_amount",
-        "is_active",
-        "created_at",
-        "updated_at",
-    )
-
-    list_filter = (
-        "service_name",
-        "is_active",
-    )
-
-    search_fields = (
-        "service_name",
-    )
-
-    readonly_fields = (
-        "uuid",
-        "created_at",
-        "updated_at",
-    )
-
-    ordering = (
-        "service_name",
-    )
-    
-
-    @admin.display(description="Service Type")
-    def display_service_name(self, obj):
-        value = obj.service_name
-    
-        if value is None:
-            return "-"
-    
-        if hasattr(value, "value"):
-            return value.value
-    
-        return str(value)
-    
-
-
 
 @admin.register(CampaignPromotionService)
 class CampaignPromotionServiceAdmin(admin.ModelAdmin):
@@ -252,7 +207,6 @@ class CampaignPromotionServiceAdmin(admin.ModelAdmin):
 
     autocomplete_fields = (
         "campaign",
-        "service_type",
     )
 
     readonly_fields = (

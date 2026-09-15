@@ -124,7 +124,7 @@
         window.location.href = "/frontend/admin/login";
       }
 
-      const BASE_URL = "http://127.0.0.1:8000"; // Change to your backend URL
+      const BASE_URL = process.env.API_BASE_URL; // Change to your backend URL
 
       const params = new URLSearchParams(window.location.search);
 

@@ -250,7 +250,7 @@
 
             <!-- SUBTOTAL -->
             <div class="summary-row">
-              <span> Subtotal </span>
+              <span> Promotion Budget </span>
 
               <strong id="subtotal"> ₹0 </strong>
             </div>
@@ -873,91 +873,83 @@
 
         if (selected.length === 0) {
           selectedServices.innerHTML = `
-
-                <p class="text-muted">
-
-                    No services selected.
-
-                </p>
-
-            `;
+            <p class="text-muted">
+                No services selected.
+            </p>
+        `;
         } else {
           let html = "";
 
           selected.forEach((item) => {
             const service = item.service;
-
             const amount = Number(item.amount || 0);
 
             serviceTotal += amount;
 
             html += `
+                <div class="selected-service">
+                    <div class="d-flex justify-content-between">
+                        <span class="selected-service-name">
+                            ${service.service_type}
+                        </span>
 
-                        <div class="selected-service">
+                        <strong>
+                            ${formatCurrency(amount)}
+                        </strong>
+                    </div>
 
-                            <div
-                                class="d-flex justify-content-between"
-                            >
-
-                                <span
-                                    class="selected-service-name"
-                                >
-
-                                    ${service.service_type}
-
-                                </span>
-
-                                <strong>
-
-                                    ${formatCurrency(amount)}
-
-                                </strong>
-
-                            </div>
-
-                            <div
-                                class="minimum-help mt-1"
-                            >
-
-                                Your promotion budget
-
-                            </div>
-
-                        </div>
-
-                    `;
+                    <div class="minimum-help mt-1">
+                        Promotion budget
+                    </div>
+                </div>
+            `;
           });
 
           selectedServices.innerHTML = html;
         }
 
-        /* ====================================================
-           PLATFORM FEE
+        // ============================================================
+        // PAYMENT CALCULATION
+        //
+        // Promotion budget = amount actually available for promotion
+        //
+        // Customer pays:
+        // Promotion Budget + Razorpay Fee + GST
+        //
+        // Using the agreed gross-up calculation:
+        // Total = Promotion Budget / 0.9764
+        // ============================================================
 
-           Example: 5%
+        // ============================================================
+        // PAYMENT CALCULATION
+        // ============================================================
 
-           Change according to your backend
-           business rules.
-        ==================================================== */
+        // Promotion budget
+        const serviceTotalRounded = Math.round(serviceTotal * 100) / 100;
 
-        const platformFeeAmount = serviceTotal * 0.02;
+        // Gross-up calculation
+        // 2% Razorpay fee + 18% GST on Razorpay fee
+        //
+        // 1 - 0.02 - (0.02 * 0.18) = 0.9764
+        //
+        // IMPORTANT:
+        // Always round UP to the next paisa.
+        const finalTotal =
+          serviceTotalRounded > 0
+            ? Math.ceil((serviceTotalRounded / 0.9764) * 100) / 100
+            : 0;
 
-        /* ====================================================
-           GST
+        // Calculate fee from final customer payment
+        const platformFeeAmount = Math.round(finalTotal * 0.02 * 100) / 100;
 
-           Example: 18%
+        // Calculate GST on fee
+        const taxAmount = Math.round(platformFeeAmount * 0.18 * 100) / 100;
 
-           Change according to your
-           actual tax configuration.
-        ==================================================== */
+        // ============================================================
+        // DISPLAY
+        // ============================================================
 
-        const taxableAmount = platformFeeAmount;
-
-        const taxAmount = taxableAmount * 0.18;
-
-        const finalTotal = serviceTotal + platformFeeAmount + taxAmount;
-
-        subtotal.innerText = formatCurrency(serviceTotal);
+        subtotal.innerText = formatCurrency(serviceTotalRounded);
 
         platformFee.innerText = formatCurrency(platformFeeAmount);
 
@@ -965,11 +957,9 @@
 
         total.innerText = formatCurrency(finalTotal);
 
-        /*
-         * Only enable payment if:
-         * 1. At least one service selected
-         * 2. Every service has valid budget
-         */
+        // ============================================================
+        // VALIDATION
+        // ============================================================
 
         let allValid = selected.length > 0;
 
@@ -985,7 +975,6 @@
 
         payButton.disabled = !allValid;
       }
-
       /* ============================================================
        CREATE PROMOTION
     ============================================================ */
@@ -1046,10 +1035,8 @@
            */
 
           const services = selected.map((item) => ({
-            service_id: item.service.uuid,
-
+            service_type: item.service.service_type,
             amount: Number(item.amount).toFixed(2),
-
             user_notes: item.user_notes.trim(),
           }));
 
@@ -1141,14 +1128,11 @@
           return;
         }
         const razorpayAmountPaise = Math.round(
-            Number(promotion.amount_in_paise)
+          Number(promotion.amount_in_paise),
         );
 
         console.log("Razorpay amount in paise:", razorpayAmountPaise);
-        console.log(
-            "Razorpay amount in rupees:",
-            razorpayAmountPaise / 100
-        );
+        console.log("Razorpay amount in rupees:", razorpayAmountPaise / 100);
 
         const options = {
           key: promotion.razorpay_key_id,

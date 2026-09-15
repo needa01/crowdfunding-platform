@@ -165,11 +165,32 @@
         color: #b91c1c;
         border: 1px solid #ef4444;
       }
+      .back-btn {
+        background: transparent;
+        border: 1px solid #d1d5db;
+        color: #374151;
+        padding: 9px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-bottom: 20px;
+        transition: 0.2s ease;
+      }
+
+      .back-btn:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+      }
     </style>
   </head>
 
   <body>
     <div class="profile-container">
+      <button type="button" class="back-btn" onclick="history.back()">
+        ← Back
+      </button>
+
       <h2>My Profile</h2>
 
       <!-- Tabs -->
@@ -302,75 +323,213 @@
         <h3>Upload Documents for Profile Verification</h3>
 
         <p style="margin-top: 8px; color: #666; font-size: 14px">
-          Upload the mandatory documents below. You may also upload optional
-          certificates such as 12A, 80G, CSR-1 and FCRA.
+          Upload all mandatory documents required for profile verification.
         </p>
 
-        <div id="required-documents-container"></div>
-        <!-- ===================================================== -->
-        <!-- OPTIONAL DOCUMENTS -->
-        <!-- ===================================================== -->
+        <div id="required-documents-container">
+          <!-- ========================= -->
+          <!-- AADHAAR CARD -->
+          <!-- ========================= -->
+          <div class="card">
+            <h4>
+              Contact Person's Aadhaar Card
+              <span style="color: red">*</span>
+            </h4>
 
-        <div class="card">
-          <h4>Additional Documents (Optional)</h4>
+            <p id="status-AADHAAR_CARD">Not Uploaded</p>
 
-          <div class="row">
-            <div class="col-6">
-              <label>Document Type</label>
+            <label>Name as per Aadhaar Card</label>
+            <input type="text" id="holder-AADHAAR_CARD" />
 
-              <select id="optional_document_type">
-                <option value="">Select Document</option>
-              </select>
-            </div>
+            <label>Aadhaar Number</label>
+            <input type="text" id="number-AADHAAR_CARD" />
 
-            <div class="col-6">
-              <label>Holder Name</label>
+            <label>Select Aadhaar Card</label>
+            <input
+              type="file"
+              id="file-AADHAAR_CARD"
+              accept=".pdf,.jpg,.jpeg,.png"
+            />
 
-              <input type="text" id="optional_holder_name" />
-            </div>
+            <div id="message-AADHAAR_CARD" class="message-box"></div>
 
-            <div class="col-6">
-              <label>Document Number</label>
-
-              <input type="text" id="optional_document_number" />
-            </div>
-
-            <div class="col-6">
-              <label>Document</label>
-
-              <input type="file" id="optional_document_file" />
-            </div>
+            <button
+              type="button"
+              onclick="uploadRequiredDocument('AADHAAR_CARD')"
+            >
+              Upload Aadhaar Card
+            </button>
           </div>
 
           <br />
 
-          <button type="button" class="submit-btn" id="addOptionalDocumentBtn">
-            + Add Document
-          </button>
+          <!-- ========================= -->
+          <!-- PAN CARD -->
+          <!-- ========================= -->
+          <div class="card">
+            <h4>
+              PAN Card
+              <span style="color: red">*</span>
+            </h4>
 
-          <br /><br />
+            <p id="status-PAN_CARD">Not Uploaded</p>
 
-          <table
-            width="100%"
-            border="1"
-            cellspacing="0"
-            cellpadding="10"
-            id="optionalDocumentTable"
-          >
-            <thead>
-              <tr>
-                <th>Document</th>
+            <label>Name as per PAN Card</label>
+            <input type="text" id="holder-PAN_CARD" />
 
-                <th>Holder</th>
+            <label>PAN Number</label>
+            <input type="text" id="number-PAN_CARD" />
 
-                <th>Status</th>
+            <label>Select PAN Card</label>
+            <input
+              type="file"
+              id="file-PAN_CARD"
+              accept=".pdf,.jpg,.jpeg,.png"
+            />
 
-                <th>Action</th>
-              </tr>
-            </thead>
+            <div id="message-PAN_CARD" class="message-box"></div>
 
-            <tbody></tbody>
-          </table>
+            <button type="button" onclick="uploadRequiredDocument('PAN_CARD')">
+              Upload PAN Card
+            </button>
+          </div>
+
+          <br />
+
+          <!-- ========================= -->
+          <!-- COMPANY INCORPORATION -->
+          <!-- ========================= -->
+          <div class="card">
+            <h4>
+              Company Incorporation Certificate
+              <span style="color: red">*</span>
+            </h4>
+
+            <p id="status-COMPANY_INCORPORATION_CERTIFICATE">Not Uploaded</p>
+
+            <label>Name as per Certificate</label>
+            <input type="text" id="holder-COMPANY_INCORPORATION_CERTIFICATE" />
+
+            <label>Certificate Number</label>
+            <input type="text" id="number-COMPANY_INCORPORATION_CERTIFICATE" />
+
+            <label>Select Company Incorporation Certificate</label>
+            <input
+              type="file"
+              id="file-COMPANY_INCORPORATION_CERTIFICATE"
+              accept=".pdf,.jpg,.jpeg,.png"
+            />
+
+            <div
+              id="message-COMPANY_INCORPORATION_CERTIFICATE"
+              class="message-box"
+            ></div>
+
+            <button
+              type="button"
+              onclick="
+                uploadRequiredDocument('COMPANY_INCORPORATION_CERTIFICATE')
+              "
+            >
+              Upload Company Incorporation Certificate
+            </button>
+          </div>
+
+          <br />
+
+          <!-- ========================= -->
+          <!-- TAN CERTIFICATE -->
+          <!-- ========================= -->
+          <div class="card">
+            <h4>TAN Certificate</h4>
+
+            <p id="status-TAN_CERTIFICATE">Not Uploaded</p>
+
+            <label>Name as per TAN Certificate</label>
+            <input type="text" id="holder-TAN_CERTIFICATE" />
+
+            <label>TAN Number</label>
+            <input type="text" id="number-TAN_CERTIFICATE" />
+
+            <label>Select TAN Certificate</label>
+            <input
+              type="file"
+              id="file-TAN_CERTIFICATE"
+              accept=".pdf,.jpg,.jpeg,.png"
+            />
+
+            <div id="message-TAN_CERTIFICATE" class="message-box"></div>
+
+            <button
+              type="button"
+              onclick="uploadRequiredDocument('TAN_CERTIFICATE')"
+            >
+              Upload TAN Certificate
+            </button>
+          </div>
+
+          <!-- ========================= -->
+          <!-- 80G CERTIFICATE -->
+          <!-- ========================= -->
+          <div class="card">
+            <h4>80G Certificate</h4>
+
+            <p id="status-80G_CERTIFICATE">Not Uploaded</p>
+
+            <label>Name as per 80G Certificate</label>
+            <input type="text" id="holder-80G_CERTIFICATE" />
+
+            <label>80G Number</label>
+            <input type="text" id="number-80G_CERTIFICATE" />
+
+            <label>Select 80G Certificate</label>
+            <input
+              type="file"
+              id="file-80G_CERTIFICATE"
+              accept=".pdf,.jpg,.jpeg,.png"
+            />
+
+            <div id="message-80G_CERTIFICATE" class="message-box"></div>
+
+            <button
+              type="button"
+              onclick="uploadRequiredDocument('80G_CERTIFICATE')"
+            >
+              Upload 80G Certificate
+            </button>
+          </div>
+
+
+          <!-- ========================= -->
+          <!-- 12A CERTIFICATE -->
+          <!-- ========================= -->
+          <div class="card">
+            <h4>12A Certificate</h4>
+
+            <p id="status-12A_CERTIFICATE">Not Uploaded</p>
+
+            <label>Name as per 12A Certificate</label>
+            <input type="text" id="holder-12A_CERTIFICATE" />
+
+            <label>12A Number</label>
+            <input type="text" id="number-12A_CERTIFICATE" />
+
+            <label>Select 12A Certificate</label>
+            <input
+              type="file"
+              id="file-12A_CERTIFICATE"
+              accept=".pdf,.jpg,.jpeg,.png"
+            />
+
+            <div id="message-12A_CERTIFICATE" class="message-box"></div>
+
+            <button
+              type="button"
+              onclick="uploadRequiredDocument('12A_CERTIFICATE')"
+            >
+              Upload 12A Certificate
+            </button>
+          </div>
         </div>
 
         <br />
@@ -443,11 +602,6 @@
 
       let profileStatus = "";
 
-      const DOCUMENT_TYPES_URL = "/api/verification/document-types?purpose=CSR";
-
-      let documentTypeMap = {};
-      let documentNameToUUID = {};
-
       async function deleteDocument(documentUUID) {
         if (!confirm("Are you sure you want to delete this document?")) {
           return;
@@ -489,108 +643,6 @@
       }
 
       window.deleteDocument = deleteDocument;
-
-      async function loadDocumentTypes() {
-        try {
-          const response = await fetch(DOCUMENT_TYPES_URL, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          const result = await response.json();
-
-          if (!result.success) return;
-
-          const optionalSelect = document.getElementById(
-            "optional_document_type",
-          );
-
-          optionalSelect.innerHTML = `<option value="">Select Document</option>`;
-
-          result.data.forEach((doc) => {
-            documentTypeMap[doc.uuid] = doc.name;
-
-            documentNameToUUID[doc.name] = doc.uuid;
-
-            if (!doc.is_required) {
-              optionalSelect.innerHTML += `
-                    <option value="${doc.name}">
-                        ${doc.name}
-                    </option>
-                `;
-            }
-          });
-
-          const requiredDocuments = result.data.filter(
-            (doc) => doc.is_required,
-          );
-
-          renderRequiredDocuments(requiredDocuments);
-        } catch (err) {
-          console.error(err);
-        }
-      }
-
-      function renderRequiredDocuments(documents) {
-        const container = document.getElementById(
-          "required-documents-container",
-        );
-
-        container.innerHTML = "";
-
-        documents.forEach((doc) => {
-          container.innerHTML += `
-                <div class="card">
-
-                    <h4>
-                        ${doc.name}
-                        <span style="color:red">*</span>
-                    </h4>
-
-                    <p id="status-${doc.uuid}">
-                        Not Uploaded
-                    </p>
-
-                    <label>Holder Name</label>
-
-                    <input
-                        type="text"
-                        id="holder-${doc.uuid}"
-                    >
-
-                    <label>Document Number</label>
-
-                    <input
-                        type="text"
-                        id="number-${doc.uuid}"
-                    >
-
-                    <label>Select Document</label>
-
-                    <input
-                        type="file"
-                        id="file-${doc.uuid}"
-                        accept=".pdf,.jpg,.jpeg,.png"
-                    >
-
-                    <div
-                        id="message-${doc.uuid}"
-                        class="message-box"
-                    ></div>
-
-                    <button
-                        type="button"
-                        onclick="uploadRequiredDocument('${doc.uuid}')"
-                    >
-                        Upload
-                    </button>
-
-                </div>
-                <br>
-                `;
-        });
-      }
 
       //Load Bank Account
       async function loadBankAccount() {
@@ -737,81 +789,96 @@
             return;
           }
 
-          // Reset Required Documents
+          // Map API document_type to HTML document type IDs
+          const documentTypeMap = {
+            "Aadhaar Card": "AADHAAR_CARD",
+            "PAN Card": "PAN_CARD",
+            "Company Incorporation Certificate":
+              "COMPANY_INCORPORATION_CERTIFICATE",
+            "TAN Certificate": "TAN_CERTIFICATE",
+            "80G Certificate": "80G_CERTIFICATE",
+            "12A Certificate": "12A_CERTIFICATE"
+          };
 
-          document.querySelectorAll("[id^='status-']").forEach((el) => {
-            el.innerHTML = "Not Uploaded";
+          // Reset document statuses
+          [
+            "AADHAAR_CARD",
+            "PAN_CARD",
+            "COMPANY_INCORPORATION_CERTIFICATE",
+            "TAN_CERTIFICATE",
+            "80G_CERTIFICATE",
+            "12A_CERTIFICATE"
+          ].forEach((documentType) => {
+            const status = document.getElementById(`status-${documentType}`);
+
+            if (status) {
+              status.innerHTML = "Not Uploaded";
+            }
           });
 
-          // Reset Optional Documents Table
-
-          document.querySelector("#optionalDocumentTable tbody").innerHTML = "";
-
-          const tbody = document.querySelector("#optionalDocumentTable tbody");
-
+          // Populate uploaded documents
           result.documents.forEach((doc) => {
             console.log("Document:", doc);
 
+            const documentTypeId = documentTypeMap[doc.document_type];
+
+            if (!documentTypeId) {
+              console.warn(
+                "No HTML mapping found for document type:",
+                doc.document_type,
+              );
+              return;
+            }
+
+            const holder = document.getElementById(`holder-${documentTypeId}`);
+
+            const number = document.getElementById(`number-${documentTypeId}`);
+
+            const status = document.getElementById(`status-${documentTypeId}`);
+
+            if (!status) {
+              console.warn(
+                "Status element not found:",
+                `status-${documentTypeId}`,
+              );
+              return;
+            }
+
+            // Populate holder name
+            if (holder) {
+              holder.value = doc.document_holder_name || "";
+            }
+
+            // Populate document number
+            if (number) {
+              number.value = doc.document_number || "";
+            }
+
+            // Show uploaded file + verification status
             const statusHtml = `
-                    <span>${getFileName(doc.file_url)}</span>
+        <span>${getFileName(doc.file_url)}</span>
 
-                    <a
-                        href="${doc.file_url}"
-                        target="_blank"
-                        style="margin-left:10px"
-                        title="View Document"
-                    >
-                        <i class="fa fa-eye"></i>
-                    </a>
+        <a
+          href="${doc.file_url}"
+          target="_blank"
+          style="margin-left:10px"
+          title="View Document"
+        >
+          <i class="fa fa-eye"></i>
+        </a>
 
-                    <br>
+        <br>
 
-                    <small>
-                        Verification Status: ${doc.verification_status}
-                    </small>
-                `;
+        <small>
+          Verification Status:
+          ${doc.verification_status}
+        </small>
+      `;
 
-            const documentTypeUUID = documentNameToUUID[doc.document_type];
-
-            const holder = document.getElementById(
-              `holder-${documentTypeUUID}`,
-            );
-            const number = document.getElementById(
-              `number-${documentTypeUUID}`,
-            );
-            const status = document.getElementById(
-              `status-${documentTypeUUID}`,
-            );
-
-            // Required document
-            if (status) {
-              if (holder) holder.value = doc.document_holder_name || "";
-              if (number) number.value = doc.document_number || "";
-
-              status.innerHTML = statusHtml;
-            }
-
-            // Optional document
-            else {
-              tbody.innerHTML += `
-      <tr id="doc-row-${doc.uuid}">
-        <td>${doc.document_type}</td>
-        <td>${doc.document_holder_name}</td>
-        <td>${statusHtml}</td>
-        <td>
-          <button
-            type="button"
-            onclick="deleteDocument('${doc.uuid}')"
-          >
-            Delete
-          </button>
-        </td>
-      </tr>
-    `;
-            }
+            status.innerHTML = statusHtml;
           });
         } catch (error) {
-          console.error("Document load error", error);
+          console.error("Document load error:", error);
         }
       }
 
@@ -821,6 +888,7 @@
 
       async function uploadRequiredDocument(documentTypeId) {
         console.log("Uploading document type:", documentTypeId);
+
         const token = sessionStorage.getItem("access_token");
 
         if (!token) {
@@ -828,21 +896,53 @@
           return;
         }
 
+        // -------------------------------------------------
+        // HTML uses TAN_CERTIFICATE
+        // API/database should receive "TAN Certificate"
+        // -------------------------------------------------
+        let documentTypeValue = documentTypeId;
+
+        if (documentTypeId === "TAN_CERTIFICATE" ) {
+          documentTypeValue = "TAN Certificate";
+        }
+        if (documentTypeId === "80G_CERTIFICATE") {
+          documentTypeValue = "80G Certificate"
+        }
+        if (documentTypeId === "12A_CERTIFICATE") {
+          documentTypeValue = "12A Certificate"
+        }
+
         const holderInput = document.getElementById(`holder-${documentTypeId}`);
+
         const numberInput = document.getElementById(`number-${documentTypeId}`);
+
         const fileInput = document.getElementById(`file-${documentTypeId}`);
+
         const messageId = `message-${documentTypeId}`;
         const statusId = `status-${documentTypeId}`;
 
-        if (!holderInput.value.trim()) {
-          showMessage(messageId, "Please enter document holder name.", "error");
+        // Safety check
+        if (!fileInput) {
+          console.error("File input not found:", `file-${documentTypeId}`);
+
+          showMessage(messageId, "Document file input not found.", "error");
 
           return;
         }
 
+        // -------------------------------------------------
+        // Holder name is mandatory except for TAN
+        // -------------------------------------------------
+        if (documentTypeId !== "TAN_CERTIFICATE" && documentTypeId !== "12A_CERTIFICATE" && documentTypeId !== "80G_CERTIFICATE" && document && !holderInput.value.trim()) {
+          showMessage(messageId, "Please enter document holder name.", "error");
+          return;
+        }
+
+        // -------------------------------------------------
+        // File is always required when uploading
+        // -------------------------------------------------
         if (fileInput.files.length === 0) {
           showMessage(messageId, "Please choose a document.", "error");
-
           return;
         }
 
@@ -850,16 +950,31 @@
 
         fd.append("purpose", "PROFILE_VERIFICATION");
 
-        fd.append("document_type", documentTypeMap[documentTypeId]);
+        // -------------------------------------------------
+        // Send actual document type value
+        //
+        // AADHAAR_CARD
+        // PAN_CARD
+        // COMPANY_INCORPORATION_CERTIFICATE
+        //
+        // TAN Certificate
+        // -------------------------------------------------
+        fd.append("document_type", documentTypeValue);
 
-        fd.append("document_holder_name", holderInput.value.trim());
+        // Holder name optional for TAN
+        if (holderInput.value.trim()) {
+          fd.append("document_holder_name", holderInput.value.trim());
+        }
 
+        // Document number optional
         if (numberInput.value.trim()) {
           fd.append("document_number", numberInput.value.trim());
         }
 
         fd.append("file_url", fileInput.files[0]);
-        console.log("Uploading document with FormData:", fd);
+
+        console.log("Document type sent to API:", documentTypeValue);
+
         try {
           const response = await fetch(
             "/api/verification/profile/document/upload",
@@ -899,10 +1014,10 @@
           );
 
           document.getElementById(statusId).innerHTML = `
-                        <span style="color:green;">
-                            Uploaded Successfully
-                        </span>
-                    `;
+      <span style="color: green;">
+        Uploaded Successfully
+      </span>
+    `;
 
           fileInput.value = "";
 
@@ -917,115 +1032,7 @@
           );
         }
       }
-      // =====================================================
-      // OPTIONAL DOCUMENT UPLOAD
-      // =====================================================
 
-      const addOptionalDocumentBtn = document.getElementById(
-        "addOptionalDocumentBtn",
-      );
-
-      addOptionalDocumentBtn.addEventListener("click", async function () {
-        const token = sessionStorage.getItem("access_token");
-
-        if (!token) {
-          alert("Please login first.");
-          return;
-        }
-
-        const type = document.getElementById("optional_document_type");
-
-        const holder = document.getElementById("optional_holder_name");
-
-        const number = document.getElementById("optional_document_number");
-
-        const file = document.getElementById("optional_document_file");
-
-        if (!type.value) {
-          alert("Please select document type.");
-
-          return;
-        }
-
-        if (!holder.value.trim()) {
-          alert("Please enter holder name.");
-
-          return;
-        }
-
-        if (file.files.length === 0) {
-          alert("Please select document.");
-
-          return;
-        }
-
-        const fd = new FormData();
-
-        fd.append("purpose", "PROFILE_VERIFICATION");
-
-        fd.append("document_type", type.value);
-
-        fd.append("document_holder_name", holder.value.trim());
-
-        if (number.value.trim()) {
-          fd.append("document_number", number.value.trim());
-        }
-
-        fd.append("file_url", file.files[0]);
-
-        console.log("Uploading optional document with FormData:", type.value);
-        console.log("Uploading optional document with FormData:", fd);
-        try {
-          const response = await fetch(
-            "/api/verification/profile/document/upload",
-            {
-              method: "POST",
-
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-
-              body: fd,
-            },
-          );
-
-          const result = await response.json();
-
-          if (!response.ok) {
-            if (result.errors) {
-              alert(Object.values(result.errors).flat().join("\n"));
-            } else {
-              alert(result.message || result.error || "Upload failed.");
-            }
-
-            return;
-          }
-
-          await loadProfileDocuments();
-
-          // Remove uploaded document from dropdown
-
-          const uploadedOption = type.options[type.selectedIndex];
-
-          uploadedOption.remove();
-
-          // Reset Fields
-
-          type.selectedIndex = 0;
-
-          holder.value = "";
-
-          number.value = "";
-
-          file.value = "";
-
-          alert(result.message || "Document uploaded successfully.");
-        } catch (error) {
-          console.error(error);
-
-          alert("Something went wrong while uploading.");
-        }
-      });
       // =========================
       // Load Profile
       // =========================
@@ -1097,7 +1104,6 @@
             "Current Status : <b>" + profileStatus + "</b>";
 
           await loadBankAccount();
-          await loadDocumentTypes();
           await loadProfileDocuments();
           toggleEditMode(profileStatus);
         } catch (error) {

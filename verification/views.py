@@ -14,7 +14,7 @@ from campaigns.models import Campaign
 from django.db.models import Q
 
 from wallets.models import Wallet
-from .models import Document, DocumentType, EntityVerificationRequest
+from .models import Document, EntityVerificationRequest
 from .serializers import CampaignDocumentSerializer, UploadProfileDocumentSerializer
 from crowdfunding.permissions import (
     CanEditProfile,
@@ -24,10 +24,12 @@ from crowdfunding.permissions import (
     IsPlatformAdmin,
 )
 from crowdfunding.enums import (
+    USER_DOCUMENT_TYPES,
     CampaignStatus,
     Currency,
     DocumentPurpose,
     ProfileStatus,
+    UserDocumentType,
     UserType,
     VerificationStatus,
     DocOwner,
@@ -40,10 +42,7 @@ from crowdfunding.enums import (
 @permission_classes([IsActiveAccount, CanManageDocuments])
 def get_campaign_documents(request, campaign_uuid):
 
-    documents = Document.objects.filter(campaign__uuid=campaign_uuid).select_related(
-        "document_type"
-    )
-
+    documents = Document.objects.filter(campaign__uuid=campaign_uuid)
     data = []
 
     for doc in documents:
@@ -71,7 +70,7 @@ def get_profile_documents(request):
     try:
         documents = Document.objects.filter(
             user=request.user, purpose=DocumentPurpose.PROFILE_VERIFICATION
-        ).select_related("document_type")
+        )
 
         data = []
 
@@ -79,7 +78,7 @@ def get_profile_documents(request):
             data.append(
                 {
                     "uuid": str(doc.uuid),
-                    "document_type": doc.document_type.name,
+                    "document_type": doc.document_type,
                     "document_holder_name": doc.document_holder_name,
                     "document_number": doc.document_number,
                     "file_url": (
@@ -116,26 +115,53 @@ def get_profile_documents(request):
 @permission_classes([IsAuthenticated])
 def get_document_types(request):
 
-    applies_to = request.GET.get("purpose")
+    purpose = request.GET.get("purpose")
 
-    queryset = DocumentType.objects.all()
+    if not purpose:
+        return Response(
+            {
+                "success": False,
+                "message": "purpose is required.",
+            },
+            status=400,
+        )
 
-    if applies_to:
-        queryset = queryset.filter(applies_to=applies_to)
+    # Campaign documents are user-defined,
+    # so they are NOT returned by this API.
+    if purpose == "CAMPAIGN" or purpose == "Campaign":
+        return Response(
+            {
+                "success": False,
+                "message": "Document types for campaigns must be entered manually.",
+            },
+            status=400,
+        )
+
+    document_types = USER_DOCUMENT_TYPES.get(purpose)
+    print("doc_types", document_types)
+    if document_types is None:
+        return Response(
+            {
+                "success": False,
+                "message": "Invalid user type.",
+            },
+            status=400,
+        )
 
     return Response(
         {
             "success": True,
             "data": [
                 {
-                    "uuid":doc.uuid,
-                    "name": doc.name,
-                    "is_required": doc.is_required
+                    "value": document_type
                 }
-                for doc in queryset
+                for document_type in document_types
             ],
         }
     )
+
+
+
 
 
 @api_view(["POST"])
@@ -143,8 +169,11 @@ def get_document_types(request):
 @transaction.atomic
 def upload_profile_document(request):
     try:
+        # =====================================================
+        # 1. VALIDATE REQUEST DATA
+        # =====================================================
         serializer = UploadProfileDocumentSerializer(data=request.data)
-        print("hello1")
+
         if not serializer.is_valid():
             return Response(
                 {
@@ -153,93 +182,136 @@ def upload_profile_document(request):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        print("hello2")
 
-        document_type_name = serializer.validated_data["document_type"]
-        owner_mapping = {
-            UserType.DONOR: DocOwner.DONOR,
-            UserType.NGO: DocOwner.NGO,
-            UserType.CSR: DocOwner.CSR,
-            UserType.INDIVIDUAL_FUNDRAISER: DocOwner.INDIVIDUAL_FUNDRAISER,
-        }
-        print("hello3")
+        document_type = serializer.validated_data["document_type"]
 
-        try:
+        # =====================================================
+        # 2. GET ALLOWED DOCUMENT TYPES FOR USER
+        # =====================================================
+        allowed_document_types = USER_DOCUMENT_TYPES.get(
+            request.user.user_type.name,
+            [],
+        )
 
-            document_type = DocumentType.objects.get(
-                name=document_type_name,
-                applies_to=owner_mapping[request.user.user_type],
-            )
-            print("hello4")
+        print("allowed_document_types:", allowed_document_types)
+        print("document_type:", document_type)
+        print("user_type:", request.user.user_type.name)
 
-        except (KeyError, DocumentType.DoesNotExist):
-            return Response(
-                {
-                    "success": False,
-                    "error": "Invalid document type.",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        # =====================================================
+        # 3. DOCUMENT TYPE VALIDATION
+        # =====================================================
 
-        print("here5")
+        if request.user.user_type.name == UserType.CSR.name:
+
+            # -------------------------------------------------
+            # CSR:
+            # Standard documents are allowed through enum.
+            # Any other document name entered by CSR is also
+            # allowed as an additional certificate.
+            # -------------------------------------------------
+
+            if document_type in allowed_document_types:
+                document_type_value = UserDocumentType[document_type]
+            else:
+                # Additional CSR certificate/document
+                document_type_value = document_type
+
+        else:
+
+            # -------------------------------------------------
+            # NON-CSR:
+            # Only predefined document types are allowed.
+            # -------------------------------------------------
+
+            if document_type not in allowed_document_types:
+                return Response(
+                    {
+                        "success": False,
+                        "error": "Invalid document type.",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            document_type_value = UserDocumentType[document_type]
+
+        print("document_type_value:", document_type_value)
+
+        # =====================================================
+        # 4. CHECK IF DOCUMENT ALREADY EXISTS
+        # =====================================================
+
         document = Document.objects.filter(
             user=request.user,
-            document_type=document_type,
+            document_type=document_type_value,
             purpose=DocumentPurpose.PROFILE_VERIFICATION,
         ).first()
 
-        print("here6")
+        print("existing document:", document)
+
+        # =====================================================
+        # 5. UPDATE EXISTING DOCUMENT
+        # =====================================================
 
         if document:
-            print("here7")
 
-            # Update existing document
+            old_file = document.file_url
 
-            document.document_holder_name = serializer.validated_data[
-                "document_holder_name"
-            ]
+            document.document_holder_name = (
+                serializer.validated_data["document_holder_name"]
+            )
 
+            # Update document number if provided
+            document.document_number = (
+                serializer.validated_data.get("document_number")
+            )
+
+            # Replace file
             document.file_url = serializer.validated_data["file_url"]
-            print("here8")
 
-            # Update number only if provided
-            if serializer.validated_data.get("document_number"):
-                document.document_number = serializer.validated_data["document_number"]
+            # Keep document type
+            document.document_type = document_type_value
 
+            # Reset verification state
             document.verification_status = VerificationStatus.PENDING
-
             document.verification_remarks = None
             document.reviewed_by = None
             document.reviewed_at = None
-            print("here9")
 
             document.save()
+
+            # Delete old physical file
+            if old_file:
+                old_file.delete(save=False)
 
             message = "Document updated successfully."
             response_status = status.HTTP_200_OK
 
-        else:
+        # =====================================================
+        # 6. CREATE NEW DOCUMENT
+        # =====================================================
 
-            # Create new document
-            print("here10")
+        else:
 
             Document.objects.create(
                 purpose=DocumentPurpose.PROFILE_VERIFICATION,
                 user=request.user,
-                document_type=document_type,
+                document_type=document_type_value,
                 document_holder_name=(
                     serializer.validated_data["document_holder_name"]
                 ),
-                document_number=(serializer.validated_data.get("document_number")),
-                file_url=(serializer.validated_data["file_url"]),
-                verification_status=(VerificationStatus.PENDING),
+                document_number=(
+                    serializer.validated_data.get("document_number")
+                ),
+                file_url=serializer.validated_data["file_url"],
+                verification_status=VerificationStatus.PENDING,
             )
-            print("here11")
 
             message = "Document uploaded successfully."
             response_status = status.HTTP_201_CREATED
 
-        print("here12")
+        # =====================================================
+        # 7. RESPONSE
+        # =====================================================
 
         return Response(
             {
@@ -249,8 +321,11 @@ def upload_profile_document(request):
             status=response_status,
         )
 
-    except ValidationError as e:
+    # =========================================================
+    # 8. VALIDATION ERROR
+    # =========================================================
 
+    except ValidationError as e:
         return Response(
             {
                 "success": False,
@@ -259,8 +334,11 @@ def upload_profile_document(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    except Exception as e:
+    # =========================================================
+    # 9. UNEXPECTED ERROR
+    # =========================================================
 
+    except Exception as e:
         transaction.set_rollback(True)
 
         return Response(
@@ -272,75 +350,164 @@ def upload_profile_document(request):
         )
 
 
+
+
 @api_view(["POST"])
 @permission_classes([IsAuthenticated, IsCampaignCreator])
 @parser_classes([MultiPartParser, FormParser])
 @transaction.atomic
 def upload_campaign_document(request):
 
-    campaign_slug = request.data.get("campaign_slug")
-    document_type_id = request.data.get("document_type_id")
-    holder_name = request.data.get("document_holder_name")
-    document_number = request.data.get("document_number")
-    uploaded_file = request.FILES.get("file_url")
-
-    if not campaign_slug:
-        return Response(
-            {"success": False, "message": "campaign_slug is required."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
-    if not uploaded_file:
-        return Response(
-            {"success": False, "message": "Document file is required."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
-
     try:
-        campaign = Campaign.objects.get(
-            campaign_slug=campaign_slug,
-            created_by=request.user,
+        campaign_slug = request.data.get("campaign_slug")
+        document_type = request.data.get("document_type")
+        holder_name = request.data.get("document_holder_name")
+        document_number = request.data.get("document_number")
+        uploaded_file = request.FILES.get("file_url")
+
+        # --------------------------------
+        # Required field validation
+        # --------------------------------
+
+        if not campaign_slug:
+            return Response(
+                {
+                    "success": False,
+                    "errors": {
+                        "campaign_slug": ["Campaign slug is required."]
+                    },
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not document_type:
+            return Response(
+                {
+                    "success": False,
+                    "errors": {
+                        "document_type": ["Document type is required."]
+                    },
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not holder_name:
+            return Response(
+                {
+                    "success": False,
+                    "errors": {
+                        "document_holder_name": [
+                            "Document holder name is required."
+                        ]
+                    },
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not uploaded_file:
+            return Response(
+                {
+                    "success": False,
+                    "errors": {
+                        "file_url": ["Document file is required."]
+                    },
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # --------------------------------
+        # Get campaign
+        # --------------------------------
+
+        try:
+            campaign = Campaign.objects.get(
+                campaign_slug=campaign_slug,
+                created_by=request.user,
+            )
+        except Campaign.DoesNotExist:
+            return Response(
+                {
+                    "success": False,
+                    "errors": {
+                        "campaign_slug": ["Campaign not found."]
+                    },
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # --------------------------------
+        # Create / Update document
+        # --------------------------------
+
+        document, created = Document.objects.update_or_create(
+            campaign=campaign,
+            document_type=document_type.strip(),
+            purpose=DocumentPurpose.CAMPAIGN_VERIFICATION,
+            defaults={
+                "document_holder_name": holder_name.strip(),
+                "document_number": document_number.strip()
+                if document_number
+                else "",
+                "file_url": uploaded_file,
+                "verification_status": VerificationStatus.PENDING,
+                "verification_remarks": None,
+                "reviewed_by": None,
+                "reviewed_at": None,
+                "ai_score": None,
+            },
         )
 
-    except Campaign.DoesNotExist:
         return Response(
-            {"success": False, "message": "Campaign not found."},
-            status=status.HTTP_404_NOT_FOUND,
+            {
+                "success": True,
+                "message": (
+                    "Document uploaded successfully."
+                    if created
+                    else "Document updated successfully."
+                ),
+                "document": CampaignDocumentSerializer(document).data,
+            },
+            status=(
+                status.HTTP_201_CREATED
+                if created
+                else status.HTTP_200_OK
+            ),
         )
 
-    try:
-        document_type = DocumentType.objects.get(uuid=document_type_id)
+    except ValidationError as e:
 
-    except DocumentType.DoesNotExist:
+        if hasattr(e, "message_dict"):
+            errors = {
+                field: [str(message) for message in messages]
+                for field, messages in e.message_dict.items()
+            }
+        else:
+            errors = {
+                "non_field_errors": [str(message) for message in e.messages]
+            }
+
         return Response(
-            {"success": False, "message": "Invalid document type."},
+            {
+                "success": False,
+                "errors": errors,
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    document, created = Document.objects.update_or_create(
-        campaign=campaign,
-        document_type=document_type,
-        purpose=DocumentPurpose.CAMPAIGN_VERIFICATION,
-        defaults={
-            "document_holder_name": holder_name,
-            "document_number": document_number,
-            "file_url": uploaded_file,
-            "verification_status": VerificationStatus.PENDING,
-            "verification_remarks": None,
-            "reviewed_by": None,
-            "reviewed_at": None,
-            "ai_score": None,
-        },
-    )
+    except Exception as e:
+        transaction.set_rollback(True)
 
-    return Response(
-        {
-            "success": True,
-            "message": "Document uploaded successfully.",
-            "document": CampaignDocumentSerializer(document).data,
-        },
-        status=status.HTTP_201_CREATED,
-    )
+        return Response(
+            {
+                "success": False,
+                "error": str(e),
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+
+
 
 
 @api_view(["POST"])
@@ -388,24 +555,17 @@ def submit_profile_verification(request):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-        required_documents = list(
-            DocumentType.objects.filter(
-                applies_to=doc_owner,
-                is_required=True,
-            ).values_list(
-                "name",
-                flat=True,
-            )
-        )
         
+        print("doc_owner", user.user_type.name, doc_owner)
+
+        required_documents = USER_DOCUMENT_TYPES.get(user.user_type.name, [])
+
         VERIFICATION_TYPE_MAPPING = {
             UserType.DONOR: VerificationType.DONOR,
             UserType.INDIVIDUAL_FUNDRAISER: VerificationType.INDIVIDUAL_FUNDRAISER,
             UserType.NGO: VerificationType.NGO,
             UserType.CSR: VerificationType.CSR,
         }
-
 
         verification_type = VERIFICATION_TYPE_MAPPING.get(user.user_type)
 
@@ -416,15 +576,19 @@ def submit_profile_verification(request):
             )
 
         missing_documents = []
-
+        print("required_documents", required_documents)
+        
         for document_name in required_documents:
-            exists = Document.objects.filter(
-                user=user,
-                purpose=DocumentPurpose.PROFILE_VERIFICATION,
-                document_type__name=document_name,
-            ).exclude(
-                file_url=""
-            ).exists()
+            
+            exists = (
+                Document.objects.filter(
+                    user=user,
+                    purpose=DocumentPurpose.PROFILE_VERIFICATION,
+                    document_type=UserDocumentType[document_name],
+                )
+                .exclude(file_url="")
+                .exists()
+            )
 
             if not exists:
                 missing_documents.append(document_name)
@@ -590,7 +754,7 @@ def verify_document(request, uuid):
     if request.user.user_type not in (
         UserType.ADMIN,
         UserType.SUPER_ADMIN,
-    ):
+    ) and not request.user.is_superuser:
         return Response(
             {
                 "success": False,
@@ -646,10 +810,10 @@ def verify_document(request, uuid):
     return Response(
         {
             "success": True,
-            "message": f"{document.document_type.name} {document.verification_status.value} successfully.",
+            "message": f"{document.document_type} {document.verification_status.value} successfully.",
             "data": {
                 "uuid": str(document.uuid),
-                "document_type": document.document_type.name,
+                "document_type": document.document_type,
                 "verification_status": document.verification_status.value,
                 "verification_remarks": document.verification_remarks,
                 "reviewed_by": (
@@ -837,9 +1001,12 @@ def verify_profile(request):
     # Fetch Required Document Types
     # --------------------------------------------------
 
-    required_document_types = DocumentType.objects.filter(applies_to=doc_owner, is_required=True)
+    required_document_types = USER_DOCUMENT_TYPES.get(
+        user.user_type.name,
+        []
+    )
 
-    if not required_document_types.exists():
+    if not required_document_types:
         return Response(
             {
                 "success": False,
@@ -851,27 +1018,28 @@ def verify_profile(request):
     # --------------------------------------------------
     # Fetch Uploaded Documents
     # --------------------------------------------------
-
+    required_document_values = [
+        UserDocumentType[doc_type].value
+        for doc_type in required_document_types
+    ]
     documents = Document.objects.filter(
         user=user,
         purpose=DocumentPurpose.PROFILE_VERIFICATION,
-        document_type__in=required_document_types,
+        document_type__in=required_document_values,
     )
 
-    required_ids = set(required_document_types.values_list("uuid", flat=True))
+    uploaded_document_types = set(
+        documents.values_list("document_type", flat=True)
+    )
+    print("uploaded_document_types", uploaded_document_types)
 
-    uploaded_ids = set(documents.values_list("document_type_id", flat=True))
+    missing_documents = [
+        document_type
+        for document_type in required_document_values
+        if document_type not in uploaded_document_types
+    ]
 
-    missing_ids = required_ids - uploaded_ids
-
-    if missing_ids:
-
-        missing_documents = list(
-            required_document_types.filter(uuid__in=missing_ids).values_list(
-                "name", flat=True
-            )
-        )
-
+    if missing_documents:
         return Response(
             {
                 "success": False,
@@ -880,7 +1048,6 @@ def verify_profile(request):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-
     # --------------------------------------------------
     # Fetch Bank Account
     # --------------------------------------------------
@@ -1138,8 +1305,7 @@ def verify_campaign(request):
     # ---------------------------------------------------------
 
     has_pending = any(
-        status == VerificationStatus.PENDING
-        for status in document_statuses
+        status == VerificationStatus.PENDING for status in document_statuses
     )
 
     if has_pending:
@@ -1159,13 +1325,11 @@ def verify_campaign(request):
     # ---------------------------------------------------------
 
     all_approved = all(
-        status == VerificationStatus.APPROVED
-        for status in document_statuses
+        status == VerificationStatus.APPROVED for status in document_statuses
     )
 
     has_rejected = any(
-        status == VerificationStatus.REJECTED
-        for status in document_statuses
+        status == VerificationStatus.REJECTED for status in document_statuses
     )
 
     # ---------------------------------------------------------
@@ -1201,8 +1365,6 @@ def verify_campaign(request):
 
     else:
 
-
-
         verification_request.status = VerificationStatus.REJECTED
         verification_request.reviewed_by = request.user
         verification_request.reviewed_at = timezone.now()
@@ -1232,10 +1394,10 @@ def verify_campaign(request):
             "updated_at",
         ]
     )
-    
+
     # ---------------------------------------------------------
-# Create Campaign Wallet
-# ---------------------------------------------------------
+    # Create Campaign Wallet
+    # ---------------------------------------------------------
 
     if action == "approve":
 
@@ -1277,8 +1439,7 @@ def delete_document(request, document_uuid):
             "user",
             "campaign",
         ).get(
-            Q(user=request.user) |
-            Q(campaign__created_by=request.user),
+            Q(user=request.user) | Q(campaign__created_by=request.user),
             uuid=document_uuid,
         )
     except Document.DoesNotExist:
@@ -1322,10 +1483,8 @@ def delete_document(request, document_uuid):
     # Profile documents cannot be deleted after profile submission
     if document.user:
         profile_submitted = EntityVerificationRequest.objects.filter(
-            user=document.user,status__in=[
-            VerificationStatus.PENDING,
-            VerificationStatus.APPROVED
-        ],
+            user=document.user,
+            status__in=[VerificationStatus.PENDING, VerificationStatus.APPROVED],
         ).exists()
 
         if profile_submitted:
@@ -1342,10 +1501,7 @@ def delete_document(request, document_uuid):
         campaign_submitted = EntityVerificationRequest.objects.filter(
             campaign=document.campaign,
             verification_type=VerificationType.CAMPAIGN,
-            status__in=[
-            VerificationStatus.PENDING,
-            VerificationStatus.APPROVED
-        ],
+            status__in=[VerificationStatus.PENDING, VerificationStatus.APPROVED],
         ).exists()
 
         if campaign_submitted:
@@ -1356,7 +1512,6 @@ def delete_document(request, document_uuid):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
 
     # Delete uploaded file
     if document.file_url:
@@ -1372,6 +1527,3 @@ def delete_document(request, document_uuid):
         },
         status=status.HTTP_200_OK,
     )
-
-
-

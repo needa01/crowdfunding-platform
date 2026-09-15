@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Campaign Funds</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            background: #f5f7fb;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 1250px;
+            margin: 0 auto;
+            padding: 30px 20px 60px;
+        }
+
+        /* HEADER */
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+
+            padding: 10px 16px;
+
+            border: 1px solid #d9dee8;
+            border-radius: 8px;
+
+            background: white;
+            color: #374151;
+
+            text-decoration: none;
+
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .back-btn:hover {
+            background: #f8fafc;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .campaign-name {
+            margin-top: 5px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        /* STATUS */
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+
+            padding: 6px 12px;
+
+            border-radius: 20px;
+
+            background: #ecfdf5;
+            color: #047857;
+
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* SUMMARY CARDS */
+
+        .summary-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(4, 1fr);
+
+            gap: 18px;
+
+            margin-bottom: 25px;
+        }
+
+        .summary-card {
+            background: white;
+
+            border: 1px solid #e8ebf0;
+
+            border-radius: 14px;
+
+            padding: 22px;
+
+            box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.03);
+        }
+
+        .card-label {
+            color: #6b7280;
+
+            font-size: 13px;
+
+            margin-bottom: 9px;
+        }
+
+        .card-value {
+            font-size: 25px;
+
+            font-weight: 700;
+
+            color: #111827;
+        }
+
+        .card-subtitle {
+            margin-top: 7px;
+
+            color: #9ca3af;
+
+            font-size: 12px;
+        }
+
+        /* PROGRESS */
+
+        .section {
+            background: white;
+
+            border: 1px solid #e8ebf0;
+
+            border-radius: 14px;
+
+            padding: 25px;
+
+            margin-bottom: 22px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+
+            margin-bottom: 20px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+
+            margin-bottom: 10px;
+
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 13px;
+
+            background: #edf0f5;
+
+            border-radius: 20px;
+
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+
+            width: 0%;
+
+            background: #2563eb;
+
+            border-radius: 20px;
+
+            transition: width .5s ease;
+        }
+
+        .progress-footer {
+            display: flex;
+            justify-content: space-between;
+
+            margin-top: 12px;
+
+            font-size: 13px;
+
+            color: #6b7280;
+        }
+
+        /* FUND SUMMARY */
+
+        .fund-layout {
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 30px;
+        }
+
+        .fund-row {
+            display: flex;
+
+            justify-content: space-between;
+
+            padding: 14px 0;
+
+            border-bottom: 1px solid #edf0f4;
+
+            font-size: 14px;
+        }
+
+        .fund-row:last-child {
+            border-bottom: none;
+        }
+
+        .fund-label {
+            color: #6b7280;
+        }
+
+        .fund-value {
+            font-weight: 600;
+        }
+
+        .negative {
+            color: #dc2626;
+        }
+
+        .positive {
+            color: #059669;
+        }
+
+        .total-row {
+            margin-top: 8px;
+
+            padding-top: 18px;
+
+            border-top: 2px solid #e5e7eb;
+
+            font-size: 16px;
+
+            font-weight: 700;
+        }
+
+        /* BALANCE */
+
+        .balance-box {
+            background: #f8fafc;
+
+            border: 1px solid #e5e7eb;
+
+            border-radius: 12px;
+
+            padding: 25px;
+        }
+
+        .balance-label {
+            color: #6b7280;
+
+            font-size: 14px;
+
+            margin-bottom: 8px;
+        }
+
+        .balance-value {
+            font-size: 34px;
+
+            font-weight: 800;
+
+            margin-bottom: 18px;
+        }
+
+        .withdraw-btn {
+            width: 100%;
+
+            padding: 13px;
+
+            border: none;
+
+            border-radius: 9px;
+
+            background: #2563eb;
+
+            color: white;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+        }
+
+        .withdraw-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .withdraw-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        /* TABLE */
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+
+            border-collapse: collapse;
+
+            min-width: 750px;
+        }
+
+        th {
+            text-align: left;
+
+            padding: 13px 12px;
+
+            background: #f8fafc;
+
+            color: #6b7280;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 15px 12px;
+
+            border-bottom:
+                1px solid #edf0f4;
+
+            font-size: 13px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .credit {
+            color: #059669;
+
+            font-weight: 600;
+        }
+
+        .debit {
+            color: #dc2626;
+
+            font-weight: 600;
+        }
+
+        /* BADGES */
+
+        .badge {
+            display: inline-flex;
+
+            padding: 5px 10px;
+
+            border-radius: 20px;
+
+            font-size: 11px;
+
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #ecfdf5;
+            color: #047857;
+        }
+
+        .badge-pending {
+            background: #fffbeb;
+            color: #b45309;
+        }
+
+        .badge-failed {
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .badge-processing {
+            background: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        /* EMPTY */
+
+        .empty {
+            text-align: center;
+
+            padding: 40px;
+
+            color: #9ca3af;
+
+            font-size: 14px;
+        }
+
+        /* LOADING */
+
+        .loading {
+            text-align: center;
+
+            padding: 100px 20px;
+
+            color: #6b7280;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 950px) {
+
+            .summary-grid {
+                grid-template-columns:
+                    repeat(2, 1fr);
+            }
+
+            .fund-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .container {
+                padding: 20px 14px 40px;
+            }
+
+            .page-header {
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .page-title {
+                font-size: 23px;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-card {
+                padding: 18px;
+            }
+
+            .card-value {
+                font-size: 22px;
+            }
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <!-- HEADER -->
+
+    <div class="page-header">
+
+        <div>
+
+            <a
+                href="javascript:history.back()"
+                class="back-btn"
+            >
+                ← Back
+            </a>
+
+            <h1
+                class="page-title"
+                style="margin-top:18px;"
+            >
+                Campaign Funds
+            </h1>
+
+            <div
+                id="campaignName"
+                class="campaign-name"
+            >
+                Loading...
+            </div>
+
+        </div>
+
+        <span
+            id="campaignStatus"
+            class="status"
+        >
+            —
+        </span>
+
+    </div>
+
+
+    <!-- SUMMARY -->
+
+    <div class="summary-grid">
+
+        <div class="summary-card">
+
+            <div class="card-label">
+                Goal Amount
+            </div>
+
+            <div
+                id="goalAmount"
+                class="card-value"
+            >
+                ₹0
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <div class="card-label">
+                Amount Raised
+            </div>
+
+            <div
+                id="raisedAmount"
+                class="card-value"
+            >
+                ₹0
+            </div>
+
+            <div
+                id="donorCount"
+                class="card-subtitle"
+            >
+                0 donors
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <div class="card-label">
+                Remaining to Raise
+            </div>
+
+            <div
+                id="remainingAmount"
+                class="card-value"
+            >
+                ₹0
+            </div>
+
+        </div>
+
+
+        <div class="summary-card">
+
+            <div class="card-label">
+                Razorpay Deductions
+            </div>
+
+            <div
+                id="razorpayDeduction"
+                class="card-value"
+            >
+                ₹0
+            </div>
+
+            <div class="card-subtitle">
+                Fees + GST
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- PROGRESS -->
+
+    <div class="section">
+
+        <div class="section-title">
+            Campaign Progress
+        </div>
+
+        <div class="progress-header">
+
+            <span>
+                Funds raised
+            </span>
+
+            <strong id="progressPercentage">
+                0%
+            </strong>
+
+        </div>
+
+        <div class="progress-bar">
+
+            <div
+                id="progressFill"
+                class="progress-fill"
+            ></div>
+
+        </div>
+
+        <div class="progress-footer">
+
+            <span id="progressRaised">
+                ₹0 raised
+            </span>
+
+            <span id="progressGoal">
+                Goal ₹0
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- FUND SUMMARY -->
+
+    <div class="section">
+
+        <div class="section-title">
+            Fund Summary
+        </div>
+
+        <div class="fund-layout">
+
+            <div>
+
+                <div class="fund-row">
+
+                    <span class="fund-label">
+                        Gross donations
+                    </span>
+
+                    <span
+                        id="grossRaised"
+                        class="fund-value"
+                    >
+                        ₹0
+                    </span>
+
+                </div>
+
+
+                <div class="fund-row">
+
+                    <span class="fund-label">
+                        Razorpay fees
+                    </span>
+
+                    <span
+                        id="razorpayFees"
+                        class="fund-value negative"
+                    >
+                        - ₹0
+                    </span>
+
+                </div>
+
+
+                <div class="fund-row">
+
+                    <span class="fund-label">
+                        GST on Razorpay fees
+                    </span>
+
+                    <span
+                        id="razorpayGst"
+                        class="fund-value negative"
+                    >
+                        - ₹0
+                    </span>
+
+                </div>
+
+
+                <div
+                    class="fund-row total-row"
+                >
+
+                    <span>
+                        Net campaign funds
+                    </span>
+
+                    <span
+                        id="netCampaignFunds"
+                        class="positive"
+                    >
+                        ₹0
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="balance-box">
+
+                <div class="balance-label">
+                    Available Wallet Balance
+                </div>
+
+                <div
+                    id="availableBalance"
+                    class="balance-value"
+                >
+                    ₹0
+                </div>
+
+                <button
+                    id="withdrawBtn"
+                    class="withdraw-btn"
+                    onclick="withdrawFunds()"
+                >
+                    Withdraw Funds
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- WITHDRAWAL SUMMARY -->
+
+    <div class="section">
+
+        <div class="section-title">
+            Withdrawal Summary
+        </div>
+
+        <div class="fund-layout">
+
+            <div>
+
+                <div class="fund-row">
+
+                    <span class="fund-label">
+                        Total withdrawn
+                    </span>
+
+                    <span
+                        id="totalWithdrawn"
+                        class="fund-value"
+                    >
+                        ₹0
+                    </span>
+
+                </div>
+
+                <div class="fund-row">
+
+                    <span class="fund-label">
+                        Pending withdrawals
+                    </span>
+
+                    <span
+                        id="pendingWithdrawals"
+                        class="fund-value"
+                    >
+                        ₹0
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- WALLET TRANSACTIONS -->
+
+    <div class="section">
+
+        <div class="section-title">
+            Wallet Transactions
+        </div>
+
+        <div
+            id="transactionContainer"
+            class="table-wrapper"
+        >
+
+            <div class="loading">
+                Loading transactions...
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- WITHDRAWALS -->
+
+    <div class="section">
+
+        <div class="section-title">
+            Withdrawals
+        </div>
+
+        <div
+            id="withdrawalContainer"
+            class="table-wrapper"
+        >
+
+            <div class="loading">
+                Loading withdrawals...
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+</div>
+
+
+<script>
+
+    const API_BASE = "/api";
+
+    const campaignSlug = "{{ campaign_slug|escapejs }}";
+
+    console.log("Campaign slug:", campaignSlug);
+    // =========================================================
+    // FORMAT MONEY
+    // =========================================================
+
+    function money(value) {
+
+        const amount =
+            Number(value || 0);
+
+        return new Intl.NumberFormat(
+            "en-IN",
+            {
+                style: "currency",
+                currency: "INR",
+                maximumFractionDigits: 2
+            }
+        ).format(amount);
+    }
+
+
+    // =========================================================
+    // DATE
+    // =========================================================
+
+    function formatDate(date) {
+
+        if (!date) {
+            return "—";
+        }
+
+        return new Date(date).toLocaleDateString(
+            "en-IN",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            }
+        );
+    }
+
+
+    // =========================================================
+    // STATUS BADGE
+    // =========================================================
+
+    function statusBadge(status) {
+
+        if (!status) {
+            return "—";
+        }
+
+        const normalized =
+            String(status)
+                .toLowerCase();
+
+        let className =
+            "badge badge-pending";
+
+        if (
+            normalized.includes("success") ||
+            normalized.includes("complete")
+        ) {
+            className =
+                "badge badge-success";
+        }
+
+        else if (
+            normalized.includes("process")
+        ) {
+            className =
+                "badge badge-processing";
+        }
+
+        else if (
+            normalized.includes("fail") ||
+            normalized.includes("reject")
+        ) {
+            className =
+                "badge badge-failed";
+        }
+
+        return `
+            <span class="${className}">
+                ${status}
+            </span>
+        `;
+    }
+
+
+    // =========================================================
+    // LOAD FUNDS
+    // =========================================================
+
+    async function loadFunds() {
+
+        if (!campaignSlug) {
+
+            alert(
+                "Campaign Slug is missing."
+            );
+
+            return;
+        }
+
+
+        try {
+
+            const token =
+                sessionStorage.getItem("access_token");
+
+
+            const response =
+                await fetch(
+                    `${API_BASE}/campaigns/my-campaigns/${campaignSlug}/funds`,
+                    {
+                        method: "GET",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+
+                            "Authorization":
+                                `Bearer ${token}`
+                        }
+                    }
+                );
+
+
+            const data =
+                await response.json();
+
+
+            if (!response.ok ||
+                !data.success) {
+
+                throw new Error(
+                    data.message ||
+                    "Unable to load campaign funds."
+                );
+            }
+
+
+            renderCampaign(
+                data.campaign
+            );
+
+            renderFunds(
+                data.funds
+            );
+
+            renderTransactions(
+                data.wallet_transactions
+            );
+
+            renderWithdrawals(
+                data.withdrawals
+            );
+
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+            alert(
+                error.message
+            );
+        }
+    }
+
+
+    // =========================================================
+    // CAMPAIGN
+    // =========================================================
+
+    function renderCampaign(campaign) {
+
+        document.getElementById(
+            "campaignName"
+        ).textContent =
+            campaign.campaign_name || "Campaign";
+
+
+        document.getElementById(
+            "campaignStatus"
+        ).textContent =
+            campaign.status || "—";
+
+
+        document.getElementById(
+            "goalAmount"
+        ).textContent =
+            money(campaign.goal_amount);
+
+
+        document.getElementById(
+            "raisedAmount"
+        ).textContent =
+            money(campaign.raised_amount);
+
+
+        document.getElementById(
+            "remainingAmount"
+        ).textContent =
+            money(campaign.remaining_amount);
+
+
+        document.getElementById(
+            "donorCount"
+        ).textContent =
+            `${campaign.total_donors || 0} donors`;
+
+
+        const percentage =
+            Number(
+                campaign.progress_percentage || 0
+            );
+
+
+        document.getElementById(
+            "progressPercentage"
+        ).textContent =
+            `${percentage.toFixed(1)}%`;
+
+
+        document.getElementById(
+            "progressFill"
+        ).style.width =
+            `${percentage}%`;
+
+
+        document.getElementById(
+            "progressRaised"
+        ).textContent =
+            `${money(campaign.raised_amount)} raised`;
+
+
+        document.getElementById(
+            "progressGoal"
+        ).textContent =
+            `Goal ${money(campaign.goal_amount)}`;
+    }
+
+
+    // =========================================================
+    // FUNDS
+    // =========================================================
+
+    function renderFunds(funds) {
+
+        document.getElementById(
+            "razorpayDeduction"
+        ).textContent =
+            money(
+                funds.total_gateway_deduction
+            );
+
+
+        document.getElementById(
+            "grossRaised"
+        ).textContent =
+            money(
+                funds.gross_raised
+            );
+
+
+        document.getElementById(
+            "razorpayFees"
+        ).textContent =
+            `- ${money(funds.razorpay_fees)}`;
+
+
+        document.getElementById(
+            "razorpayGst"
+        ).textContent =
+            `- ${money(funds.razorpay_gst)}`;
+
+
+        document.getElementById(
+            "netCampaignFunds"
+        ).textContent =
+            money(
+                funds.net_campaign_funds
+            );
+
+
+        document.getElementById(
+            "availableBalance"
+        ).textContent =
+            money(
+                funds.available_balance
+            );
+
+
+        document.getElementById(
+            "totalWithdrawn"
+        ).textContent =
+            money(
+                funds.total_withdrawn
+            );
+
+
+        document.getElementById(
+            "pendingWithdrawals"
+        ).textContent =
+            money(
+                funds.pending_withdrawal_amount
+            );
+
+
+        const withdrawBtn =
+            document.getElementById(
+                "withdrawBtn"
+            );
+
+
+        if (
+            Number(funds.available_balance) <= 0
+        ) {
+
+            withdrawBtn.disabled = true;
+
+            withdrawBtn.textContent =
+                "No Funds Available";
+
+        }
+
+        else {
+
+            withdrawBtn.disabled = false;
+
+            withdrawBtn.textContent =
+                "Withdraw Funds";
+        }
+    }
+
+
+    // =========================================================
+    // TRANSACTIONS
+    // =========================================================
+
+    function renderTransactions(
+        transactions
+    ) {
+
+        const container =
+            document.getElementById(
+                "transactionContainer"
+            );
+
+
+        if (
+            !transactions ||
+            transactions.length === 0
+        ) {
+
+            container.innerHTML = `
+                <div class="empty">
+                    No wallet transactions yet.
+                </div>
+            `;
+
+            return;
+        }
+
+
+        let rows = "";
+
+
+        transactions.forEach(
+            transaction => {
+
+                const credit =
+                    Number(
+                        transaction.credit || 0
+                    );
+
+                const debit =
+                    Number(
+                        transaction.debit || 0
+                    );
+
+
+                rows += `
+
+                    <tr>
+
+                        <td>
+                            ${formatDate(
+                                transaction.created_at
+                            )}
+                        </td>
+
+                        <td>
+                            ${
+                                transaction.transaction_type
+                                || "Transaction"
+                            }
+                        </td>
+
+                        <td>
+                            ${
+                                transaction.description
+                                || "—"
+                            }
+                        </td>
+
+                        <td class="amount-cell">
+                            ${
+                                credit > 0
+                                ? `<span class="credit">+ ${money(credit)}</span>`
+                                : debit > 0
+                                    ? `<span class="debit">- ${money(debit)}</span>`
+                                    : "—"
+                            }
+                            
+                        </td>
+
+                        <td>
+                            ${
+                                money(
+                                    transaction.balance_after
+                                )
+                            }
+                        </td>
+
+                    </tr>
+                `;
+            }
+        );
+
+
+        container.innerHTML = `
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Date</th>
+
+                        <th>Type</th>
+
+                        <th>Description</th>
+
+                        <th>Amount</th>
+
+                        <th>Balance</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    ${rows}
+
+                </tbody>
+
+            </table>
+        `;
+    }
+
+
+    // =========================================================
+    // WITHDRAWALS
+    // =========================================================
+
+    function renderWithdrawals(
+        withdrawals
+    ) {
+
+        const container =
+            document.getElementById(
+                "withdrawalContainer"
+            );
+
+
+        if (
+            !withdrawals ||
+            withdrawals.length === 0
+        ) {
+
+            container.innerHTML = `
+                <div class="empty">
+                    No withdrawals yet.
+                </div>
+            `;
+
+            return;
+        }
+
+
+        let rows = "";
+
+
+        withdrawals.forEach(
+            withdrawal => {
+
+                rows += `
+
+                    <tr>
+
+                        <td>
+                            ${formatDate(
+                                withdrawal.created_at
+                            )}
+                        </td>
+
+                        <td>
+                            ${
+                                withdrawal.withdrawal_number
+                                || "—"
+                            }
+                        </td>
+
+                        <td>
+                            ${money(
+                                withdrawal.amount
+                            )}
+                        </td>
+
+                        <td>
+                            ${statusBadge(
+                                withdrawal.status
+                            )}
+                        </td>
+
+                        <td>
+                            ${
+                                withdrawal.processed_at
+                                ? formatDate(
+                                    withdrawal.processed_at
+                                  )
+                                : "—"
+                            }
+                        </td>
+
+                    </tr>
+
+                `;
+            }
+        );
+
+
+        container.innerHTML = `
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Date</th>
+
+                        <th>Withdrawal ID</th>
+
+                        <th>Amount</th>
+
+                        <th>Status</th>
+
+                        <th>Processed</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    ${rows}
+
+                </tbody>
+
+            </table>
+        `;
+    }
+
+
+    // =========================================================
+    // PAYMENTS
+    // =========================================================
+
+    function renderPayments(
+        payments
+    ) {
+
+        const container =
+            document.getElementById(
+                "paymentContainer"
+            );
+
+
+        if (
+            !payments ||
+            payments.length === 0
+        ) {
+
+            container.innerHTML = `
+                <div class="empty">
+                    No successful payments yet.
+                </div>
+            `;
+
+            return;
+        }
+
+
+        let rows = "";
+
+
+        payments.forEach(
+            payment => {
+
+                rows += `
+
+                    <tr>
+
+                        <td>
+                            ${formatDate(
+                                payment.created_at
+                            )}
+                        </td>
+
+                        <td>
+                            ${
+                                payment.razorpay_payment_id
+                                || "—"
+                            }
+                        </td>
+
+                        <td>
+                            ${money(
+                                payment.amount
+                            )}
+                        </td>
+
+                        <td class="debit">
+                            - ${money(
+                                payment.gateway_fee
+                            )}
+                        </td>
+
+                        <td class="debit">
+                            - ${money(
+                                payment.gateway_tax
+                            )}
+                        </td>
+
+                        <td class="credit">
+                            ${money(
+                                payment.net_amount
+                            )}
+                        </td>
+
+                    </tr>
+
+                `;
+            }
+        );
+
+
+        container.innerHTML = `
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>Date</th>
+
+                        <th>Razorpay Payment</th>
+
+                        <th>Gross</th>
+
+                        <th>Fee</th>
+
+                        <th>GST</th>
+
+                        <th>Net</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    ${rows}
+
+                </tbody>
+
+            </table>
+        `;
+    }
+
+
+    // =========================================================
+    // WITHDRAW
+    // =========================================================
+
+    function withdrawFunds() {
+
+        const amount =
+            document.getElementById(
+                "availableBalance"
+            ).textContent;
+
+
+        alert(
+            `Withdrawal flow will be opened for ${amount}.`
+        );
+
+        /*
+            Later:
+
+            window.location.href =
+                `/withdraw?campaign_slug=${campaignSlug}`;
+        */
+    }
+
+
+    // =========================================================
+    // INIT
+    // =========================================================
+
+    loadFunds();
+
+</script>
+
+
+</body>
+
+</html>

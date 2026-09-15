@@ -1,6 +1,7 @@
 from django.db import models
 from django_enum.fields import EnumField
 import uuid
+from campaigns.models import CampaignPromotionService
 from crowdfunding.enums import (
     Currency,
     PaymentGateway,
@@ -29,7 +30,7 @@ class Withdrawal(models.Model):
 
     campaign = models.ForeignKey(
         "campaigns.Campaign",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="withdrawals",
     )
 
@@ -102,15 +103,9 @@ class PaymentTransaction(models.Model):
 
     transaction_type = EnumField(TransactionType)
 
-    campaign_promotion_services = models.ManyToManyField(
-        "campaigns.CampaignPromotionService",
-        related_name="payment_transactions",
-        blank=True
-    )
-
     donation = models.OneToOneField(
         "donations.Donation",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="transaction",
         blank=True,
         null=True,
@@ -118,7 +113,7 @@ class PaymentTransaction(models.Model):
 
     withdrawal = models.ForeignKey(
         "Withdrawal",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="transactions",
         blank=True,
         null=True,
@@ -154,6 +149,7 @@ class PaymentTransaction(models.Model):
         max_digits=12,
         decimal_places=2,
     )
+    
 
     currency = EnumField(Currency)
 
@@ -240,3 +236,34 @@ class PaymentTransaction(models.Model):
             return f"{self.donation.unique_donation_number} - {self.status}"
 
         return f"{self.uuid} - {self.status}"
+
+
+
+class PromotionServicePaymentTransaction(models.Model):
+    payment_transaction = models.ForeignKey(
+        PaymentTransaction,
+        on_delete=models.PROTECT,
+        related_name="promotion_links",
+    )
+
+    promotion_service = models.ForeignKey(
+        CampaignPromotionService,
+        on_delete=models.PROTECT,
+        related_name="payment_links",
+    )
+    
+    class Meta:
+        db_table = "promotion_service_payment_transaction"
+        verbose_name = "Promotion Service Payment Transaction"
+        verbose_name_plural = "Promotion Service Payment Transactions"
+
+            
+        constraints = [
+            models.UniqueConstraint(
+                fields=["payment_transaction", "promotion_service"],
+                name="unique_payment_transaction_promotion_service",
+            )
+        ]
+    
+
+

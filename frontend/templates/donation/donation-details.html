@@ -75,11 +75,28 @@
         font-size: 22px;
         font-weight: bold;
       }
+      .back-btn {
+        display: inline-block;
+        margin-bottom: 15px;
+        padding: 10px 16px;
+        background: #ffffff;
+        color: #333;
+        text-decoration: none;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .back-btn:hover {
+        background: #f0f0f0;
+      }
     </style>
   </head>
 
   <body>
     <div class="container">
+      <a href="javascript:history.back()" class="back-btn"> ← Back </a>
       <div class="card">
         <h2>Donation Details</h2>
 
@@ -121,14 +138,28 @@
         </table>
       </div>
 
-      <div class="card">
-        <h2>Campaign</h2>
+      <div class="card" id="donation-context-card">
+        <h2 id="context-title"></h2>
 
-        <div class="campaign-title" id="campaign-title"></div>
+        <img
+          id="context-cover-photo"
+          src=""
+          alt=""
+          style="
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+            display: none;
+            margin-bottom: 15px;
+          "
+        />
 
-        <br />
+        <div class="campaign-title" id="context-name"></div>
 
-        <a id="campaign-link" class="btn"> View Campaign </a>
+        <a id="campaign-link" class="btn" style="display: none">
+          View Campaign
+        </a>
       </div>
 
       <div class="card">
@@ -208,11 +239,51 @@
 
         document.getElementById("message").innerText = d.message || "-";
 
-        document.getElementById("campaign-title").innerText =
-          d.campaign.campaign_name;
+        // ==========================================================
+        // CAMPAIGN / PLATFORM
+        // ==========================================================
 
-        document.getElementById("campaign-link").href =
-          `/frontend/campaign/${d.campaign.campaign_slug}`;
+        const contextTitle = document.getElementById("context-title");
+        const contextName = document.getElementById("context-name");
+        const contextCoverPhoto = document.getElementById(
+          "context-cover-photo",
+        );
+        const campaignLink = document.getElementById("campaign-link");
+
+        if (d.campaign) {
+          // ------------------------------------------
+          // Campaign Donation
+          // ------------------------------------------
+
+          contextTitle.innerText = "Campaign";
+
+          contextName.innerText = d.campaign.campaign_name;
+
+          if (d.campaign.cover_photo) {
+            contextCoverPhoto.src = d.campaign.cover_photo;
+            contextCoverPhoto.style.display = "block";
+          }
+
+          campaignLink.href = `/frontend/campaign/${d.campaign.campaign_slug}`;
+
+          campaignLink.style.display = "inline-block";
+        } else if (d.platform) {
+          // ------------------------------------------
+          // Platform Donation
+          // ------------------------------------------
+
+          contextTitle.innerText = "Platform Donation";
+
+          contextName.innerText = d.platform.name || "Our Platform";
+
+          if (d.platform.cover_photo) {
+            contextCoverPhoto.src = d.platform.cover_photo;
+            contextCoverPhoto.style.display = "block";
+          }
+
+          // No campaign link for platform donation
+          campaignLink.style.display = "none";
+        }
 
         document.getElementById("donated-at").innerText = d.donated_at || "-";
 

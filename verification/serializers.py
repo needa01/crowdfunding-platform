@@ -5,7 +5,6 @@ from verification.models import Document
 
 
 class UploadProfileDocumentSerializer(serializers.ModelSerializer):
-    document_type = serializers.CharField()
 
     class Meta:
         model = Document
@@ -19,7 +18,6 @@ class UploadProfileDocumentSerializer(serializers.ModelSerializer):
 
 class CampaignDocumentSerializer(serializers.ModelSerializer):
 
-    document_type = serializers.CharField(source="document_type.name", read_only=True)
 
     class Meta:
         model = Document

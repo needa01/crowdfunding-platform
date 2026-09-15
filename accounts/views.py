@@ -37,7 +37,7 @@ from django.contrib.auth import authenticate
 from rest_framework import status
 from django.utils import timezone
 from organizations.models import CSRProfile, NGOProfile
-from verification.models import Document, DocumentType, EntityVerificationRequest
+from verification.models import Document, EntityVerificationRequest
 
 
 
@@ -64,7 +64,7 @@ def get_user_info(request):
             "success": True,
             "user_name": user.fullname,
             "user_email": user.email,
-            "user_type": user.user_type.value,
+            "user_type": user.user_type.value if not user.is_superuser else UserType.SUPER_ADMIN.value,
             "status": user.status.value,
             "profile_status": user.profile_status.value,
             "verification_status": verification_status,
@@ -986,7 +986,7 @@ def login(request):
             status=status.HTTP_401_UNAUTHORIZED,
         )
 
-    if user.user_type in [UserType.ADMIN, UserType.SUPER_ADMIN]:
+    if user.user_type in [UserType.ADMIN, UserType.SUPER_ADMIN] or user.is_superuser is True:
         return Response(
             {"success": False, "error": "Please use the Admin Portal."},
             status=status.HTTP_403_FORBIDDEN,
@@ -1445,9 +1445,11 @@ def update_bank_account(request):
                 "branch_name": branch_name,
             },
         )
+        old_cancelled_cheque = None  # Initialize variable to hold the old file reference
 
         # Update existing record
         if not created:
+            old_cancelled_cheque = bank_account.cancelled_cheque
             if account_holder_name:
                 bank_account.account_holder_name = account_holder_name
 
@@ -1474,6 +1476,9 @@ def update_bank_account(request):
         bank_account.remarks = None
 
         bank_account.save()
+        # Delete old physical file
+        if old_cancelled_cheque:
+            old_cancelled_cheque.delete(save=False)
 
         return Response(
             {

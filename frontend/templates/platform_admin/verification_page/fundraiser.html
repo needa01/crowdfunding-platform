@@ -276,10 +276,35 @@
           grid-template-columns: 1fr;
         }
       }
+      .back-btn {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: 0.2s ease;
+}
+
+.back-btn:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
     </style>
   </head>
   <body>
     <div class="container">
+      <button
+  type="button"
+  class="back-btn"
+  onclick="history.back()"
+>
+  ← Back
+</button>
+
       <h1>Fundraiser Verification</h1>
 
       <!-- ================= Applicant ================= -->

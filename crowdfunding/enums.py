@@ -1,12 +1,14 @@
 from django.db import models
 from enum import Enum
 
+
 class KYC_Status(Enum):
     NOT_SUBMITTED = "Not Submitted"
     PENDING = "Pending"
     APPROVED = "Approved"
     REJECTED = "Rejected"
-        
+
+
 class UserType(Enum):
     INDIVIDUAL_FUNDRAISER = "Individual Fundraiser"
     NGO = "NGO"
@@ -14,19 +16,22 @@ class UserType(Enum):
     ADMIN = "Admin"
     SUPER_ADMIN = "Super Admin"
     DONOR = "Donor"
-    PLATFORM_OWNER="Platform Owner"
+    PLATFORM_OWNER = "Platform Owner"
+
 
 class Status(Enum):
     ACTIVE = "Active"
     SUSPENDED = "Suspended"
     DELETED = "Deleted"
-    
+
+
 class ProfileStatus(Enum):
     BASIC_INFO = "Basic Info"
     PROFILE_COMPLETED = "Profile Completed"
     VERIFICATION_PENDING = "Verification Pending"
     VERIFIED = "Verified"
-    VERIFICATION_REJECTED = "Verification Rejected" 
+    VERIFICATION_REJECTED = "Verification Rejected"
+
 
 class BeneficiaryType(Enum):
     ME = "Me"
@@ -37,7 +42,6 @@ class BeneficiaryType(Enum):
     INDIVIDUAL = "Individual"
     INSTITUTION = "Institution"
     COMMUNITY = "Community"
-    
 
 
 class BeneficiaryGroupType(Enum):
@@ -76,57 +80,94 @@ class CampaignStatus(Enum):
     PENDING = "Pending"
     ACTIVE = "Active"
     PAUSED = "Paused"
-    COMPLETED = "Completed" # Campaign has reached its end date or target amount
+    COMPLETED = "Completed"  # Campaign has reached its end date or target amount
     REJECTED = "Rejected"
-    CLOSED = "Closed" # Campaign has been closed by the campaign owner or admin
-
+    CLOSED = "Closed"  # Campaign has been closed by the campaign owner or admin
 
 
 class CampaignType(Enum):
     CROWDFUNDING = "Crowdfunding"
     CSR = "CSR"
 
-class DocumentPurpose(Enum):
-        PROFILE_VERIFICATION = "Profile Verification"
-        CAMPAIGN_VERIFICATION = "Campaign Verification"
+
+class UserDocumentType(models.TextChoices):
+    AADHAAR_CARD = "Aadhaar Card"
+    PAN_CARD = "PAN Card"
+    NGO_PAN_CARD = "NGO PAN Card"
+    REGISTRATION_CERTIFICATE = "Registration Certificate"
+    COMPANY_INCORPORATION_CERTIFICATE = "Company Incorporation Certificate"
+
+
+USER_DOCUMENT_TYPES = {
+    "DONOR": [
+        UserDocumentType.AADHAAR_CARD.name,
+        UserDocumentType.PAN_CARD.name,
+    ],
+
+    "INDIVIDUAL_FUNDRAISER": [
+        UserDocumentType.AADHAAR_CARD.name,
+        UserDocumentType.PAN_CARD.name,
+    ],
+
+    "NGO": [
+        UserDocumentType.AADHAAR_CARD.name,
+        UserDocumentType.NGO_PAN_CARD.name,
+        UserDocumentType.REGISTRATION_CERTIFICATE.name,
+    ],
+
+    "CSR": [
+        UserDocumentType.AADHAAR_CARD.name,
+        UserDocumentType.PAN_CARD.name,
+        UserDocumentType.COMPANY_INCORPORATION_CERTIFICATE.name,
+    ],
+}
 
 
 
 class DocumentPurpose(Enum):
     PROFILE_VERIFICATION = "Profile Verification"
     CAMPAIGN_VERIFICATION = "Campaign Verification"
-    BANK_VERIFICATION ="Bank Verification"
+    BANK_VERIFICATION = "Bank Verification"
+
 
 class VerificationEntity(Enum):
     INDIVIDUAL_FUNDRAISER = "Individual Fundraiser"
     NGO = "NGO"
     CSR = "CSR"
     CAMPAIGN = "Campaign"
-    
+
+
 class VerificationStatus(Enum):
     PENDING = "Pending"
     APPROVED = "Approved"
     UNDER_REVIEW = "Under Review"
     REJECTED = "Rejected"
-    
+
+
 class AccountType(Enum):
-        SAVINGS = "Savings"
-        CURRENT = "Current"
+    SAVINGS = "Savings"
+    CURRENT = "Current"
 
 
+
+class CampaignPromotionServiceType(Enum):
+    SOCIAL_MEDIA = "Social Media"
+    FEATURED = "Featured"
+    GOOGLE_ADS = "Google Ads"
 
 class PromotionStatus(Enum):
     PENDING = "Pending"
+    SUBMITTED = "Submitted"
     ACTIVE = "Active"
     COMPLETED = "Completed"
     CANCELLED = "Cancelled"
-
 
 
 class NGOType(Enum):
     TRUST = "Trust"
     SOCIETY = "Society"
     SECTION_8 = "Section 8"
+
 
 class DocOwner(Enum):
     DONOR = "Donor"
@@ -135,21 +176,24 @@ class DocOwner(Enum):
     CSR = "CSR"
     CAMPAIGN = "Campaign"
     CSR_CAMPAIGN = "CSR Campaign"
-    
+
+
 class DonationStatus(Enum):
     PENDING = "Pending"
     SUCCESS = "Success"
     FAILED = "Failed"
     REFUNDED = "Refunded"
-    
+
+
 class Currency(Enum):
     INR = "INR"
     USD = "USD"
     EUR = "EUR"
     GBP = "GBP"
 
+
 class PaymentGateway(Enum):
-    MANUAL = "Manual" # For testing and demo purposes
+    MANUAL = "Manual"  # For testing and demo purposes
     RAZORPAY = "Razorpay"
     STRIPE = "Stripe"
     PAYPAL = "Paypal"
@@ -172,21 +216,24 @@ class TransactionStatus(Enum):
     SUCCESS = "Success"
     FAILED = "Failed"
     REFUNDED = "Refunded"
-    
+
+
 class TransactionType(Enum):
     DONATION = "Donation"
     REFUND = "Refund"
     WITHDRAWAL = "Withdrawal"
     DEPOSIT = "Deposit"
     CAMPAIGN_PROMOTION = "Campaign Promotion"
-    
+
+
 class WithdrawalStatus(Enum):
     PENDING = "Pending"
     APPROVED = "Approved"
     PAID = "Paid"
     REJECTED = "Rejected"
     FAILED = "Failed"
-    
+
+
 class VerificationType(Enum):
     DONOR = "Donor"
     INDIVIDUAL_FUNDRAISER = "Individual Fundraiser"
@@ -194,15 +241,17 @@ class VerificationType(Enum):
     CSR = "CSR"
     CAMPAIGN = "Campaign"
 
-    
+
 class WalletType(Enum):
     CAMPAIGN = "Campaign"
     PLATFORM = "Platform"
-    
+
+
 class WalletTransactionType(Enum):
     CREDIT = "Credit"
     DEBIT = "Debit"
-    
+
+
 class DonationType(Enum):
     CAMPAIGN = "Campaign"
     PLATFORM = "Platform"

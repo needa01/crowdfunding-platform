@@ -71,7 +71,7 @@
     <div class="container py-5">
 
       <!-- Back -->
-      <a href="my-campaigns" class="btn btn-outline-secondary mb-4">
+      <a href="javascript:history.back()" class="btn btn-outline-secondary mb-4">
         ← Back
       </a>
 
@@ -548,11 +548,11 @@
 
 
           raised.innerHTML =
-            "₹" + (c.amount_raised || 0);
+            "₹" + (c.raised_amount || 0);
 
 
           raised2.innerHTML =
-            "₹" + (c.amount_raised || 0);
+            "₹" + (c.raised_amount || 0);
 
 
           goal.innerHTML =
@@ -604,11 +604,11 @@
 
 
           verifiedBy.innerHTML =
-            c.verification?.verified_by || "-";
+            c.verification?.verified_by.name || "-";
 
 
           verifiedAt.innerHTML =
-            c.verification?.verified_at || "-";
+            c.verification?.reviewed_at || "-";
 
 
           verificationAiScore.innerHTML =
@@ -651,7 +651,7 @@
             Number(c.goal_amount || 0);
 
           const raisedAmount =
-            Number(c.amount_raised || 0);
+            Number(c.raised_amount || 0);
 
 
           let percent = 0;

@@ -201,10 +201,30 @@
           flex: 1 1 100%;
         }
       }
+      .back-btn {
+        background: transparent;
+        border: 1px solid #d8d8d8;
+        color: #333;
+        padding: 9px 18px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-bottom: 20px;
+        transition: 0.2s;
+      }
+
+      .back-btn:hover {
+        background: #f1f3f5;
+        border-color: #bbb;
+      }
     </style>
   </head>
   <body>
     <div class="container">
+      <button type="button" class="back-btn" onclick="history.back()">
+        ← Back
+      </button>
       <div class="page-title">
         <h2>Create CSR Initiative</h2>
         <p>
@@ -388,7 +408,6 @@
                       Select Beneficiary
                     </option>
 
-                    
                     <option value="Community">Community</option>
                     <option value="NGO">NGO</option>
                     <option value="Institution">Institution</option>
@@ -396,7 +415,7 @@
                   </select>
                 </div>
 
-                <div class="col-6" id ="beneficiary-group-section">
+                <div class="col-6" id="beneficiary-group-section">
                   <label>Beneficiary Group Type</label>
 
                   <select
@@ -536,11 +555,11 @@
                 <div class="col-6">
                   <label>Document Type</label>
 
-                  <select id="document_type">
-                    <option value="" selected disabled>
-                      Select Document Type
-                    </option>
-                  </select>
+                  <input
+                    type="text"
+                    id="document_type"
+                    placeholder="Enter document type"
+                  />
                 </div>
 
                 <div class="col-6">
@@ -550,7 +569,7 @@
                 </div>
 
                 <div class="col-6">
-                  <label>Document Number (Optional)</label>
+                  <label>Document Number</label>
 
                   <input type="text" id="document_number" />
                 </div>
@@ -627,6 +646,52 @@
     <script>
       document.addEventListener("DOMContentLoaded", async function () {
         const form = document.getElementById("campaignForm");
+
+        function showError(message, fallback = "Something went wrong.") {
+          alert(message || fallback);
+        }
+
+        async function getErrorMessage(response) {
+          try {
+            const data = await response.json();
+
+            // Normal message/detail/error response
+            if (data.message) {
+              return data.message;
+            }
+
+            if (data.detail) {
+              return data.detail;
+            }
+
+            if (data.error && typeof data.error === "string") {
+              return data.error;
+            }
+
+            // Django/DRF validation errors
+            if (data.errors && typeof data.errors === "object") {
+              const messages = [];
+
+              Object.entries(data.errors).forEach(([field, errors]) => {
+                if (Array.isArray(errors)) {
+                  errors.forEach((message) => {
+                    messages.push(message);
+                  });
+                } else {
+                  messages.push(errors);
+                }
+              });
+
+              if (messages.length > 0) {
+                return messages.join("\n");
+              }
+            }
+
+            return "Something went wrong.";
+          } catch (error) {
+            return `Request failed with status ${response.status}.`;
+          }
+        }
 
         // =====================================================
         // STEPS
@@ -721,7 +786,9 @@
             }
 
             if (status === "Deleted") {
-              alert("Your account has been deleted.");
+              alert(
+                "Your account has been deleted. Please signup or contact support.",
+              );
               window.location.href = "/frontend/login";
               return false;
             }
@@ -729,7 +796,7 @@
             // Verification status checks
             if (verificationStatus === "Pending") {
               alert("Please verify your profile first.");
-              window.location.href = "/frontend/campaigns";
+              window.location.href = "/frontend/profile/ngo";
               return false;
             }
 
@@ -737,13 +804,13 @@
               alert(
                 "Your profile verification was rejected. Please update your details and submit again.",
               );
-              window.location.href = "/frontend/campaigns";
+              window.location.href = "/frontend/profile/ngo";
               return false;
             }
 
             if (verificationStatus !== "Approved") {
               alert("Please verify your profile first.");
-              window.location.href = "/frontend/campaigns";
+              window.location.href = "/frontend/profile/ngo";
               return false;
             }
 
@@ -787,7 +854,7 @@
         const beneficiaryGroupSection = document.getElementById(
           "beneficiary-group-section",
         );
-        
+
         const beneficiaryAgeSection = document.getElementById(
           "beneficiary-age-section",
         );
@@ -799,31 +866,28 @@
         const beneficiaryAge = form.beneficiary_age;
 
         function toggleBeneficiaryFields() {
-            beneficiaryGroup.value = "Group";
-            beneficiaryGroup.disabled = true;
-            beneficiaryGroup.required = false;
+          beneficiaryGroup.value = "Group";
+          beneficiaryGroup.disabled = true;
+          beneficiaryGroup.required = false;
 
-            beneficiaryGroupSection.style.display = "none";
-            beneficiaryAgeSection.style.display = "none";
-            
-            beneficiaryName.disabled = false;
+          beneficiaryGroupSection.style.display = "none";
+          beneficiaryAgeSection.style.display = "none";
 
-            beneficiaryRelation.disabled = false;
+          beneficiaryName.disabled = false;
 
-            beneficiaryMobile.disabled = false;
+          beneficiaryRelation.disabled = false;
 
-            beneficiaryLocation.disabled = false;
+          beneficiaryMobile.disabled = false;
 
-            beneficiaryAge.disabled = true;
+          beneficiaryLocation.disabled = false;
 
-            toggleBeneficiaryCount();
-          
+          beneficiaryAge.disabled = true;
 
-          
-            relationSection.style.display = "none";
-            relationField.required = false;
-            relationField.value = "";
-          
+          toggleBeneficiaryCount();
+
+          relationSection.style.display = "none";
+          relationField.required = false;
+          relationField.value = "";
         }
 
         beneficiaryType.addEventListener("change", toggleBeneficiaryFields);
@@ -859,20 +923,52 @@
         // DATE VALIDATION
         // =====================================================
 
-        const today = new Date().toISOString().split("T")[0];
-
         const startDate = document.getElementById("start_date");
         const endDate = document.getElementById("end_date");
 
-        startDate.min = today;
-        endDate.min = today;
+        const today = new Date();
 
-        startDate.addEventListener("change", function () {
-          endDate.min = this.value;
+        // Start date = tomorrow
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
 
-          if (endDate.value && endDate.value < this.value) {
-            endDate.value = "";
+        const tomorrowString = tomorrow.toISOString().split("T")[0];
+
+        startDate.min = tomorrowString;
+        startDate.value = tomorrowString;
+
+        // =====================================================
+        // SET END DATE = START DATE + 7 DAYS
+        // =====================================================
+
+        function updateEndDate() {
+          if (!startDate.value) {
+            return;
           }
+
+          const start = new Date(startDate.value);
+
+          // Minimum end date = start date + 7 days
+          const minimumEndDate = new Date(start);
+          minimumEndDate.setDate(minimumEndDate.getDate() + 7);
+
+          const minimumEndDateString = minimumEndDate
+            .toISOString()
+            .split("T")[0];
+
+          // Prevent selecting an end date before start + 7 days
+          endDate.min = minimumEndDateString;
+
+          // Automatically set end date to start + 7 days
+          endDate.value = minimumEndDateString;
+        }
+
+        // Initial end date
+        updateEndDate();
+
+        // Update end date whenever start date changes
+        startDate.addEventListener("change", function () {
+          updateEndDate();
         });
 
         toggleBeneficiaryCount();
@@ -904,47 +1000,6 @@
         cause.addEventListener("change", toggleMedical);
 
         toggleMedical();
-
-        // =====================================================
-        // LOAD DOCUMENT TYPES
-        // =====================================================
-
-        async function loadDocumentTypes() {
-          const token = sessionStorage.getItem("access_token");
-
-          if (!token) return;
-
-          try {
-            const response = await fetch(
-              "/api/verification/document-types?purpose=CSR Campaign",
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              },
-            );
-
-            const data = await response.json();
-
-            const select = document.getElementById("document_type");
-
-            if (data.success) {
-              console.log("data", data);
-              console.log("data.data", data.data);
-              data.data.forEach((doc) => {
-                select.innerHTML += `
-                                        <option value="${doc.uuid}">
-                                            ${doc.name}
-                                        </option>
-                                    `;
-              });
-            }
-          } catch (err) {
-            console.log(err);
-          }
-        }
-
-        loadDocumentTypes();
 
         // =====================================================
         // NEXT BUTTON STEP 1
@@ -1169,13 +1224,13 @@
               body: formData,
             });
 
-            const data = await response.json();
-
             if (!response.ok) {
-              alert(data.message || data.detail || "Unable to save draft");
-
+              const errorMessage = await getErrorMessage(response);
+              showError(errorMessage, "Unable to save draft.");
               return;
             }
+
+            const data = await response.json();
 
             createdCampaignSlug = data.data.campaign_slug;
 
@@ -1195,9 +1250,11 @@
               behavior: "smooth",
             });
           } catch (error) {
-            console.log(error);
-
-            alert("Something went wrong");
+            console.error("Save draft error:", error);
+            showError(
+              error.message,
+              "Something went wrong while saving the campaign.",
+            );
           }
         });
 
@@ -1311,7 +1368,7 @@
 
           fd.append("purpose", "Campaign Verification");
           console.log(type.value);
-          fd.append("document_type_id", type.value);
+          fd.append("document_type", type.value.trim());
 
           fd.append("document_holder_name", holder.value.trim());
 
@@ -1333,19 +1390,19 @@
               },
             );
 
-            const data = await response.json();
-
             if (!response.ok) {
-              alert(data.message || "Document upload failed.");
-
+              const errorMessage = await getErrorMessage(response);
+              showError(errorMessage, "Document upload failed.");
               return;
             }
+
+            const data = await response.json();
 
             const tbody = document.querySelector("#documentTable tbody");
 
             tbody.innerHTML += `
                 <tr id="doc-row-${data.document.uuid}">
-                    <td>${type.options[type.selectedIndex].text}</td>
+                    <td>${type.value}</td>
 
                     <td>${holder.value}</td>
 
@@ -1383,21 +1440,21 @@
 
             // reset fields
 
-            // Remove uploaded document type from dropdown
-            const uploadedOption = type.options[type.selectedIndex];
-            uploadedOption.remove();
+            
 
             // Reset form fields
-            type.selectedIndex = 0;
+            type.value = "";
             holder.value = "";
             number.value = "";
             file.value = "";
 
             alert("Document uploaded successfully.");
           } catch (error) {
-            console.log(error);
-
-            //alert("Something went wrong while uploading document.");
+            console.error("Document upload error:", error);
+            showError(
+              error.message,
+              "Something went wrong while uploading the document.",
+            );
           }
         });
 
@@ -1445,23 +1502,25 @@
               }),
             });
 
-            const data = await response.json();
-
             if (!response.ok) {
-              alert(data.message || "Unable to submit campaign");
-
+              const errorMessage = await getErrorMessage(response);
+              showError(errorMessage, "Unable to submit campaign.");
               return;
             }
+
+            const data = await response.json();
 
             alert("Campaign submitted successfully.");
 
             sessionStorage.removeItem("draft_campaign_slug");
 
-            window.location.href = "/frontend/profile/my-campaigns";
+            window.location.href = "/frontend/my-campaigns";
           } catch (error) {
-            console.log(error);
-
-            alert("Something went wrong.");
+            console.error("Campaign submission error:", error);
+            showError(
+              error.message,
+              "Something went wrong while submitting the campaign.",
+            );
           }
         });
       });

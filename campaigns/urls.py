@@ -2,10 +2,12 @@ from django.urls import path
 
 from campaigns.views import (
     campaign_detail,
+    campaign_funds_detail,
     campaign_list,
     create_campaign,
     get_campaign_donations,
     get_my_campaigns,
+    get_my_verified_campaigns,
     my_campaign_detail,
     update_campaign,
     get_promotion_services,
@@ -15,6 +17,8 @@ from campaigns.views import (
 urlpatterns = [
     path("get-campaigns", campaign_list, name="campaign_list"),
     path("my-campaigns", get_my_campaigns, name="my-campaign_list"),
+    path("campaign-funds", get_my_verified_campaigns, name="campaign_funds"),
+    path("my-campaigns/<slug:campaign_slug>/funds", campaign_funds_detail, name="my_campaign_detail"),
     path(
         "get-campaign-services", get_promotion_services, name="get_promotion_services"
     ),

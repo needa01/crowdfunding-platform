@@ -31,7 +31,30 @@
         border-radius: 16px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
       }
+      .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
 
+        text-decoration: none;
+        color: #374151;
+        background: #f9fafb;
+        border: 1px solid #d1d5db;
+
+        padding: 8px 14px;
+        border-radius: 7px;
+
+        font-size: 14px;
+        font-weight: 500;
+
+        transition: all 0.2s ease;
+      }
+
+      .back-btn:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+        color: #111827;
+      }
       h2 {
         text-align: center;
         margin-bottom: 25px;
@@ -170,6 +193,8 @@
 
   <body>
     <div class="profile-container">
+      <a href="javascript:history.back()" class="back-btn"> ← Back </a>
+
       <h2>My Profile</h2>
 
       <!-- Tabs -->
@@ -568,7 +593,6 @@
           document.getElementById("pan-status").innerHTML = "Not Uploaded";
           document.getElementById("aadhaar-status").innerHTML = "Not Uploaded";
 
-
           result.documents.forEach((doc) => {
             if (doc.document_type === "PAN Card") {
               document.getElementById("pan_holder_name").value =
@@ -625,24 +649,78 @@
           console.log("Document load error", error);
         }
       }
-      //DOCS Upload
-      async function uploadDocument(documentType) {
-        let numberInput;
-        let fileInput;
-        let statusElement;
-        let messageBox;
 
-        if (documentType === "PAN Card") {
-          numberInput = document.getElementById("pan_number");
-          fileInput = document.getElementById("pan_file");
-          statusElement = document.getElementById("pan-status");
-          messageBox = "pan-message";
-        } else if (documentType === "Aadhaar Card") {
-          numberInput = document.getElementById("aadhaar_number");
-          fileInput = document.getElementById("aadhaar_file");
-          statusElement = document.getElementById("aadhaar-status");
-          messageBox = "aadhaar-message";
+      const PROFILE_DOCUMENT_MAP = {
+        "PAN CARD": {
+          holderInput: "pan_holder_name",
+          numberInput: "pan_number",
+          fileInput: "pan_file",
+          statusElement: "pan-status",
+          messageBox: "pan-message",
+        },
+
+        "AADHAAR CARD": {
+          holderInput: "aadhaar_holder_name",
+          numberInput: "aadhaar_number",
+          fileInput: "aadhaar_file",
+          statusElement: "aadhaar-status",
+          messageBox: "aadhaar-message",
+        },
+      };
+
+      async function uploadDocument(documentType) {
+        // Convert "PAN Card" -> "PAN CARD"
+        const normalizedType = (documentType || "").trim().toUpperCase();
+
+        const config = PROFILE_DOCUMENT_MAP[normalizedType];
+
+        if (!config) {
+          console.error("Invalid document type:", documentType);
+          return;
         }
+
+        // ============================================
+        // GET INPUT ELEMENTS
+        // ============================================
+        let validDocumentType = null;
+        if (documentType === "PAN Card" ) {
+          validDocumentType = "PAN_CARD";
+        }
+        else if(documentType === "Aadhaar Card") {
+          validDocumentType = "AADHAAR_CARD";
+        }
+        else {
+          console.error("Invalid document type:", documentType);
+          return;
+        }
+
+        const numberInput = document.getElementById(config.numberInput);
+
+        const fileInput = document.getElementById(config.fileInput);
+
+        const holderNameInput = document.getElementById(config.holderInput);
+
+        const statusElement = document.getElementById(config.statusElement);
+
+        const messageBox = config.messageBox;
+
+        // ============================================
+        // SAFETY CHECK
+        // ============================================
+
+        if (!fileInput) {
+          console.error("File input not found:", config.fileInput);
+          return;
+        }
+
+        if (!holderNameInput) {
+          console.error("Holder name input not found:", config.holderInput);
+          return;
+        }
+
+        // ============================================
+        // GET FILE
+        // ============================================
 
         const file = fileInput.files[0];
 
@@ -655,37 +733,47 @@
           return;
         }
 
+        // ============================================
+        // CREATE FORM DATA
+        // ============================================
+
         const formData = new FormData();
 
-        formData.append("document_type", documentType);
         formData.append("purpose", "PROFILE_VERIFICATION");
-        let holderNameInput;
 
-        if (documentType === "PAN Card") {
-          holderNameInput = document.getElementById("pan_holder_name");
-        } else if (documentType === "Aadhaar Card") {
-          holderNameInput = document.getElementById("aadhaar_holder_name");
-        }
+        formData.append("document_type", validDocumentType);
 
         formData.append("document_holder_name", holderNameInput.value.trim());
-        if (numberInput.value.trim()) {
+
+        if (numberInput && numberInput.value.trim()) {
           formData.append("document_number", numberInput.value.trim());
         }
+
         formData.append("file_url", file);
+
+        // ============================================
+        // UPLOAD
+        // ============================================
 
         try {
           const response = await fetch(
             "/api/verification/profile/document/upload",
             {
               method: "POST",
+
               headers: {
                 Authorization: `Bearer ${token}`,
               },
+
               body: formData,
             },
           );
 
           const result = await response.json();
+
+          // ============================================
+          // SUCCESS
+          // ============================================
 
           if (result.success) {
             showMessage(
@@ -694,16 +782,31 @@
               "success",
             );
 
-            statusElement.innerText = "Pending Verification";
-          } else if (result.errors) {
+            if (statusElement) {
+              statusElement.innerText = "Pending Verification";
+            }
+
+            // Reload documents so filename + eye icon appear
+            await loadProfileDocuments();
+          }
+
+          // ============================================
+          // VALIDATION ERRORS
+          // ============================================
+          else if (result.errors) {
             const messages = Object.values(result.errors).flat().join("<br>");
 
             showMessage(messageBox, messages, "error");
-          } else {
+          }
+
+          // ============================================
+          // GENERAL ERROR
+          // ============================================
+          else {
             showMessage(messageBox, result.error || "Upload failed.", "error");
           }
         } catch (error) {
-          console.error(error);
+          console.error("Document upload error:", error);
 
           showMessage(messageBox, "Document upload failed.", "error");
         }

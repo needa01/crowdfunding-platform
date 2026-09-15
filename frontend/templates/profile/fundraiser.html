@@ -31,7 +31,30 @@
         border-radius: 16px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
       }
+      .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
 
+        text-decoration: none;
+        color: #374151;
+        background: #f9fafb;
+        border: 1px solid #d1d5db;
+
+        padding: 8px 14px;
+        border-radius: 7px;
+
+        font-size: 14px;
+        font-weight: 500;
+
+        transition: all 0.2s ease;
+      }
+
+      .back-btn:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+        color: #111827;
+      }
       h2 {
         text-align: center;
         margin-bottom: 25px;
@@ -170,6 +193,8 @@
 
   <body>
     <div class="profile-container">
+      <a href="javascript:history.back()" class="back-btn"> ← Back </a>
+
       <h2>My Profile</h2>
 
       <!-- Tabs -->
@@ -657,15 +682,20 @@
 
         const formData = new FormData();
 
-        formData.append("document_type", documentType);
         formData.append("purpose", "PROFILE_VERIFICATION");
         let holderNameInput;
+        let valid_documentType;
 
         if (documentType === "PAN Card") {
+          valid_documentType= "PAN_CARD"
           holderNameInput = document.getElementById("pan_holder_name");
         } else if (documentType === "Aadhaar Card") {
+          valid_documentType= "AADHAAR_CARD"
           holderNameInput = document.getElementById("aadhaar_holder_name");
         }
+
+        formData.append("document_type", valid_documentType);
+
 
         formData.append("document_holder_name", holderNameInput.value.trim());
         if (numberInput.value.trim()) {

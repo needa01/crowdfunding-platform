@@ -6,6 +6,8 @@ urlpatterns = [
     path("login", views.login_page, name="login"),
     path("change-password", views.change_password, name="change-password"),
     path("campaigns", views.campaigns, name="campaigns"),
+    path("campaign-funds", views.campaign_funds, name="campaign_funds"),
+    path("my-campaign/<slug:campaign_slug>/funds", views.my_campaign_funds_detail, name="my_campaign_funds_detail"),
     # signup urls
     path("signup/donor", views.donor_signup, name="donor_signup"),
     path("signup/fundraiser", views.fundraiser_signup, name="fundraiser_signup"),
@@ -21,12 +23,12 @@ urlpatterns = [
     path("profile/ngo", views.ngo_profile, name="ngo_profile"),
     path("profile/csr", views.csr_profile, name="csr_profile"),
     # my-campaign url
-    path("profile/my-campaigns", views.my_campaigns, name="my_campaigns"),
+    path("my-campaigns", views.my_campaigns, name="my_campaigns"),
     # detailed campaign page
     path(
         "campaign/<slug:campaign_slug>", views.campaign_detail, name="detail_campaign"
     ),
-    path("profile/my-campaign", views.my_campaign_detail, name="my_detail_campaign"),
+    path("my-campaign", views.my_campaign_detail, name="my_detail_campaign"),
     path("campaign/promote/<slug:campaign_slug>", views.campaign_promotion_view, name="campaign_promotion_view"),
     # create campaign page for individual fundraiser and ngo
     path(
@@ -77,6 +79,12 @@ urlpatterns = [
             name="payment_success",
         ),
         
+    #withdrawal urls
+    path(
+        "withdrawals",
+        views.my_withdrawals_view,
+        name="my_withdrawals",
+    ),
     
     # admin urls
     path("admin/login", views.admin_login_view, name="admin_login"),

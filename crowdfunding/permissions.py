@@ -120,19 +120,36 @@ class IsSuperAdmin(BasePermission):
 
         user = request.user
 
-        return user.is_authenticated and user.user_type == UserType.SUPER_ADMIN
+        return user.is_authenticated and (
+            user.user_type == UserType.SUPER_ADMIN or user.is_superuser
+        )
 
 
 class IsPlatformAdmin(BasePermission):
-
+    print("IsPlatformAdmin")
     def has_permission(self, request, view):
-
+        print("IsPlatformAdmin")
         user = request.user
-
-        return user.is_authenticated and user.user_type in [
-            UserType.ADMIN,
-            UserType.SUPER_ADMIN,
-        ]
+        print("user", user.user_type)
+        print(
+            user.is_authenticated
+            and (
+                user.is_superuser
+                or user.user_type
+                in [
+                    UserType.ADMIN,
+                    UserType.SUPER_ADMIN,
+                ]
+            )
+        )
+        return user.is_authenticated and (
+            user.is_superuser
+            or user.user_type
+            in [
+                UserType.ADMIN,
+                UserType.SUPER_ADMIN,
+            ]
+        )
 
 
 class IsDonor(BasePermission):
@@ -185,12 +202,10 @@ class IsCampaignCreator(BasePermission):
         if user.user_type == UserType.NGO:
             verification_type = VerificationType.NGO
             print("p enter4")
-        
 
         elif user.user_type == UserType.INDIVIDUAL_FUNDRAISER:
             verification_type = VerificationType.INDIVIDUAL_FUNDRAISER
             print("p enter5")
-            
 
         else:
             self.message = "You do not have permission to perform this action."
@@ -206,7 +221,7 @@ class IsCampaignCreator(BasePermission):
         if not is_verified:
             self.message = "Please verify your profile first."
             return False
-        
+
         print("p enter7")
 
         return True

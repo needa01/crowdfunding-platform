@@ -1,9 +1,10 @@
 from decimal import Decimal, InvalidOperation
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.http import FileResponse
 from django.shortcuts import render
 from django.utils import timezone
+from django.utils.timezone import localtime
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from django.shortcuts import get_object_or_404
@@ -23,7 +24,12 @@ from crowdfunding.enums import (
     VerificationStatus,
     VerificationType,
 )
-from crowdfunding.permissions import CanDonate, IsActiveAccount, IsDonor, IsCampaignCreator
+from crowdfunding.permissions import (
+    CanDonate,
+    IsActiveAccount,
+    IsDonor,
+    IsCampaignCreator,
+)
 from crowdfunding.utils import generate_receipt_number
 from donations.models import Donation, DonationReceipt
 from donations.serializers import CreateDonationSerializer
@@ -65,7 +71,7 @@ def create_campaign_donation(request):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-    
+
     if not isinstance(campaign_slug, str) or not campaign_slug.strip():
         return Response(
             {
@@ -101,7 +107,7 @@ def create_campaign_donation(request):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-    
+
     if not amount.is_finite():
         return Response(
             {
@@ -120,8 +126,7 @@ def create_campaign_donation(request):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-        
-    
+
     if amount.as_tuple().exponent < -2:
         return Response(
             {
@@ -130,7 +135,7 @@ def create_campaign_donation(request):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-    
+
     if message is None:
         message = ""
 
@@ -171,7 +176,6 @@ def create_campaign_donation(request):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-
 
     # ========================================================
     # CAMPAIGN
@@ -318,9 +322,7 @@ def create_campaign_donation(request):
     # ========================================================
 
     try:
-        razorpay_order = create_razorpay_order(
-            donation=donation
-        )
+        razorpay_order = create_razorpay_order(donation=donation)
 
         if not razorpay_order:
             raise ValueError("Empty Razorpay order response.")
@@ -335,9 +337,7 @@ def create_campaign_donation(request):
         print("RAZORPAY ORDER ERROR:", exc)
 
         donation.status = DonationStatus.FAILED
-        donation.save(
-            update_fields=["status", "updated_at"]
-        )
+        donation.save(update_fields=["status", "updated_at"])
 
         return Response(
             {
@@ -346,7 +346,6 @@ def create_campaign_donation(request):
             },
             status=status.HTTP_502_BAD_GATEWAY,
         )
-
 
     # ========================================================
     # PAYMENT TRANSACTION
@@ -372,9 +371,7 @@ def create_campaign_donation(request):
         print("PAYMENT TRANSACTION INTEGRITY ERROR:", exc)
 
         donation.status = DonationStatus.FAILED
-        donation.save(
-            update_fields=["status", "updated_at"]
-        )
+        donation.save(update_fields=["status", "updated_at"])
 
         return Response(
             {
@@ -389,9 +386,7 @@ def create_campaign_donation(request):
         print("PAYMENT TRANSACTION ERROR:", exc)
 
         donation.status = DonationStatus.FAILED
-        donation.save(
-            update_fields=["status", "updated_at"]
-        )
+        donation.save(update_fields=["status", "updated_at"])
 
         return Response(
             {
@@ -416,16 +411,13 @@ def create_campaign_donation(request):
                 "razorpay_key_id": settings.RAZORPAY_KEY_ID,
                 "razorpay_order_id": razorpay_order_id,
                 "amount": str(donation.amount),
-                "amount_in_paise": int(
-                    donation.amount * Decimal("100")
-                ),
+                "amount_in_paise": int(donation.amount * Decimal("100")),
                 "currency": donation.currency.value,
                 "payment_status": payment_transaction.status.value,
             },
         },
         status=status.HTTP_201_CREATED,
     )
-
 
 
 @api_view(["POST"])
@@ -494,9 +486,7 @@ def create_platform_donation(request):
     # ========================================================
 
     try:
-        razorpay_order = create_platform_razorpay_order(
-            donation=donation
-        )
+        razorpay_order = create_platform_razorpay_order(donation=donation)
 
     except Exception as exc:
         donation.status = DonationStatus.FAILED
@@ -538,21 +528,12 @@ def create_platform_donation(request):
                 "donation_uuid": str(donation.uuid),
                 "transaction_uuid": str(payment_transaction.uuid),
                 "donation_number": donation.unique_donation_number,
-
                 "razorpay_key_id": settings.RAZORPAY_KEY_ID,
-
                 "razorpay_order_id": razorpay_order["id"],
-
                 "amount": str(donation.amount),
-
-                "amount_in_paise": int(
-                    donation.amount * Decimal("100")
-                ),
-
+                "amount_in_paise": int(donation.amount * Decimal("100")),
                 "currency": donation.currency.value,
-
-                "payment_status":
-                    payment_transaction.status.value,
+                "payment_status": payment_transaction.status.value,
             },
         },
         status=status.HTTP_201_CREATED,
@@ -564,79 +545,112 @@ def create_platform_donation(request):
 @permission_classes([IsActiveAccount, IsDonor])
 def get_donation_details(request, donation_uuid):
     try:
-        donation = Donation.objects.select_related(
-            "campaign",
-            "receipt",
-            "transaction",
-        ).get(
-            uuid=donation_uuid,
-            donor=request.user,
+        donation = (
+            Donation.objects.select_related(
+                "campaign",
+                "receipt",
+                "transaction",
+            )
+            .get(
+                uuid=donation_uuid,
+                donor=request.user,
+            )
         )
+
+        data = {
+            "uuid": str(donation.uuid),
+            "donation_number": donation.unique_donation_number,
+            "amount": str(donation.amount),
+            "currency": donation.currency.value,
+            "status": donation.status.value,
+            "is_anonymous": donation.is_anonymous,
+            "message": donation.message or "",
+            "donated_at": (
+                localtime(donation.donated_at).strftime("%d %b %Y, %I:%M %p")
+                if donation.donated_at
+                else None
+            ),
+            "created_at": (
+                localtime(donation.created_at).strftime("%d %b %Y, %I:%M %p")
+                if donation.created_at
+                else None
+            ),
+            "receipt": {
+                "available": hasattr(donation, "receipt"),
+                "receipt_number": (
+                    donation.receipt.receipt_num
+                    if hasattr(donation, "receipt")
+                    else None
+                ),
+                "has_receipt_file": (
+                    bool(donation.receipt.receipt_file)
+                    if hasattr(donation, "receipt")
+                    else False
+                ),
+            },
+            "payment": {
+                "gateway": (
+                    donation.transaction.gateway.value
+                    if hasattr(donation, "transaction")
+                    else None
+                ),
+                "payment_method": (
+                    donation.transaction.payment_method.value
+                    if (
+                        hasattr(donation, "transaction")
+                        and donation.transaction.payment_method
+                    )
+                    else None
+                ),
+                "transaction_status": (
+                    donation.transaction.status.value
+                    if hasattr(donation, "transaction")
+                    else None
+                ),
+                "gateway_payment_id": (
+                    donation.transaction.gateway_payment_id
+                    if hasattr(donation, "transaction")
+                    else None
+                ),
+            },
+        }
+
+        # ==========================================================
+        # CAMPAIGN DONATION
+        # ==========================================================
+
+        if donation.donation_type == DonationType.CAMPAIGN:
+
+            data["campaign"] = {
+                "uuid": str(donation.campaign.uuid),
+                "campaign_name": donation.campaign.campaign_name,
+                "campaign_slug": donation.campaign.campaign_slug,
+                "cover_photo": (
+                    request.build_absolute_uri(
+                        donation.campaign.cover_photo.url
+                    )
+                    if donation.campaign.cover_photo
+                    else None
+                ),
+            }
+
+        # ==========================================================
+        # PLATFORM DONATION
+        # ==========================================================
+
+        elif donation.donation_type == DonationType.PLATFORM:
+
+            data["platform"] = {
+                "name": "Our Platform",
+                "cover_photo": request.build_absolute_uri(
+                    "/static/receipts/logo.webp"
+                ),
+            }
 
         return Response(
             {
                 "success": True,
-                "data": {
-                    "uuid": str(donation.uuid),
-                    "donation_number": donation.unique_donation_number,
-                    "campaign": {
-                        "uuid": str(donation.campaign.uuid),
-                        "campaign_name": donation.campaign.campaign_name,
-                        "campaign_slug": donation.campaign.campaign_slug,
-                        "cover_photo": (
-                            request.build_absolute_uri(
-                                donation.campaign.cover_photo.url
-                            )
-                            if donation.campaign.cover_photo
-                            else None
-                        ),
-                    },
-                    "amount": str(donation.amount),
-                    "currency": donation.currency.value,
-                    "status": donation.status.value,
-                    "is_anonymous": donation.is_anonymous,
-                    "message": donation.message,
-                    "donated_at": donation.donated_at,
-                    "created_at": donation.created_at,
-                    "receipt": {
-                        "available": hasattr(donation, "receipt"),
-                        "receipt_number": (
-                            donation.receipt.receipt_num
-                            if hasattr(donation, "receipt")
-                            else None
-                        ),
-                        "has_receipt_file": (
-                            bool(donation.receipt.receipt_file)
-                            if hasattr(donation, "receipt")
-                            else False
-                        ),
-                    },
-                    "payment": {
-                        "gateway": (
-                            donation.transaction.gateway.value
-                            if hasattr(donation, "transaction")
-                            else None
-                        ),
-                        "payment_method": (
-                            donation.transaction.payment_method.value
-                            if (
-                                hasattr(donation, "transaction")
-                                and donation.transaction.payment_method
-                            )
-                            else None
-                        ),
-                        "transaction_status": (
-                            donation.transaction.status.value
-                            if hasattr(donation, "transaction")
-                            else None
-                        ),
-                        "gateway_payment_id": (
-                            donation.transaction.gateway_payment_id
-                            if hasattr(donation, "transaction")
-                            else None
-                        ),
-                    },
-                },
+                "data": data,
             }
         )
 
@@ -657,7 +671,6 @@ def get_donation_details(request, donation_uuid):
             },
             status=500,
         )
-
 
 @api_view(["GET"])
 @permission_classes([IsActiveAccount, IsDonor])
@@ -684,37 +697,82 @@ def get_my_donations(request):
 
         for donation in page_obj:
 
-            campaign = donation.campaign
+            # -----------------------------------------------------
+            # Common donation data
+            # -----------------------------------------------------
 
-            data.append(
-                {
-                    "uuid": str(donation.uuid),
-                    "donation_number": donation.unique_donation_number,
-                    "campaign": {
-                        "uuid": str(campaign.uuid),
-                        "campaign_name": campaign.campaign_name,
-                        "campaign_slug": campaign.campaign_slug,
-                        "cover_photo": (
-                            request.build_absolute_uri(campaign.cover_photo.url)
-                            if campaign.cover_photo
-                            else None
-                        ),
-                        "goal_amount": str(campaign.goal_amount),
-                        "raised_amount": str(campaign.raised_amount),
-                    },
-                    "amount": str(donation.amount),
-                    "currency": donation.currency.value,
-                    "status": donation.status.value,
-                    "is_anonymous": donation.is_anonymous,
-                    "message": donation.message,
-                    "donated_at": donation.donated_at,
-                    "created_at": donation.created_at,
-                    "receipt_available": hasattr(
+            donation_data = {
+                "uuid": str(donation.uuid),
+                "donation_number": (donation.unique_donation_number),
+                "donation_type": (donation.donation_type.value),
+                "amount": str(donation.amount),
+                "currency": (donation.currency.value),
+                "status": (donation.status.value),
+                "is_anonymous": (donation.is_anonymous),
+                "message": (donation.message),
+                "donated_at": (donation.donated_at),
+                "created_at": (donation.created_at),
+                "receipt_available": (
+                    hasattr(
                         donation,
                         "receipt",
-                    ),
+                    )
+                ),
+            }
+
+            # =====================================================
+            # 5. CAMPAIGN DONATION
+            # =====================================================
+
+            if donation.donation_type == DonationType.CAMPAIGN:
+
+                campaign = donation.campaign
+
+                # A campaign donation must have a campaign
+                if not campaign:
+                    return Response(
+                        {
+                            "success": False,
+                            "message": (
+                                "Campaign donation is not "
+                                "associated with a campaign."
+                            ),
+                            "donation_uuid": str(donation.uuid),
+                        },
+                        status=500,
+                    )
+
+                donation_data["campaign"] = {
+                    "campaign_name": (campaign.campaign_name),
+                    "cover_photo": (
+                        request.build_absolute_uri(campaign.cover_photo.url)
+                        if campaign.cover_photo
+                        else None
+                    )
                 }
-            )
+
+            # =====================================================
+            # 6. PLATFORM DONATION
+            # =====================================================
+
+            elif donation.donation_type == DonationType.PLATFORM:
+
+                donation_data["platform"] = {
+                    "name": "Platform Donation",
+                    "cover_photo": (
+                        request.build_absolute_uri("/static/receipts/logo.webp")
+                    )
+                }
+
+            # =====================================================
+            # 7. ADD DONATION TO RESPONSE
+            # =====================================================
+
+            data.append(donation_data)
+
+        # =========================================================
+        # 8. SUCCESS RESPONSE
+        # =========================================================
 
         return Response(
             {
@@ -737,6 +795,8 @@ def get_my_donations(request):
             },
             status=500,
         )
+
+
 
 
 @api_view(["POST"])
@@ -765,7 +825,7 @@ def generate_receipt(request, donation_uuid):
     # =========================================================
     # 2. RECEIPT CAN ONLY BE GENERATED FOR SUCCESSFUL DONATION
     # =========================================================
-    
+
     if donation.donor != request.user:
         return Response(
             {
@@ -868,6 +928,9 @@ def generate_receipt(request, donation_uuid):
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+
 
 
 @api_view(["GET"])

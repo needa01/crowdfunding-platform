@@ -178,10 +178,6 @@ class PaymentTransactionAdmin(admin.ModelAdmin):
         "withdrawal",
     )
 
-    filter_horizontal = (
-        "campaign_promotion_services",
-    )
-
     readonly_fields = (
         "uuid",
         "created_at",

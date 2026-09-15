@@ -1,14 +1,16 @@
 from io import BytesIO
+from pathlib import Path
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.utils import timezone
 
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
-from pathlib import Path
 
-from django.conf import settings
+from crowdfunding.enums import DonationType
+
 
 def generate_donation_receipt(receipt):
     donation = receipt.donation
@@ -70,7 +72,10 @@ def generate_donation_receipt(receipt):
     # HEADER
     # --------------------------------------------------
 
-    pdf.setFont("Helvetica-Bold", 20)
+    pdf.setFont(
+        "Helvetica-Bold",
+        20
+    )
 
     pdf.drawString(
         180,
@@ -80,7 +85,10 @@ def generate_donation_receipt(receipt):
 
     # Receipt number
 
-    pdf.setFont("Helvetica", 10)
+    pdf.setFont(
+        "Helvetica",
+        10
+    )
 
     pdf.drawRightString(
         width - 50,
@@ -118,10 +126,9 @@ def generate_donation_receipt(receipt):
 
     y -= 35
 
-    pdf.setFont(
-        "Helvetica",
-        11
-    )
+    # --------------------------------------------------
+    # COMMON DETAILS
+    # --------------------------------------------------
 
     details = [
         (
@@ -132,19 +139,61 @@ def generate_donation_receipt(receipt):
             "Amount",
             f"{donation.amount} {donation.currency.value}"
         ),
-        (
-            "Campaign",
-            donation.campaign.campaign_name
-        ),
-        (
-            "Donor",
-            donation.donor.fullname
-        ),
-        (
-            "Date",
-            donation.created_at.strftime("%d-%m-%Y")
-        ),
     ]
+
+    # --------------------------------------------------
+    # CAMPAIGN / PLATFORM
+    # --------------------------------------------------
+
+    if donation.donation_type == DonationType.CAMPAIGN:
+
+        details.append(
+            (
+                "Campaign",
+                donation.campaign.campaign_name
+            )
+        )
+
+    elif donation.donation_type == DonationType.PLATFORM:
+
+        details.append(
+            (
+                "Donation Type",
+                "Platform Donation"
+            )
+        )
+
+        details.append(
+            (
+                "Platform",
+                "Our Platform"
+            )
+        )
+
+    # --------------------------------------------------
+    # DONOR + DATE
+    # --------------------------------------------------
+
+    details.extend(
+        [
+            (
+                "Donor",
+                "Anonymous"
+                if donation.is_anonymous
+                else donation.donor.fullname
+            ),
+            (
+                "Date",
+                donation.donated_at.strftime("%d-%m-%Y")
+                if donation.donated_at
+                else donation.created_at.strftime("%d-%m-%Y")
+            ),
+        ]
+    )
+
+    # --------------------------------------------------
+    # DRAW DETAILS
+    # --------------------------------------------------
 
     for label, value in details:
 

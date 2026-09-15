@@ -14,6 +14,18 @@ def change_password(request):
 def campaigns(request):
     return render(request, 'campaigns/campaigns.html')
 
+def campaign_funds(request):
+    return render(request, 'campaigns/campaign-funds.html')
+
+def my_campaign_funds_detail(request, campaign_slug):
+    return render(
+        request,
+        "campaigns/my-campaign-funds-detail.html",
+        {
+            "campaign_slug": campaign_slug,
+        },
+    )
+
 #signup views
 def donor_signup(request):
     return render(request, 'signup/donor.html')
@@ -65,6 +77,11 @@ def campaign_promotion_view(request, campaign_slug):
         {
             "campaign_slug": campaign_slug,
         })
+
+
+#withdrawal views
+def my_withdrawals_view(request):
+    return render(request, 'withdrawals/withdrawals.html')
 
 #register views
 def register_fundraiser(request):

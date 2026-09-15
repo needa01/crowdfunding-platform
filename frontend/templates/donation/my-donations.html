@@ -1,147 +1,159 @@
-<!DOCTYPE html>
+<!doctype html>
+
 <html lang="en">
-
 <head>
-
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Donations</title>
 
-    <style>
 
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
-            font-family:Arial,sans-serif;
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+    }
+
+    body {
+        background: #f4f6f9;
+    }
+
+    .container {
+        width: 1200px;
+        max-width: calc(100% - 40px);
+        margin: 40px auto;
+    }
+
+    .header {
+        margin-bottom: 30px;
+    }
+
+    .header .back-btn {
+        display: inline-block;
+        text-decoration: none;
+        color: #374151;
+        background: white;
+        border: 1px solid #d1d5db;
+        padding: 8px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        margin-bottom: 18px;
+        transition: 0.2s ease;
+    }
+
+    .header .back-btn:hover {
+        background: #f3f4f6;
+    }
+
+    h1 {
+        font-size: 30px;
+        color: #111827;
+    }
+
+    .donation-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .campaign {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+
+    .campaign img {
+        width: 120px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+
+    .campaign h3 {
+        margin-bottom: 8px;
+        color: #111827;
+    }
+
+    .campaign p {
+        color: #777;
+        margin-bottom: 5px;
+    }
+
+    .amount {
+        font-size: 22px;
+        font-weight: bold;
+        color: #0a8f3d;
+    }
+
+    .status {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 20px;
+        color: white;
+        margin-top: 8px;
+        font-size: 13px;
+    }
+
+    .Success {
+        background: #16a34a;
+    }
+
+    .Pending {
+        background: #f59e0b;
+    }
+
+    .Failed {
+        background: #dc2626;
+    }
+
+    .actions {
+        text-align: right;
+    }
+
+    .btn {
+        display: inline-block;
+        margin-top: 10px;
+        text-decoration: none;
+        color: white;
+        background: #2563eb;
+        padding: 10px 18px;
+        border-radius: 6px;
+        transition: 0.2s ease;
+    }
+
+    .btn:hover {
+        background: #1d4ed8;
+    }
+
+    .empty {
+        background: white;
+        text-align: center;
+        padding: 80px;
+        border-radius: 10px;
+    }
+
+    @media (max-width: 768px) {
+        .donation-card {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 20px;
         }
 
-        body{
-            background:#f4f6f9;
+        .actions {
+            width: 100%;
+            text-align: left;
         }
+    }
+</style>
 
-        .container{
-            width:1200px;
-            margin:40px auto;
-        }
-
-        h1{
-            margin-bottom:30px;
-        }
-
-        .donation-card{
-
-            background:white;
-            border-radius:10px;
-            padding:20px;
-            margin-bottom:20px;
-
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-
-            box-shadow:0 2px 8px rgba(0,0,0,.08);
-
-        }
-
-        .campaign{
-            display:flex;
-            gap:20px;
-            align-items:center;
-        }
-
-        .campaign img{
-
-            width:120px;
-            height:80px;
-            object-fit:cover;
-            border-radius:8px;
-
-        }
-
-        .campaign h3{
-            margin-bottom:8px;
-        }
-
-        .campaign p{
-
-            color:#777;
-            margin-bottom:5px;
-
-        }
-
-        .amount{
-
-            font-size:22px;
-            font-weight:bold;
-            color:#0a8f3d;
-
-        }
-
-        .status{
-
-            display:inline-block;
-
-            padding:5px 10px;
-
-            border-radius:20px;
-
-            color:white;
-
-            margin-top:8px;
-
-            font-size:13px;
-
-        }
-
-        .Success{
-            background:#16a34a;
-        }
-
-        .Pending{
-            background:#f59e0b;
-        }
-
-        .Failed{
-            background:#dc2626;
-        }
-
-        .actions{
-
-            text-align:right;
-
-        }
-
-        .btn{
-
-            display:inline-block;
-
-            margin-top:10px;
-
-            text-decoration:none;
-
-            color:white;
-
-            background:#2563eb;
-
-            padding:10px 18px;
-
-            border-radius:6px;
-
-        }
-
-        .empty{
-
-            background:white;
-
-            text-align:center;
-
-            padding:80px;
-
-            border-radius:10px;
-
-        }
-
-    </style>
 
 </head>
 
@@ -149,131 +161,250 @@
 
 <div class="container">
 
+
+<div class="header">
+
+    <a href="javascript:history.back()" class="back-btn">
+        ← Back
+    </a>
+
     <h1>My Donations</h1>
-
-    <div id="donations-container">
-
-    </div>
 
 </div>
 
+<div id="donations-container"></div>
+
+
+</div>
 
 <script>
 
-const token = sessionStorage.getItem("access_token");
+    const token = sessionStorage.getItem("access_token");
 
-loadDonations();
+    loadDonations();
 
-async function loadDonations(){
 
-    const response = await fetch(
-        "/api/donations/my-donations",
-        {
-            headers:{
-                Authorization:`Bearer ${token}`
+    async function loadDonations() {
+
+        try {
+
+            const response = await fetch(
+                "/api/donations/my-donations",
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+
+            const result = await response.json();
+
+            const container =
+                document.getElementById(
+                    "donations-container"
+                );
+
+            container.innerHTML = "";
+
+
+            // =====================================================
+            // API ERROR
+            // =====================================================
+
+            if (!response.ok || !result.success) {
+
+                container.innerHTML = `
+                    <div class="empty">
+                        <h2>Unable to load donations</h2>
+                        <br>
+                        <p>
+                            ${result.message || "Something went wrong."}
+                        </p>
+                    </div>
+                `;
+
+                return;
             }
+
+
+            // =====================================================
+            // NO DONATIONS
+            // =====================================================
+
+            if (result.count === 0) {
+
+                container.innerHTML = `
+                    <div class="empty">
+
+                        <h2>No Donations Yet</h2>
+
+                        <br>
+
+                        <p>
+                            You haven't made any donations yet.
+                        </p>
+
+                    </div>
+                `;
+
+                return;
+            }
+
+
+            // =====================================================
+            // RENDER DONATIONS
+            // =====================================================
+
+            result.data.forEach((d) => {
+
+                let title = "";
+                let image = "";
+                let typeLabel = "";
+
+
+                // =================================================
+                // CAMPAIGN DONATION
+                // =================================================
+
+                if (
+                    d.donation_type === "Campaign" &&
+                    d.campaign
+                ) {
+
+                    title =
+                        d.campaign.campaign_name;
+
+                    image =
+                        d.campaign.cover_photo
+
+                    typeLabel =
+                        "Campaign Donation";
+                }
+
+
+                // =================================================
+                // PLATFORM DONATION
+                // =================================================
+
+                else if (
+                    d.donation_type === "Platform" &&
+                    d.platform
+                ) {
+
+                    title =
+                        d.platform.name;
+
+                    image =
+                        d.platform.cover_photo
+
+                    typeLabel =
+                        "Platform Donation";
+                }
+
+
+
+                // =================================================
+                // CARD
+                // =================================================
+
+                container.innerHTML += `
+
+                    <div class="donation-card">
+
+                        <div class="campaign">
+
+                            <img
+                                src="${image}"
+                                alt="${title}"
+                                onerror="this.src='/static/receipts/logo.webp'"
+                            >
+
+                            <div>
+
+                                <h3>
+                                    ${title}
+                                </h3>
+
+                                <p>
+                                    ${typeLabel}
+                                </p>
+
+                                <p>
+                                    Donation No :
+                                    ${d.donation_number}
+                                </p>
+
+                                <p>
+                                    ${new Date(
+                                        d.created_at
+                                    ).toLocaleDateString()}
+                                </p>
+
+                                <span
+                                    class="status ${d.status}"
+                                >
+                                    ${d.status}
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="actions">
+
+                            <div class="amount">
+                                ₹${d.amount}
+                            </div>
+
+                            <a
+                                class="btn"
+                                href="/frontend/donations/${d.uuid}"
+                            >
+                                View Details
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+            });
+
         }
-    );
 
-    const result = await response.json();
+        catch (error) {
 
-    const container =
-        document.getElementById("donations-container");
+            console.error(
+                "GET MY DONATIONS ERROR:",
+                error
+            );
 
-    container.innerHTML="";
+            document.getElementById(
+                "donations-container"
+            ).innerHTML = `
 
-    if(result.count===0){
+                <div class="empty">
 
-        container.innerHTML=`
+                    <h2>Something went wrong</h2>
 
-            <div class="empty">
+                    <br>
 
-                <h2>No Donations Yet</h2>
+                    <p>
+                        Unable to load your donations.
+                    </p>
 
-                <br>
+                </div>
 
-                <p>
-                    You haven't donated to any campaign.
-                </p>
+            `;
 
-            </div>
-
-        `;
-
-        return;
+        }
 
     }
-
-    result.data.forEach(d=>{
-
-        container.innerHTML += `
-
-        <div class="donation-card">
-
-            <div class="campaign">
-
-                <img
-                    src="${d.campaign.cover_photo || '/static/images/no-image.png'}"
-                >
-
-                <div>
-
-                    <h3>${d.campaign.campaign_name}</h3>
-
-                    <p>
-
-                        Donation No :
-                        ${d.donation_number}
-
-                    </p>
-
-                    <p>
-
-                        ${new Date(
-                            d.created_at
-                        ).toLocaleDateString()}
-
-                    </p>
-
-                    <span
-                        class="status ${d.status}"
-                    >
-                        ${d.status}
-                    </span>
-
-                </div>
-
-            </div>
-
-            <div class="actions">
-
-                <div class="amount">
-
-                    ₹${d.amount}
-
-                </div>
-
-                <a
-                    class="btn"
-                    href="/frontend/donations/${d.uuid}"
-                >
-
-                    View Details
-
-                </a>
-
-            </div>
-
-        </div>
-
-        `;
-
-    });
-
-}
 
 </script>
 
 </body>
-
 </html>

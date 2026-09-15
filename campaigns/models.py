@@ -19,6 +19,7 @@ from crowdfunding.enums import (
     BeneficiaryRelation,
     BeneficiaryType,
     CampaignCause,
+    CampaignPromotionServiceType,
     CampaignStatus,
     CampaignType,
     KYC_Status,
@@ -29,6 +30,7 @@ from crowdfunding.enums import (
     VerificationType,
     VerificationStatus,
 )
+from crowdfunding.upload_paths import campaign_profile_upload_path
 from organizations.models import NGOProfile
 from django.core.exceptions import ValidationError
 
@@ -50,7 +52,7 @@ class Campaign(models.Model):
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="campaigns",
         null=False,
         blank=False,
@@ -63,7 +65,7 @@ class Campaign(models.Model):
 
     ngo = models.ForeignKey(
         NGOProfile,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name="campaigns",
@@ -81,9 +83,10 @@ class Campaign(models.Model):
     campaign_desc = models.TextField()
 
     cover_photo = models.ImageField(
-        upload_to="campaigns/covers/",
+        upload_to=campaign_profile_upload_path,
         null=True,
         blank=True,
+        max_length=500
     )
 
     goal_amount = models.DecimalField(
@@ -134,7 +137,7 @@ class Campaign(models.Model):
     )
 
     beneficiary_mobile = models.CharField(
-        max_length=15,
+        max_length=10,
         null=True,
         blank=True,
     )
@@ -239,12 +242,44 @@ class Campaign(models.Model):
         # =====================================================
         # BASIC USER VALIDATION
         # =====================================================
+        
+        # =====================================================
+        # BENEFICIARY MOBILE VALIDATION
+        # =====================================================
+        if self.beneficiary_type == BeneficiaryType.INDIVIDUAL and self.beneficiary_group_type == BeneficiaryGroupType.GROUP:
+            raise ValidationError(
+                {
+                    "beneficiary_group_type": (
+                        "Individual beneficiaries cannot be part of a group."
+                    )
+                }
+            )
+
+        if self.beneficiary_mobile:
+            if not self.beneficiary_mobile.isdigit():
+                raise ValidationError(
+                    {
+                        "beneficiary_mobile": (
+                            "Beneficiary mobile number must contain only digits."
+                        )
+                    }
+                )
+
+            if len(self.beneficiary_mobile) != 10:
+                raise ValidationError(
+                    {
+                        "beneficiary_mobile": (
+                            "Beneficiary mobile number must be exactly 10 digits."
+                        )
+                    }
+                )
+
+        if self.beneficiary_type == BeneficiaryType.ME:
+            self.beneficiary_relation = BeneficiaryRelation.SELF
 
         if self.created_by.user_type == UserType.DONOR:
-            raise ValidationError(
-                {"created_by": ("Donors cannot create campaigns.")}
-            )
-        
+            raise ValidationError({"created_by": ("Donors cannot create campaigns.")})
+
         # CSR users cannot create campaigns
         if self.created_by.user_type == UserType.CSR:
             raise ValidationError(
@@ -387,7 +422,7 @@ class Campaign(models.Model):
 
                 self.beneficiary_group_type = BeneficiaryGroupType.INDIVIDUAL
 
-                self.beneficiary_relation = None
+                self.beneficiary_relation = BeneficiaryRelation.SELF
 
                 self.beneficiary_name = self.created_by.fullname
 
@@ -476,7 +511,10 @@ class Campaign(models.Model):
             # Raise an error if the user supplied one.
             # -------------------------------------------------
 
-            if self.beneficiary_relation is not None:
+            if self.beneficiary_relation is not None and (
+                self.beneficiary_type != BeneficiaryType.ME
+                and self.beneficiary_type != BeneficiaryType.RELATIVE
+            ):
                 raise ValidationError(
                     {
                         "beneficiary_relation": (
@@ -549,6 +587,12 @@ class Campaign(models.Model):
     # =========================================================
 
     def save(self, *args, **kwargs):
+        
+        if self.beneficiary_type == BeneficiaryType.INDIVIDUAL:
+            self.beneficiary_group_type = BeneficiaryGroupType.INDIVIDUAL
+            self.beneficiary_member_count = 1
+        if self.beneficiary_type == BeneficiaryType.NGO or self.beneficiary_type == BeneficiaryType.OTHERS or self.beneficiary_type == BeneficiaryType.COMMUNITY or self.beneficiary_type == BeneficiaryType.INSTITUTION:
+            self.beneficiary_group_type = BeneficiaryGroupType.GROUP
 
         # =====================================================
         # INDIVIDUAL BENEFICIARY
@@ -678,28 +722,6 @@ class Campaign(models.Model):
         super().save(*args, **kwargs)
 
 
-class CampaignPromotionServiceTypes(models.Model):
-
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-    service_name = models.CharField(max_length=50)
-
-    minimum_amount = models.DecimalField(max_digits=10, decimal_places=2)
-
-    is_active = models.BooleanField(default=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        db_table = "campaign_promotion_services_type"
-        verbose_name = "Campaign Promotion Services Type"
-        verbose_name_plural = "Campaign Promotion Services Types"
-
-    def __str__(self):
-        return self.service_name
-
-
 class CampaignPromotionService(models.Model):
 
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -708,10 +730,8 @@ class CampaignPromotionService(models.Model):
         Campaign, on_delete=models.CASCADE, related_name="services"
     )
 
-    service_type = models.ForeignKey(
-        CampaignPromotionServiceTypes,
-        on_delete=models.PROTECT,
-        related_name="campaign_promotions",
+    service_type = EnumField(
+        CampaignPromotionServiceType
     )
 
     amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -771,3 +791,7 @@ class CampaignPromotionService(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+
+

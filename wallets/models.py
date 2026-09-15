@@ -61,10 +61,11 @@ class Wallet(models.Model):
             raise ValidationError(
                 {"campaign": "Platform wallet cannot be linked to a campaign."}
             )
+        
 
     def __str__(self):
         if self.wallet_type == WalletType.CAMPAIGN:
-            return f"{self.campaign.title} Wallet"
+            return f"{self.campaign.campaign_name} Wallet"
 
         return "Platform Wallet"
     
@@ -79,7 +80,7 @@ class WalletTransaction(models.Model):
 
     wallet = models.ForeignKey(
         "Wallet",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="transactions",
     )
 
@@ -109,7 +110,7 @@ class WalletTransaction(models.Model):
 
     donation = models.ForeignKey(
         "donations.Donation",
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="wallet_transactions",
         blank=True,
         null=True,
@@ -117,15 +118,7 @@ class WalletTransaction(models.Model):
 
     withdrawal = models.ForeignKey(
         "payments.Withdrawal",
-        on_delete=models.SET_NULL,
-        related_name="wallet_transactions",
-        blank=True,
-        null=True,
-    )
-
-    campaign_service = models.ForeignKey(
-        "campaigns.CampaignPromotionService",
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="wallet_transactions",
         blank=True,
         null=True,
@@ -138,7 +131,7 @@ class WalletTransaction(models.Model):
 
     created_by = models.ForeignKey(
         "accounts.CustomUser",
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         related_name="created_wallet_transactions",
         blank=True,
         null=True,
@@ -159,8 +152,7 @@ class WalletTransaction(models.Model):
 
         references = [
             self.donation,
-            self.withdrawal,
-            self.campaign_service,
+            self.withdrawal
         ]
 
         if sum(ref is not None for ref in references) != 1:

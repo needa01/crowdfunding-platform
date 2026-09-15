@@ -1,64 +1,9 @@
 from django.contrib import admin
 
 from .models import (
-    DocumentType,
     Document,
     EntityVerificationRequest,
 )
-
-
-@admin.register(DocumentType)
-class DocumentTypeAdmin(admin.ModelAdmin):
-
-    list_display = (
-        "name",
-        "display_applies_to",
-        "is_required",
-        "uuid",
-    )
-
-    list_filter = (
-        "applies_to",
-        "is_required",
-    )
-
-    search_fields = (
-        "name",
-    )
-
-    readonly_fields = (
-        "uuid",
-    )
-
-    ordering = (
-        "name",
-    )
-
-    fieldsets = (
-        (
-            "Document Type",
-            {
-                "fields": (
-                    "uuid",
-                    "name",
-                    "applies_to",
-                    "is_required",
-                )
-            },
-        ),
-    )
-
-    @admin.display(description="Applies To")
-    def display_applies_to(self, obj):
-        value = obj.applies_to
-
-        if value is None:
-            return "-"
-
-        if hasattr(value, "value"):
-            return value.value
-
-        return str(value)
 
 
 @admin.register(Document)
@@ -98,7 +43,6 @@ class DocumentAdmin(admin.ModelAdmin):
     autocomplete_fields = (
         "user",
         "campaign",
-        "document_type",
         "reviewed_by",
     )
 

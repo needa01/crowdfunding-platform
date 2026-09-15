@@ -6,8 +6,9 @@ from rest_framework.decorators import (
     permission_classes,
     authentication_classes,
 )
+from decimal import ROUND_UP
 from campaigns.models import RAZORPAY_FEE_PERCENTAGE, GST_PERCENTAGE
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import OuterRef, Subquery
@@ -16,24 +17,23 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from campaigns.models import (
     Campaign,
-    CampaignPromotionServiceTypes,
     CampaignPromotionService,
 )
 from campaigns.serializers import (
     CampaignDetailSerializer,
     CampaignListSerializer,
+    CampaignPromotionServiceTypesSerializer,
     MyCampaignDetailSerializer,
     MyCampaignListSerializer,
-    CampaignPromotionServiceTypesSerializer,
+    
 )
 from crowdfunding.enums import (
-    BeneficiaryGroupType,
     BeneficiaryType,
     CampaignCause,
+    CampaignPromotionServiceType,
     CampaignStatus,
     CampaignType,
     DonationStatus,
-    KYC_Status,
     UserType,
     VerificationStatus,
     VerificationType,
@@ -42,17 +42,35 @@ from crowdfunding.enums import (
     TransactionStatus,
     Currency,
     PromotionStatus,
+    WalletTransactionType,
+    WalletType,
+    WithdrawalStatus,
 )
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from crowdfunding.permissions import IsCampaignCreator
 from donations.models import Donation
 from organizations.models import NGOProfile
-from payments.models import PaymentTransaction
+from payments.models import PaymentTransaction, PromotionServicePaymentTransaction, Withdrawal
 from verification.models import EntityVerificationRequest
 import razorpay
 from django.conf import settings
 
+from wallets.models import Wallet
+
+from decimal import Decimal
+
+from django.db.models import Sum, Count, Q
+from django.shortcuts import get_object_or_404
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+
+from campaigns.models import Campaign
+from donations.models import Donation
+from wallets.models import Wallet, WalletTransaction
 
 razorpay_client = razorpay.Client(
     auth=(
@@ -342,7 +360,7 @@ def create_campaign(request):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-    
+
     if beneficiary_type != BeneficiaryType.ME.value:
 
         campaign_data["beneficiary_group_type"] = request.data.get(
@@ -432,6 +450,10 @@ def create_campaign(request):
     )
 
 
+
+
+
+
 @api_view(["POST"])
 @permission_classes([IsCampaignCreator])
 @transaction.atomic
@@ -485,9 +507,10 @@ def create_campaign_promotion_payment(request):
     # =========================================================
 
     try:
-        campaign = Campaign.objects.get(campaign_slug=campaign_slug)
+        campaign = Campaign.objects.get(
+            campaign_slug=campaign_slug
+        )
     except Campaign.DoesNotExist:
-
         return Response(
             {
                 "success": False,
@@ -501,7 +524,6 @@ def create_campaign_promotion_payment(request):
     # =========================================================
 
     if campaign.created_by != request.user:
-
         return Response(
             {
                 "success": False,
@@ -511,7 +533,23 @@ def create_campaign_promotion_payment(request):
         )
 
     # =========================================================
-    # 4. CHECK CAMPAIGN STATUS
+    # 4. CHECK CAMPAIGN TYPE
+    # =========================================================
+
+    if campaign.campaign_type == CampaignType.CSR:
+        return Response(
+            {
+                "success": False,
+                "message": (
+                    "Promotional services are available only "
+                    "for crowdfunding campaigns."
+                ),
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # =========================================================
+    # 5. CHECK CAMPAIGN VERIFICATION
     # =========================================================
 
     verification = EntityVerificationRequest.objects.filter(
@@ -519,7 +557,10 @@ def create_campaign_promotion_payment(request):
         verification_type=VerificationType.CAMPAIGN,
     ).first()
 
-    if not verification or verification.status != VerificationStatus.APPROVED:
+    if (
+        not verification
+        or verification.status != VerificationStatus.APPROVED
+    ):
         return Response(
             {
                 "success": False,
@@ -529,56 +570,70 @@ def create_campaign_promotion_payment(request):
         )
 
     # =========================================================
-    # 5. VALIDATE SERVICES
+    # 6. VALIDATE SERVICES
     # =========================================================
+
     validated_services = []
 
     service_total = Decimal("0.00")
-    total_fee = Decimal("0.00")
-    total_tax = Decimal("0.00")
+
+    # Get all allowed hard-coded promotion types
+    allowed_service_types = {
+        service_type.value
+        for service_type in CampaignPromotionServiceType
+    }
 
     for item in services_data:
 
-        service_id = item.get("service_id")
+        service_type = item.get("service_type")
         amount = item.get("amount")
         user_notes = item.get("user_notes", "")
 
-        if not service_id:
+        # -----------------------------------------------------
+        # SERVICE TYPE REQUIRED
+        # -----------------------------------------------------
+
+        if not service_type:
             return Response(
                 {
                     "success": False,
-                    "message": "service_id is required for every service.",
+                    "message": (
+                        "service_type is required for every service."
+                    ),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        # -----------------------------------------------------
+        # VALIDATE SERVICE TYPE
+        # -----------------------------------------------------
+
+        if service_type not in allowed_service_types:
+            return Response(
+                {
+                    "success": False,
+                    "message": (
+                        f"Invalid promotion service type: "
+                        f"{service_type}."
+                    ),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # -----------------------------------------------------
+        # AMOUNT REQUIRED
+        # -----------------------------------------------------
 
         if amount is None:
             return Response(
                 {
                     "success": False,
-                    "message": f"Amount is required for service {service_id}.",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # -----------------------------------------------------
-        # GET PRICING MASTER
-        # -----------------------------------------------------
-
-        try:
-            pricing = CampaignPromotionServiceTypes.objects.get(
-                uuid=service_id,
-                is_active=True,
-            )
-        except CampaignPromotionServiceTypes.DoesNotExist:
-            return Response(
-                {
-                    "success": False,
                     "message": (
-                        f"Promotion service {service_id} " "not found or inactive."
+                        f"Amount is required for service "
+                        f"{service_type}."
                     ),
                 },
-                status=status.HTTP_404_NOT_FOUND,
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # -----------------------------------------------------
@@ -586,14 +641,17 @@ def create_campaign_promotion_payment(request):
         # -----------------------------------------------------
 
         try:
-            amount = Decimal(str(amount)).quantize(Decimal("0.01"))
+            amount = Decimal(str(amount)).quantize(
+                Decimal("0.01")
+            )
         except (InvalidOperation, TypeError, ValueError):
 
             return Response(
                 {
                     "success": False,
                     "message": (
-                        f"Invalid amount for " f"{pricing.service_type.value}."
+                        f"Invalid amount for service "
+                        f"{service_type}."
                     ),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -603,62 +661,107 @@ def create_campaign_promotion_payment(request):
             return Response(
                 {
                     "success": False,
-                    "message": "Amount must be greater than zero.",
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if amount < pricing.minimum_amount:
-            return Response(
-                {
-                    "success": False,
                     "message": (
-                        f"Minimum budget for "
-                        f"{pricing.service_type.value} is "
-                        f"₹{pricing.minimum_amount}."
+                        f"Amount for {service_type} "
+                        "must be greater than zero."
                     ),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         # -----------------------------------------------------
-        # CALCULATE RAZORPAY FEE
+        # CONVERT STRING TO ENUM
         # -----------------------------------------------------
 
-        fee = (amount * RAZORPAY_FEE_PERCENTAGE / Decimal("100")).quantize(
-            Decimal("0.01")
+        promotion_service_type = CampaignPromotionServiceType(
+            service_type
         )
 
         # -----------------------------------------------------
-        # CALCULATE GST
-        # GST is calculated on the fee
-        # -----------------------------------------------------
-
-        tax = (fee * GST_PERCENTAGE / Decimal("100")).quantize(Decimal("0.01"))
-
-        # -----------------------------------------------------
-        # STORE VALIDATED SERVICE
+        # STORE SERVICE
         # -----------------------------------------------------
 
         validated_services.append(
             {
-                "pricing": pricing,
+                "service_type": promotion_service_type,
                 "amount": amount,
-                "fee": fee,
-                "tax": tax,
                 "user_notes": user_notes,
             }
         )
 
         service_total += amount
-        total_fee += fee
-        total_tax += tax
 
     # =========================================================
-    # 6. CREATE PAYMENT TRANSACTION
+    # 7. CALCULATE CUSTOMER PAYABLE AMOUNT
+    #
+    # Promotion budget = amount the service should receive
+    #
+    # Customer pays:
+    #
+    #     Promotion Budget
+    #     + Razorpay Fee
+    #     + GST on Razorpay Fee
+    #
+    # Fee = 2%
+    # GST = 18%
+    #
+    # Since the fee is calculated on the final customer payment:
+    #
+    # total = budget / (1 - 0.02 - (0.02 * 0.18))
+    #
+    # denominator = 0.9764
+    #
+    # Example:
+    #
+    # ₹3000 / 0.9764 = ₹3072.511...
+    #
+    # Rounded according to the payment amount:
+    # ₹3072.52
     # =========================================================
 
-    final_total = (service_total + total_fee + total_tax).quantize(Decimal("0.01"))
+    fee_percentage = (
+        RAZORPAY_FEE_PERCENTAGE / Decimal("100")
+    )
+
+    gst_percentage = (
+        GST_PERCENTAGE / Decimal("100")
+    )
+
+    denominator = (
+        Decimal("1")
+        - fee_percentage
+        - (fee_percentage * gst_percentage)
+    )
+
+    final_total = (
+        service_total / denominator
+    ).quantize(
+        Decimal("0.01"),
+        rounding=ROUND_UP,
+    )
+
+    # =========================================================
+    # 8. CALCULATE FEE AND GST FOR DISPLAY/STORAGE
+    # =========================================================
+
+    total_fee = (
+        final_total * fee_percentage
+    ).quantize(
+        Decimal("0.01"),
+        rounding=ROUND_UP,
+    )
+
+    total_tax = (
+        total_fee * gst_percentage
+    ).quantize(
+        Decimal("0.01"),
+        rounding=ROUND_UP,
+    )
+
+    # =========================================================
+    # 9. CREATE PAYMENT TRANSACTION
+    # =========================================================
+
     payment_transaction = PaymentTransaction.objects.create(
         transaction_type=TransactionType.CAMPAIGN_PROMOTION,
         amount=final_total,
@@ -668,16 +771,20 @@ def create_campaign_promotion_payment(request):
     )
 
     # =========================================================
-    # 7. CREATE RAZORPAY ORDER
+    # 10. CREATE RAZORPAY ORDER
     # =========================================================
 
     try:
 
         razorpay_order = razorpay_client.order.create(
             {
-                "amount": int(final_total * Decimal("100")),
+                "amount": int(
+                    final_total * Decimal("100")
+                ),
                 "currency": "INR",
-                "receipt": str(payment_transaction.uuid),
+                "receipt": str(
+                    payment_transaction.uuid
+                ),
             }
         )
 
@@ -691,10 +798,12 @@ def create_campaign_promotion_payment(request):
         raise
 
     # =========================================================
-    # 8. SAVE RAZORPAY ORDER ID
+    # 11. SAVE RAZORPAY ORDER ID
     # =========================================================
 
-    payment_transaction.gateway_order_id = razorpay_order["id"]
+    payment_transaction.gateway_order_id = (
+        razorpay_order["id"]
+    )
 
     payment_transaction.save(
         update_fields=[
@@ -703,47 +812,117 @@ def create_campaign_promotion_payment(request):
     )
 
     # =========================================================
-    # 9. CREATE PROMOTION SERVICE RECORDS
+    # 12. CREATE PROMOTION SERVICE RECORDS
+    #
+    # Each service stores its original promotion budget.
+    #
+    # Fee and tax are distributed proportionally between
+    # selected services.
     # =========================================================
 
     created_services = []
 
     for item in validated_services:
 
-        promotion_service = CampaignPromotionService.objects.create(
-            campaign=campaign,
-            service_type=item["pricing"],
-            amount=item["amount"],
-            fee=item["fee"],
-            tax=item["tax"],
-            currency=Currency.INR,
-            promotion_status=PromotionStatus.PENDING,
-            user_notes=item["user_notes"],
+        service_amount = item["amount"]
+
+        # Proportion of total promotion budget
+        proportion = (
+            service_amount / service_total
         )
 
-        created_services.append(promotion_service)
+        service_fee = (
+            total_fee * proportion
+        ).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_UP,
+        )
+
+        service_tax = (
+            total_tax * proportion
+        ).quantize(
+            Decimal("0.01"),
+            rounding=ROUND_UP,
+        )
+
+        promotion_service = (
+            CampaignPromotionService.objects.create(
+                campaign=campaign,
+                service_type=item["service_type"],
+                amount=service_amount,
+                fee=service_fee,
+                tax=service_tax,
+                currency=Currency.INR,
+                promotion_status=PromotionStatus.PENDING,
+                user_notes=item["user_notes"],
+            )
+        )
+
+        created_services.append(
+            promotion_service
+        )
 
     # =========================================================
-    # 10. LINK SERVICES TO PAYMENT TRANSACTION
+    # 13. LINK SERVICES TO PAYMENT TRANSACTION
     # =========================================================
 
-    payment_transaction.campaign_promotion_services.set(created_services)
+    for service in created_services:
+
+        PromotionServicePaymentTransaction.objects.create(
+            payment_transaction=payment_transaction,
+            promotion_service=service,
+        )
+
+    # =========================================================
+    # 14. RESPONSE
+    # =========================================================
+
     return Response(
         {
             "success": True,
             "message": "Promotion payment order created.",
             "data": {
-                "transaction_uuid": str(payment_transaction.uuid),
-                "razorpay_order_id": (razorpay_order["id"]),
+                "transaction_uuid": str(
+                    payment_transaction.uuid
+                ),
+
+                "razorpay_order_id": (
+                    razorpay_order["id"]
+                ),
+
+                # Actual promotion budget
+                "promotion_budget": service_total,
+
+                # Fee charged to customer
+                "razorpay_fee": total_fee,
+
+                # GST on fee
+                "gst": total_tax,
+
+                # Actual amount customer pays
                 "amount": final_total,
-                "amount_in_paise": int(final_total * Decimal("100")),
+
+                "amount_in_paise": int(
+                    final_total * Decimal("100")
+                ),
+
                 "currency": "INR",
-                "razorpay_key_id": (settings.RAZORPAY_KEY_ID),
+
+                "razorpay_key_id": (
+                    settings.RAZORPAY_KEY_ID
+                ),
+
                 "services": [
                     {
-                        "promotion_service_uuid": str(service.uuid),
-                        "service_type": (service.service_type.service_type.value),
+                        "promotion_service_uuid": str(
+                            service.uuid
+                        ),
+                        "service_type": (
+                            service.service_type.value
+                        ),
                         "amount": service.amount,
+                        "fee": service.fee,
+                        "tax": service.tax,
                     }
                     for service in created_services
                 ],
@@ -751,6 +930,10 @@ def create_campaign_promotion_payment(request):
         },
         status=status.HTTP_201_CREATED,
     )
+
+
+
+
 
 
 @api_view(["PATCH"])
@@ -1010,7 +1193,11 @@ def get_campaign_donations(request, campaign_slug):
                     "currency": donation.currency.value,
                     "message": donation.message or "",
                     "is_anonymous": donation.is_anonymous,
-                    "donated_at": donation.donated_at,
+                    "donated_at": (
+                        donation.donated_at.strftime("%d %b %Y, %I:%M %p")
+                        if donation.donated_at
+                        else None
+                    ),
                 }
             )
 
@@ -1051,11 +1238,17 @@ def get_campaign_donations(request, campaign_slug):
 @permission_classes([AllowAny])
 def get_promotion_services(request):
 
-    services = CampaignPromotionServiceTypeseTypeseTypes.objects.filter(
-        is_active=True
-    ).order_by("service_type")
+    services = [
+        {
+            "service_type": service_type.value,
+        }
+        for service_type in CampaignPromotionServiceType
+    ]
 
-    serializer = CampaignPromotionServiceTypesSerializer(services, many=True)
+    serializer = CampaignPromotionServiceTypesSerializer(
+        services,
+        many=True
+    )
 
     return Response(
         {
@@ -1065,3 +1258,319 @@ def get_promotion_services(request):
         },
         status=status.HTTP_200_OK,
     )
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_my_verified_campaigns(request):
+
+    # 1. First get only my ACTIVE campaigns
+    campaigns = Campaign.objects.filter(
+        created_by=request.user,
+        campaign_status=CampaignStatus.ACTIVE,
+    ).order_by("-created_at")
+
+    data = []
+
+    # 2. Now check each campaign in EntityVerificationRequest
+    for campaign in campaigns:
+
+        verification = EntityVerificationRequest.objects.filter(
+            campaign=campaign,
+            verification_type=VerificationType.CAMPAIGN,
+            status=VerificationStatus.APPROVED,
+        ).first()
+
+        # No verified request → don't show campaign
+        if not verification:
+            continue
+
+        # 3. Get campaign wallet
+        wallet = Wallet.objects.filter(
+            campaign=campaign,
+            wallet_type=WalletType.CAMPAIGN,
+        ).first()
+
+        data.append(
+            {
+                "campaign_name": campaign.campaign_name,
+                "campaign_slug": campaign.campaign_slug,
+                "cover_photo": (
+                    request.build_absolute_uri(campaign.cover_photo.url)
+                    if campaign.cover_photo
+                    else None
+                ),
+                "wallet_balance": str(wallet.balance if wallet else Decimal("0.00")),
+                "campaign_status": campaign.campaign_status.value,
+                "is_verified": True,
+            }
+        )
+
+    return Response(
+        {
+            "success": True,
+            "data": data,
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def campaign_funds_detail(request, campaign_slug):
+
+    # =========================================================
+    # 1. GET CAMPAIGN
+    # =========================================================
+
+    campaign = get_object_or_404(Campaign, campaign_slug=campaign_slug)
+
+    # =========================================================
+    # 2. SECURITY CHECK
+    # =========================================================
+
+    if campaign.created_by != request.user:
+
+        return Response(
+            {
+                "success": False,
+                "message": ("You are not authorized to view " "these campaign funds."),
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # =========================================================
+    # 3. CAMPAIGN VALUES
+    # =========================================================
+
+    goal_amount = campaign.goal_amount or Decimal("0.00")
+
+    raised_amount = campaign.raised_amount or Decimal("0.00")
+
+    remaining_amount = max(goal_amount - raised_amount, Decimal("0.00"))
+
+    if goal_amount > 0:
+
+        progress_percentage = (raised_amount / goal_amount) * Decimal("100")
+
+        progress_percentage = min(progress_percentage, Decimal("100"))
+
+    else:
+
+        progress_percentage = Decimal("0.00")
+
+    # =========================================================
+    # 4. SUCCESSFUL PAYMENT TRANSACTIONS
+    # =========================================================
+
+    successful_payments = PaymentTransaction.objects.filter(
+        donation__campaign=campaign, status=TransactionStatus.SUCCESS
+    )
+
+    # =========================================================
+    # 5. GROSS AMOUNT RAISED
+    # =========================================================
+
+    gross_raised = successful_payments.aggregate(total=Sum("amount"))[
+        "total"
+    ] or Decimal("0.00")
+
+    # =========================================================
+    # 6. RAZORPAY FEES
+    # =========================================================
+
+    razorpay_fees = Decimal("0.00")
+    razorpay_gst = Decimal("0.00")
+
+    for payment in successful_payments:
+
+        gateway_response = payment.gateway_response or {}
+
+        fee_paise = gateway_response.get("fee", 0)
+        tax_paise = gateway_response.get("tax", 0)
+
+        total_fee_paise = Decimal(str(fee_paise)) + Decimal(str(tax_paise))
+
+        razorpay_gst += Decimal(str(tax_paise)) / Decimal("100")
+
+        razorpay_fees += total_fee_paise / Decimal("100")
+
+    # =========================================================
+    # 7. NET CAMPAIGN FUNDS
+    # =========================================================
+
+    net_campaign_funds = gross_raised - razorpay_fees
+
+    # =========================================================
+    # 10. GET CAMPAIGN WALLET
+    # =========================================================
+
+    wallet, _ = Wallet.objects.get_or_create(campaign=campaign)
+
+    wallet_balance = wallet.balance or Decimal("0.00")
+
+    # =========================================================
+    # 11. WITHDRAWALS
+    # =========================================================
+
+    withdrawals = Withdrawal.objects.filter(campaign=campaign).order_by("-created_at")
+
+    # ---------------------------------------------------------
+    # Completed withdrawals
+    # ---------------------------------------------------------
+
+    completed_withdrawals = withdrawals.filter(status=WithdrawalStatus.PAID)
+
+    # ---------------------------------------------------------
+    # Pending / processing withdrawals
+    # ---------------------------------------------------------
+
+    pending_withdrawals = withdrawals.filter(
+        status__in=[
+            WithdrawalStatus.PENDING,
+            WithdrawalStatus.APPROVED,
+        ]
+    )
+
+    # ---------------------------------------------------------
+    # Total withdrawn
+    # ---------------------------------------------------------
+
+    total_withdrawn = completed_withdrawals.aggregate(total=Sum("amount"))[
+        "total"
+    ] or Decimal("0.00")
+
+    # ---------------------------------------------------------
+    # Pending withdrawal amount
+    # ---------------------------------------------------------
+
+    pending_withdrawal_amount = pending_withdrawals.aggregate(total=Sum("amount"))[
+        "total"
+    ] or Decimal("0.00")
+
+    # =========================================================
+    # 12. AVAILABLE BALANCE
+    # =========================================================
+
+    # Wallet balance is the authoritative available balance.
+
+    available_balance = wallet_balance
+
+    # =========================================================
+    # 13. TOTAL DONORS
+    # =========================================================
+
+    total_donors = (
+        Donation.objects.filter(campaign=campaign, status=DonationStatus.SUCCESS)
+        .values("donor")
+        .distinct()
+        .count()
+    )
+
+    # =========================================================
+    # 14. WALLET TRANSACTIONS
+    # =========================================================
+
+    transactions = WalletTransaction.objects.filter(wallet=wallet).order_by(
+        "-created_at"
+    )
+
+    wallet_transaction_data = []
+
+    for transaction in transactions:
+
+        wallet_transaction_data.append(
+            {
+                "uuid": str(transaction.uuid),
+                "transaction_type": (
+                    transaction.transaction_type.value
+                    if transaction.transaction_type
+                    else None
+                ),
+                "description": getattr(transaction, "description", ""),
+                "credit": (
+                    transaction.amount
+                    if transaction.transaction_type == WalletTransactionType.CREDIT
+                    else None
+                ),
+                "debit": str(
+                    transaction.amount
+                    if transaction.transaction_type == WalletTransactionType.DEBIT
+                    else None
+                ),
+                "balance_after": str(
+                    transaction.balance_after
+                    if transaction.balance_after is not None
+                    else Decimal("0.00")
+                ),
+                "created_at": transaction.created_at,
+            }
+        )
+
+    # =========================================================
+    # 15. WITHDRAWAL HISTORY
+    # =========================================================
+
+    withdrawal_data = []
+
+    for withdrawal in withdrawals:
+
+        withdrawal_data.append(
+            {
+                "uuid": str(withdrawal.uuid),
+                "withdrawal_number": getattr(withdrawal, "withdrawal_number", None),
+                "amount": str(
+                    withdrawal.amount
+                    if withdrawal.amount is not None
+                    else Decimal("0.00")
+                ),
+                "status": withdrawal.status.value if withdrawal.status else None,
+                "created_at": withdrawal.created_at,
+                "processed_at": getattr(withdrawal, "processed_at", None),
+                "failure_reason": getattr(withdrawal, "failure_reason", None),
+            }
+        )
+
+    # =========================================================
+    # 16. FINAL RESPONSE
+    # =========================================================
+
+    responseData = {
+        "success": True,
+        # =================================================
+        # CAMPAIGN
+        # =================================================
+        "campaign": {
+            "campaign_slug": (campaign.campaign_slug),
+            "campaign_name": (campaign.campaign_name),
+            "campaign_status": (campaign.campaign_status.value),
+            "goal_amount": str(goal_amount),
+            "raised_amount": str(raised_amount),
+            "remaining_amount": str(remaining_amount),
+            "progress_percentage": round(float(progress_percentage), 2),
+            "total_donors": (total_donors),
+        },
+        # =================================================
+        # FUNDS
+        # =================================================
+        "funds": {
+            "gross_raised": str(gross_raised),
+            "razorpay_fees": str(razorpay_fees - razorpay_gst),
+            "razorpay_gst": str(razorpay_gst),
+            "total_gateway_deduction": str(razorpay_fees),
+            "net_campaign_funds": str(net_campaign_funds),
+            "total_withdrawn": str(total_withdrawn),
+            "pending_withdrawal_amount": str(pending_withdrawal_amount),
+            "available_balance": str(available_balance),
+        },
+        # =================================================
+        # WALLET TRANSACTIONS
+        # =================================================
+        "wallet_transactions": (wallet_transaction_data),
+        # =================================================
+        # WITHDRAWALS
+        # =================================================
+        "withdrawals": (withdrawal_data),
+    }
+
+    print("final response", responseData)
+    return Response(responseData, status=status.HTTP_200_OK)

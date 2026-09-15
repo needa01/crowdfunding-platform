@@ -6,27 +6,29 @@ from .views import (
     get_document_types,
     get_profile_documents,
     submit_campaign_verification,
-    submit_profile_verification,
-    upload_campaign_document,
-    upload_profile_document,
     verify_campaign,
     verify_document,
-    verify_profile,
     verify_bankaccount,
 )
+
+from . import views
 
 urlpatterns = [
     path("campaign/documents", get_campaign_documents, name="get-campaign-docs"),
     path("profile/documents", get_profile_documents, name="get-profile-docs"),
     path(
-        "profile/document/upload", upload_profile_document, name="upload-profile-docs"
+        "profile/document/upload",
+        views.upload_profile_document,
+        name="upload-profile-docs",
     ),
     path(
-        "campaign/document/upload", upload_campaign_document, name="upload-profile-docs"
+        "campaign/document/upload",
+        views.upload_campaign_document,
+        name="upload-campaign-docs",
     ),
     path(
         "profile/submit",
-        submit_profile_verification,
+        views.submit_profile_verification,
         name="submit-profile-verification",
     ),
     path(
@@ -41,7 +43,7 @@ urlpatterns = [
         name="delete_document",
     ),
     path("bankaccount/verify", verify_bankaccount, name="verify_bankaccount"),
-    path("profile/verify", verify_profile, name="verify-profile"),
+    path("profile/verify", views.verify_profile, name="verify-profile"),
     path("campaign/verify", verify_campaign, name="verify-campaign"),
     path("document-types", get_document_types, name="get-document-types"),
 ]

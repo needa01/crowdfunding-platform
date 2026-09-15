@@ -14,6 +14,7 @@ from crowdfunding.enums import (
     UserType,
     VerificationStatus,
 )
+from crowdfunding.upload_paths import cancelled_cheque_upload_path, profile_picture_upload_path
 
 
 class CustomUser(AbstractUser):
@@ -37,7 +38,10 @@ class CustomUser(AbstractUser):
 
     # profile_picture = models.URLField(null=True, blank=True)
     profile_picture = models.FileField(
-        upload_to="documents/profile/%Y/%m/", null=True, blank=True
+        upload_to=profile_picture_upload_path,
+        null=True,
+        blank=True,
+        max_length=500
     )
 
     user_type = EnumField(UserType, default=UserType.DONOR)
@@ -85,14 +89,16 @@ class DonorProfile(models.Model):
         db_table = "donor_profile"
         verbose_name = "Donor Profile"
         verbose_name_plural = "Donor Profiles"
-    
+
     def __str__(self):
         return f"{self.user.fullname ({self.user.user_type})}"
 
 
 class IndividualProfile(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="individual_profile")
+    user = models.OneToOneField(
+        CustomUser, on_delete=models.CASCADE, related_name="individual_profile"
+    )
     occupation = models.CharField(max_length=100, null=True, blank=True)
 
     address = models.TextField()
@@ -105,9 +111,9 @@ class IndividualProfile(models.Model):
         db_table = "individual_fundraiser_profile"
         verbose_name = "Indivdual Fundraiser Profile"
         verbose_name_plural = "Individual Fundraiser Profiles"
-    
+
     def __str__(self):
-           return f"{self.user.fullname ({self.user.user_type})}" 
+        return f"{self.user.fullname ({self.user.user_type})}"
 
 
 class OTP(models.Model):
@@ -162,7 +168,7 @@ class BankAccount(models.Model):
         max_length=18,
         validators=[account_number_validator],
     )
-    
+
     account_type = EnumField(AccountType, default=AccountType.SAVINGS)
 
     ifsc_validator = RegexValidator(
@@ -177,11 +183,11 @@ class BankAccount(models.Model):
 
     branch_name = models.CharField(max_length=255, null=True)
 
-
     cancelled_cheque = models.FileField(
-        upload_to="documents/bank/cancelled-cheques/%Y/%m/",
+        upload_to=cancelled_cheque_upload_path,
         null=True,
         blank=True,
+        max_length=500
     )
 
     verification_status = EnumField(
@@ -190,7 +196,7 @@ class BankAccount(models.Model):
 
     verified_by = models.ForeignKey(
         CustomUser,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name="verified_bank_accounts",

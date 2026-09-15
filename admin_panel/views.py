@@ -16,6 +16,7 @@ from crowdfunding.enums import (
     DocumentPurpose,
     DonationStatus,
     DonationType,
+    PromotionStatus,
     Status,
     TransactionStatus,
     UserType,
@@ -36,7 +37,7 @@ from verification.models import Document, EntityVerificationRequest
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def admin_login(request):
-
+    print("admin_login called")
     email = request.data.get("email")
     password = request.data.get("password")
 
@@ -54,7 +55,10 @@ def admin_login(request):
             status=status.HTTP_401_UNAUTHORIZED,
         )
     # Only admins allowed
-    if user.user_type not in [UserType.ADMIN, UserType.SUPER_ADMIN]:
+    if (
+        user.user_type not in [UserType.ADMIN, UserType.SUPER_ADMIN]
+        and not user.is_superuser
+    ):
         return Response(
             {
                 "success": False,
@@ -62,7 +66,7 @@ def admin_login(request):
             },
             status=status.HTTP_403_FORBIDDEN,
         )
-
+    print("admin_login: User is an admin")
     if not user.check_password(password):
         return Response(
             {"success": False, "error": "Invalid password"},
@@ -94,10 +98,14 @@ def admin_login(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsPlatformAdmin])
 def admin_dashboard(request):
+    print("admin_dashboard called")
     try:
         user = request.user
         print("everything is okay")
-        if user.user_type not in [UserType.ADMIN, UserType.SUPER_ADMIN]:
+        if (
+            user.user_type not in [UserType.ADMIN, UserType.SUPER_ADMIN]
+            and not user.is_superuser
+        ):
             return Response(
                 {
                     "success": False,
@@ -108,7 +116,7 @@ def admin_dashboard(request):
         print("everything is okay2")
 
         total_users = CustomUser.objects.exclude(
-            user_type__in=[UserType.ADMIN, UserType.SUPER_ADMIN]
+            user_type__in=[UserType.ADMIN, UserType.SUPER_ADMIN], is_superuser=True
         ).count()
         total_individual_fundraisers = CustomUser.objects.filter(
             user_type=UserType.INDIVIDUAL_FUNDRAISER
@@ -132,7 +140,10 @@ def admin_dashboard(request):
         print("everything is okay4")
 
         total_donations = (
-            Donation.objects.aggregate(total_amount=Sum("amount"))["total_amount"] or 0
+            Donation.objects.filter(status=DonationStatus.SUCCESS).aggregate(
+                total_amount=Sum("amount")
+            )["total_amount"]
+            or 0
         )
         donation_count = Donation.objects.filter(status=DonationStatus.SUCCESS).count()
         platform_donations = (
@@ -354,7 +365,7 @@ def get_admins(request):
 
     try:
         # Only superadmin can access this API
-        if request.user.user_type != UserType.SUPER_ADMIN:
+        if request.user.user_type != UserType.SUPER_ADMIN and not request.user.is_superuser:
             return Response(
                 {
                     "success": False,
@@ -378,7 +389,11 @@ def get_admins(request):
                     "email": admin.email,
                     "mobile": admin.mobile,
                     "status": admin.status.value if admin.status else None,
-                    "created_at": admin.created_at,
+                    "created_at": (
+                        admin.created_at.strftime("%d %b %Y, %I:%M %p")
+                        if admin.created_at
+                        else None
+                    ),
                 }
             )
 
@@ -402,6 +417,114 @@ def get_admins(request):
             },
             status=500,
         )
+
+
+@api_view(["GET"])
+@permission_classes([IsPlatformAdmin])
+def get_promotion_services_list(request,status):
+    try:
+        # =========================================================
+        # 1. VALIDATE STATUS
+        # =========================================================
+
+        status_value = str(status).strip().lower()
+
+        status_map = {
+            "pending": PromotionStatus.PENDING,
+            "submitted": PromotionStatus.SUBMITTED,
+            "active": PromotionStatus.ACTIVE,
+            "completed": PromotionStatus.COMPLETED,
+            "cancelled": PromotionStatus.CANCELLED,
+        }
+
+        if status_value not in status_map:
+            return Response(
+                {
+                    "success": False,
+                    "message": (
+                        "Invalid status. Allowed values are: "
+                        "Pending, Submitted, Active, Completed, Cancelled."
+                    ),
+                },
+                status=400,
+            )
+
+        promotion_status = status_map[status_value]
+
+        # =========================================================
+        # 2. GET PROMOTION SERVICES
+        # =========================================================
+
+        services = (
+            CampaignPromotionService.objects
+            .filter(promotion_status=promotion_status)
+            .select_related("campaign", "service_type")
+            .order_by("-created_at")
+        )
+
+        # =========================================================
+        # 3. BUILD RESPONSE
+        # =========================================================
+
+        service_data = []
+
+        for service in services:
+            service_data.append(
+                {
+                    "uuid": str(service.uuid),
+                    "campaign": {
+                        "uuid": str(service.campaign.uuid),
+                        "slug": service.campaign.slug,
+                        "title": service.campaign.title,
+                    },
+                    "service_type": (
+                        service.service_type
+                        if isinstance(service.service_type, str)
+                        else service.service_type.value
+                    ),
+                    "amount": str(service.amount),
+                    "fee": str(service.fee),
+                    "tax": str(service.tax),
+                    "currency": service.currency,
+                    "promotion_status": (
+                        service.promotion_status.value
+                        if hasattr(service.promotion_status, "value")
+                        else service.promotion_status
+                    ),
+                    "user_notes": service.user_notes,
+                    "created_at": service.created_at,
+                    "updated_at": service.updated_at,
+                }
+            )
+
+        # =========================================================
+        # 4. RESPONSE
+        # =========================================================
+
+        return Response(
+            {
+                "success": True,
+                "message": "Promotion services fetched successfully.",
+                "status": promotion_status.value,
+                "count": len(service_data),
+                "services": service_data,
+            },
+            status=200,
+        )
+
+    except Exception as e:
+        return Response(
+            {
+                "success": False,
+                "message": "Failed to fetch promotion services.",
+                "error": str(e),
+            },
+            status=500,
+        )
+
+
+
+
 
 
 @api_view(["GET"])
@@ -451,7 +574,6 @@ def get_donor_for_verification(request, user_id):
 
     documents = (
         Document.objects.select_related(
-            "document_type",
             "reviewed_by",
         )
         .filter(user=user, purpose=DocumentPurpose.PROFILE_VERIFICATION)
@@ -476,7 +598,11 @@ def get_donor_for_verification(request, user_id):
                 "user_type": user.user_type.value,
                 "status": user.status.value,
                 "profile_status": user.profile_status.value,
-                "created_at": user.created_at,
+                "created_at": (
+                    user.created_at.strftime("%d %b %Y, %I:%M %p")
+                    if user.created_at
+                    else None
+                ),
             },
             # ---------------- PROFILE ----------------
             "profile": (
@@ -505,7 +631,11 @@ def get_donor_for_verification(request, user_id):
                     "verified_by": (
                         bank.verified_by.display_name if bank.verified_by else None
                     ),
-                    "verified_at": bank.verified_at,
+                    "verified_at": (
+                        bank.verified_at.strftime("%d %b %Y, %I:%M %p")
+                        if bank.verified_at
+                        else None
+                    ),
                     "cancelled_cheque": (
                         request.build_absolute_uri(bank.cancelled_cheque.url)
                         if bank.cancelled_cheque
@@ -519,7 +649,7 @@ def get_donor_for_verification(request, user_id):
             "documents": [
                 {
                     "uuid": str(document.uuid),
-                    "document_type": document.document_type.name,
+                    "document_type": document.document_type,
                     "document_holder_name": document.document_holder_name,
                     "document_number": document.document_number,
                     "file": (
@@ -532,8 +662,16 @@ def get_donor_for_verification(request, user_id):
                     "reviewed_by": (
                         document.reviewed_by.fullname if document.reviewed_by else None
                     ),
-                    "reviewed_at": document.reviewed_at,
-                    "created_at": document.created_at,
+                    "reviewed_at": (
+                        document.reviewed_at.strftime("%d %b %Y, %I:%M %p")
+                        if document.reviewed_at
+                        else None
+                    ),
+                    "created_at": (
+                        document.created_at.strftime("%d %b %Y, %I:%M %p")
+                        if document.created_at
+                        else None
+                    ),
                 }
                 for document in documents
             ],
@@ -551,8 +689,16 @@ def get_donor_for_verification(request, user_id):
                     if verification and verification.reviewed_by
                     else None
                 ),
-                "reviewed_at": (verification.reviewed_at if verification else None),
-                "created_at": (verification.created_at if verification else None),
+                "reviewed_at": (
+                    verification.reviewed_at.strftime("%d %b %Y, %I:%M %p")
+                    if verification and verification.reviewed_at
+                    else None
+                ),
+                "created_at": (
+                    verification.created_at.strftime("%d %b %Y, %I:%M %p")
+                    if verification and verification.created_at
+                    else None
+                ),
             },
         },
     }
@@ -614,7 +760,6 @@ def get_fundraiser_for_verification(request, user_id):
 
     documents = (
         Document.objects.select_related(
-            "document_type",
             "reviewed_by",
         )
         .filter(
@@ -642,7 +787,11 @@ def get_fundraiser_for_verification(request, user_id):
                 "user_type": user.user_type.value,
                 "status": user.status.value,
                 "profile_status": user.profile_status.value,
-                "created_at": user.created_at,
+                "created_at": (
+                    user.created_at.strftime("%d %b %Y, %I:%M %p")
+                    if user.created_at
+                    else None
+                ),
             },
             # ---------------- PROFILE ----------------
             "profile": (
@@ -671,7 +820,11 @@ def get_fundraiser_for_verification(request, user_id):
                     "verified_by": (
                         bank.verified_by.display_name if bank.verified_by else None
                     ),
-                    "verified_at": bank.verified_at,
+                    "verified_at": (
+                        bank.verified_at.strftime("%d %b %Y, %I:%M %p")
+                        if bank.verified_at
+                        else None
+                    ),
                     "cancelled_cheque": (
                         request.build_absolute_uri(bank.cancelled_cheque.url)
                         if bank.cancelled_cheque
@@ -685,7 +838,7 @@ def get_fundraiser_for_verification(request, user_id):
             "documents": [
                 {
                     "uuid": str(document.uuid),
-                    "document_type": document.document_type.name,
+                    "document_type": document.document_type,
                     "document_holder_name": document.document_holder_name,
                     "document_number": document.document_number,
                     "file": (
@@ -698,8 +851,16 @@ def get_fundraiser_for_verification(request, user_id):
                     "reviewed_by": (
                         document.reviewed_by.fullname if document.reviewed_by else None
                     ),
-                    "reviewed_at": document.reviewed_at,
-                    "created_at": document.created_at,
+                    "reviewed_at": (
+                        document.reviewed_at.strftime("%d %b %Y, %I:%M %p")
+                        if document.reviewed_at
+                        else None
+                    ),
+                    "created_at": (
+                        document.created_at.strftime("%d %b %Y, %I:%M %p")
+                        if document.created_at
+                        else None
+                    ),
                 }
                 for document in documents
             ],
@@ -717,8 +878,16 @@ def get_fundraiser_for_verification(request, user_id):
                     if verification and verification.reviewed_by
                     else None
                 ),
-                "reviewed_at": (verification.reviewed_at if verification else None),
-                "created_at": (verification.created_at if verification else None),
+                "reviewed_at": (
+                    verification.reviewed_at.strftime("%d %b %Y, %I:%M %p")
+                    if verification and verification.reviewed_at
+                    else None
+                ),
+                "created_at": (
+                    verification.created_at.strftime("%d %b %Y, %I:%M %p")
+                    if verification and verification.created_at
+                    else None
+                ),
             },
         },
     }
@@ -781,7 +950,6 @@ def get_ngo_for_verification(request, user_id):
 
     documents = (
         Document.objects.select_related(
-            "document_type",
             "reviewed_by",
         )
         .filter(
@@ -809,7 +977,11 @@ def get_ngo_for_verification(request, user_id):
                 "user_type": user.user_type.value,
                 "status": user.status.value,
                 "profile_status": user.profile_status.value,
-                "created_at": user.created_at,
+                "created_at": (
+                    user.created_at.strftime("%d %b %Y, %I:%M %p")
+                    if user.created_at
+                    else None
+                ),
             },
             # ---------------- NGO PROFILE ----------------
             "profile": (
@@ -826,7 +998,11 @@ def get_ngo_for_verification(request, user_id):
                     "state": profile.state,
                     "country": profile.country,
                     "pincode": profile.pincode,
-                    "created_at": profile.created_at,
+                    "created_at": (
+                        profile.created_at.strftime("%d %b %Y, %I:%M %p")
+                        if profile.created_at
+                        else None
+                    ),
                 }
                 if profile
                 else None
@@ -846,7 +1022,11 @@ def get_ngo_for_verification(request, user_id):
                     "verified_by": (
                         bank.verified_by.display_name if bank.verified_by else None
                     ),
-                    "verified_at": bank.verified_at,
+                    "verified_at": (
+                        bank.verified_at.strftime("%d %b %Y, %I:%M %p")
+                        if bank.verified_at
+                        else None
+                    ),
                     "cancelled_cheque": (
                         request.build_absolute_uri(bank.cancelled_cheque.url)
                         if bank.cancelled_cheque
@@ -860,7 +1040,7 @@ def get_ngo_for_verification(request, user_id):
             "documents": [
                 {
                     "uuid": str(document.uuid),
-                    "document_type": document.document_type.name,
+                    "document_type": document.document_type,
                     "document_holder_name": document.document_holder_name,
                     "document_number": document.document_number,
                     "file": (
@@ -875,8 +1055,16 @@ def get_ngo_for_verification(request, user_id):
                         if document.reviewed_by
                         else None
                     ),
-                    "reviewed_at": document.reviewed_at,
-                    "created_at": document.created_at,
+                    "reviewed_at": (
+                        document.reviewed_at.strftime("%d %b %Y, %I:%M %p")
+                        if document.reviewed_at
+                        else None
+                    ),
+                    "created_at": (
+                        document.created_at.strftime("%d %b %Y, %I:%M %p")
+                        if document.created_at
+                        else None
+                    ),
                 }
                 for document in documents
             ],
@@ -894,8 +1082,16 @@ def get_ngo_for_verification(request, user_id):
                     if verification and verification.reviewed_by
                     else None
                 ),
-                "reviewed_at": (verification.reviewed_at if verification else None),
-                "created_at": (verification.created_at if verification else None),
+                "reviewed_at": (
+                    verification.reviewed_at.strftime("%d %b %Y, %I:%M %p")
+                    if verification and verification.reviewed_at
+                    else None
+                ),
+                "created_at": (
+                    verification.created_at.strftime("%d %b %Y, %I:%M %p")
+                    if verification and verification.created_at
+                    else None
+                ),
             },
         },
     }
@@ -958,7 +1154,6 @@ def get_csr_for_verification(request, user_id):
 
     documents = (
         Document.objects.select_related(
-            "document_type",
             "reviewed_by",
         )
         .filter(
@@ -986,7 +1181,11 @@ def get_csr_for_verification(request, user_id):
                 "user_type": user.user_type.value,
                 "status": user.status.value,
                 "profile_status": user.profile_status.value,
-                "created_at": user.created_at,
+                "created_at": (
+                    user.created_at.strftime("%d %b %Y, %I:%M %p")
+                    if user.created_at
+                    else None
+                ),
             },
             # ---------------- CSR PROFILE ----------------
             "profile": (
@@ -1002,7 +1201,11 @@ def get_csr_for_verification(request, user_id):
                     "state": profile.state,
                     "country": profile.country,
                     "pincode": profile.pincode,
-                    "created_at": profile.created_at,
+                    "created_at": (
+                        profile.created_at.strftime("%d %b %Y, %I:%M %p")
+                        if profile.created_at
+                        else None
+                    ),
                 }
                 if profile
                 else None
@@ -1022,7 +1225,11 @@ def get_csr_for_verification(request, user_id):
                     "verified_by": (
                         bank.verified_by.display_name if bank.verified_by else None
                     ),
-                    "verified_at": bank.verified_at,
+                    "verified_at": (
+                        bank.verified_at.strftime("%d %b %Y, %I:%M %p")
+                        if bank.verified_at
+                        else None
+                    ),
                     "cancelled_cheque": (
                         request.build_absolute_uri(bank.cancelled_cheque.url)
                         if bank.cancelled_cheque
@@ -1036,7 +1243,7 @@ def get_csr_for_verification(request, user_id):
             "documents": [
                 {
                     "uuid": str(document.uuid),
-                    "document_type": document.document_type.name,
+                    "document_type": document.document_type,
                     "document_holder_name": document.document_holder_name,
                     "document_number": document.document_number,
                     "file": (
@@ -1051,8 +1258,16 @@ def get_csr_for_verification(request, user_id):
                         if document.reviewed_by
                         else None
                     ),
-                    "reviewed_at": document.reviewed_at,
-                    "created_at": document.created_at,
+                    "reviewed_at": (
+                        document.reviewed_at.strftime("%d %b %Y, %I:%M %p")
+                        if document.reviewed_at
+                        else None
+                    ),
+                    "created_at": (
+                        document.created_at.strftime("%d %b %Y, %I:%M %p")
+                        if document.created_at
+                        else None
+                    ),
                 }
                 for document in documents
             ],
@@ -1070,8 +1285,16 @@ def get_csr_for_verification(request, user_id):
                     if verification and verification.reviewed_by
                     else None
                 ),
-                "reviewed_at": (verification.reviewed_at if verification else None),
-                "created_at": (verification.created_at if verification else None),
+                "reviewed_at": (
+                    verification.reviewed_at.strftime("%d %b %Y, %I:%M %p")
+                    if verification and verification.reviewed_at
+                    else None
+                ),
+                "created_at": (
+                    verification.created_at.strftime("%d %b %Y, %I:%M %p")
+                    if verification and verification.created_at
+                    else None
+                ),
             },
         },
     }
@@ -1115,7 +1338,6 @@ def get_campaign_for_verification(request, campaign_slug):
 
     documents = (
         Document.objects.select_related(
-            "document_type",
             "reviewed_by",
         )
         .filter(
@@ -1150,7 +1372,11 @@ def get_campaign_for_verification(request, campaign_slug):
                 "total_views": campaign.total_views,
                 "start_date": campaign.start_date,
                 "end_date": campaign.end_date,
-                "created_at": campaign.created_at,
+                "created_at": (
+                    campaign.created_at.strftime("%d %b %Y, %I:%M %p")
+                    if campaign.created_at
+                    else None
+                ),
             },
             # ---------------- Creator ----------------
             "creator": {
@@ -1211,7 +1437,11 @@ def get_campaign_for_verification(request, campaign_slug):
                     "country": campaign.ngo.country,
                     "pincode": campaign.ngo.pincode,
                     "website": campaign.ngo.website,
-                    "created_at": campaign.ngo.created_at,
+                    "created_at": (
+                        campaign.ngo.created_at.strftime("%d %b %Y, %I:%M %p")
+                        if campaign.ngo.created_at
+                        else None
+                    ),
                 }
                 if campaign.ngo
                 else None
@@ -1246,7 +1476,7 @@ def get_campaign_for_verification(request, campaign_slug):
             "documents": [
                 {
                     "uuid": str(document.uuid),
-                    "document_type": document.document_type.name,
+                    "document_type": document.document_type,
                     "document_holder_name": document.document_holder_name,
                     "document_number": document.document_number,
                     "file": (
@@ -1259,8 +1489,16 @@ def get_campaign_for_verification(request, campaign_slug):
                     "reviewed_by": (
                         document.reviewed_by.fullname if document.reviewed_by else None
                     ),
-                    "reviewed_at": document.reviewed_at,
-                    "created_at": document.created_at,
+                    "reviewed_at": (
+                        document.reviewed_at.strftime("%d %b %Y, %I:%M %p")
+                        if document.reviewed_at
+                        else None
+                    ),
+                    "created_at": (
+                        document.created_at.strftime("%d %b %Y, %I:%M %p")
+                        if document.created_at
+                        else None
+                    ),
                 }
                 for document in documents
             ],
@@ -1278,8 +1516,16 @@ def get_campaign_for_verification(request, campaign_slug):
                     if verification and verification.reviewed_by
                     else None
                 ),
-                "reviewed_at": (verification.reviewed_at if verification else None),
-                "created_at": (verification.created_at if verification else None),
+                "reviewed_at": (
+                    verification.reviewed_at.strftime("%d %b %Y, %I:%M %p")
+                    if verification and verification.reviewed_at
+                    else None
+                ),
+                "created_at": (
+                    verification.created_at.strftime("%d %b %Y, %I:%M %p")
+                    if verification and verification.created_at
+                    else None
+                ),
             },
             "financials": {
                 "goal_amount": campaign.goal_amount,

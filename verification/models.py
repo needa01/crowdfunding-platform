@@ -1,3 +1,5 @@
+import re
+
 from django.db import models
 import uuid
 
@@ -9,33 +11,14 @@ from django.core.exceptions import ValidationError
 from crowdfunding.enums import (
     DocOwner,
     DocumentPurpose,
+    UserDocumentType,
     VerificationStatus,
     VerificationType,
 )
 from django.core.validators import RegexValidator
 from django.db.models import Q
 
-
-class DocumentType(models.Model):
-    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=100)
-    applies_to = EnumField(DocOwner)
-    is_required = models.BooleanField(default=False, editable=True)
-
-    class Meta:
-        db_table = "document_type"
-        verbose_name = "Document Type"
-        verbose_name_plural = "Document Type"
-
-        constraints = [
-            models.UniqueConstraint(
-                fields=["name", "applies_to"],
-                name="unique_document_type_per_owner",
-            )
-        ]
-
-    def __str__(self):
-        return f"{self.name} ({self.applies_to.value})"
+from crowdfunding.upload_paths import document_upload_path
 
 
 class Document(models.Model):
@@ -46,7 +29,7 @@ class Document(models.Model):
 
     user = models.ForeignKey(
         CustomUser,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="documents",
         null=True,
         blank=True,
@@ -54,21 +37,21 @@ class Document(models.Model):
 
     campaign = models.ForeignKey(
         Campaign,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="documents",
         null=True,
         blank=True,
     )
 
-    document_type = models.ForeignKey(
-        DocumentType, on_delete=models.PROTECT, related_name="documents"
+    document_type = models.CharField(
+        max_length=255,
     )
 
     document_holder_name = models.CharField(max_length=255)
 
-    document_number = models.CharField(max_length=100, null=True, blank=True)
+    document_number = models.CharField(max_length=100)
 
-    file_url = models.FileField(upload_to="documents/docs/%Y/%m/")
+    file_url = models.FileField(upload_to=document_upload_path, max_length=500)
 
     verification_status = EnumField(
         VerificationStatus, default=VerificationStatus.PENDING
@@ -128,6 +111,53 @@ class Document(models.Model):
             raise ValidationError(
                 {"campaign": "Campaign verification requires a campaign."}
             )
+        if not self.document_number:
+            raise ValidationError({"document_number": "Document number is required."})
+        number = self.document_number.strip().upper()
+        
+
+        if self.document_type == UserDocumentType.PAN_CARD.value:
+            if not re.fullmatch(r"[A-Z]{5}[0-9]{4}[A-Z]", number):
+                raise ValidationError({
+                    "document_number":
+                        "Invalid PAN number. PAN must be in the format ABCDE1234F."
+                })
+        
+        elif self.document_type == UserDocumentType.NGO_PAN_CARD.value:
+            if not re.fullmatch(r"^[A-Z]{3}[TAB][0-9]{4}[A-Z]$", number):
+                raise ValidationError({
+                    "document_number":
+                        "Invalid NGO PAN number. NGO PAN must be in the format ABC[T or A or B]1234D."
+                })
+
+        elif self.document_type == UserDocumentType.AADHAAR_CARD.value:
+            if not re.fullmatch(r"\d{12}", number):
+                raise ValidationError({
+                    "document_number":
+                        "Invalid Aadhaar number. Aadhaar must contain exactly 12 digits."
+                })
+                
+        elif self.document_type == "TAN Certificate":
+            if not re.fullmatch(r"^[A-Z]{4}[0-9]{5}[A-Z]$", number):
+                raise ValidationError({
+                    "document_number":
+                        "Invalid TAN number. TAN must be in the format ABCD12345F."
+                })
+        
+        elif self.document_type == "80G Certificate":
+            if not re.fullmatch(r"^[A-Z0-9]{16}$" ,number):
+                raise ValidationError({
+                    "document_number":
+                        "Invalid Section 80G number. It must contain exactly 16 uppercase letters and digits. "
+                })
+        elif self.document_type == "12A Certificate":
+            if not re.fullmatch(r"^[A-Z0-9]{16}$" ,number):
+                raise ValidationError({
+                    "document_number":
+                        "Invalid Section 12A number. It must contain exactly 16 uppercase letters and digits. "
+                })
+
+        self.document_number = number
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -135,6 +165,8 @@ class Document(models.Model):
 
     def __str__(self):
         return f"{self.document_type} - {self.document_holder_name}"
+
+
 
 
 class EntityVerificationRequest(models.Model):
@@ -149,7 +181,7 @@ class EntityVerificationRequest(models.Model):
 
     user = models.ForeignKey(
         "accounts.CustomUser",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="verification_requests",
         blank=True,
         null=True,
@@ -157,7 +189,7 @@ class EntityVerificationRequest(models.Model):
 
     campaign = models.ForeignKey(
         "campaigns.Campaign",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="verification_requests",
         blank=True,
         null=True,

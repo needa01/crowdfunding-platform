@@ -201,10 +201,28 @@
           flex: 1 1 100%;
         }
       }
+      .back-btn {
+        display: inline-block;
+        margin-bottom: 20px;
+        padding: 9px 16px;
+        border: 1px solid #ccc;
+        border-radius: 7px;
+        color: #333;
+        text-decoration: none;
+        font-size: 14px;
+        background: #fff;
+        transition: 0.2s;
+      }
+
+      .back-btn:hover {
+        background: #f5f5f5;
+        color: #000;
+      }
     </style>
   </head>
   <body>
     <div class="container">
+      <a href="javascript:history.back()" class="back-btn"> ← Back </a>
       <div class="page-title">
         <h2>Create Crowdfunding Campaign</h2>
         <p>Create a fundraising campaign for yourself or your beneficiary.</p>
@@ -518,11 +536,11 @@
                 <div class="col-6">
                   <label>Document Type</label>
 
-                  <select id="document_type">
-                    <option value="" selected disabled>
-                      Select Document Type
-                    </option>
-                  </select>
+                  <input
+                    type="text"
+                    id="document_type"
+                    placeholder="Enter document type"
+                  />
                 </div>
 
                 <div class="col-6">
@@ -532,7 +550,7 @@
                 </div>
 
                 <div class="col-6">
-                  <label>Document Number (Optional)</label>
+                  <label>Document Number</label>
 
                   <input type="text" id="document_number" />
                 </div>
@@ -605,8 +623,10 @@
     </div>
 
     <script>
+
       document.addEventListener("DOMContentLoaded", function () {
         const form = document.getElementById("campaignForm");
+        const API_BASE = process.env.API_BASE_URL
 
         // =====================================================
         // STEPS
@@ -745,20 +765,51 @@
         // DATE VALIDATION
         // =====================================================
 
-        const today = new Date().toISOString().split("T")[0];
-
         const startDate = document.getElementById("start_date");
         const endDate = document.getElementById("end_date");
 
-        startDate.min = today;
-        endDate.min = today;
+        const today = new Date();
 
-        startDate.addEventListener("change", function () {
-          endDate.min = this.value;
+        // Start date = tomorrow
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
 
-          if (endDate.value && endDate.value < this.value) {
-            endDate.value = "";
+        const tomorrowString = tomorrow.toISOString().split("T")[0];
+
+        startDate.min = tomorrowString;
+        startDate.value = tomorrowString;
+
+        // =====================================================
+        // SET END DATE = START DATE + 7 DAYS
+        // =====================================================
+
+        function updateEndDate() {
+          if (!startDate.value) {
+            return;
           }
+
+          const start = new Date(startDate.value);
+
+          const minimumEndDate = new Date(start);
+          minimumEndDate.setDate(minimumEndDate.getDate() + 7);
+
+          const minimumEndDateString = minimumEndDate
+            .toISOString()
+            .split("T")[0];
+
+          // Minimum allowed end date
+          endDate.min = minimumEndDateString;
+
+          // Automatically set end date to start + 7 days
+          endDate.value = minimumEndDateString;
+        }
+
+        // Initial value
+        updateEndDate();
+
+        // When start date changes
+        startDate.addEventListener("change", function () {
+          updateEndDate();
         });
 
         toggleBeneficiaryCount();
@@ -791,44 +842,6 @@
 
         toggleMedical();
 
-        // =====================================================
-        // LOAD DOCUMENT TYPES
-        // =====================================================
-
-        async function loadDocumentTypes() {
-          const token = sessionStorage.getItem("access_token");
-
-          if (!token) return;
-
-          try {
-            const response = await fetch(
-              "/api/verification/document-types?purpose=Campaign",
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              },
-            );
-
-            const data = await response.json();
-
-            const select = document.getElementById("document_type");
-
-            if (data.success) {
-              data.data.forEach((doc) => {
-                select.innerHTML += `
-                                      <option value="${doc.uuid}">
-                                          ${doc.name}
-                                      </option>
-                                  `;
-              });
-            }
-          } catch (err) {
-            console.log(err);
-          }
-        }
-
-        loadDocumentTypes();
         async function deleteDocument(documentUUID) {
           if (!confirm("Are you sure you want to delete this document?")) {
             return;
@@ -1208,7 +1221,7 @@
 
           fd.append("purpose", "Campaign Verification");
 
-          fd.append("document_type_id", type.value);
+          fd.append("document_type", type.value.trim());
 
           fd.append("document_holder_name", holder.value.trim());
 
@@ -1242,7 +1255,7 @@
 
             tbody.innerHTML += `
                 <tr id="doc-row-${data.document.uuid}">
-                    <td>${type.options[type.selectedIndex].text}</td>
+                    <td>${data.document.document_type}</td>
 
                     <td>${holder.value}</td>
 
@@ -1278,14 +1291,8 @@
                 </tr>
                 `;
 
-            // reset fields
-
-            // Remove uploaded document type from dropdown
-            const uploadedOption = type.options[type.selectedIndex];
-            uploadedOption.remove();
-
             // Reset form fields
-            type.selectedIndex = 0;
+            type.value = "";
             holder.value = "";
             number.value = "";
             file.value = "";
@@ -1354,13 +1361,192 @@
 
             sessionStorage.removeItem("draft_campaign_slug");
 
-            window.location.href = "/frontend/profile/my-campaigns";
+            window.location.href = "/frontend/my-campaigns";
           } catch (error) {
             console.log(error);
 
             alert("Something went wrong.");
           }
         });
+      });
+
+      document.addEventListener("DOMContentLoaded", async function () {
+        // =====================================================
+        // USER ACCESS / PROFILE VERIFICATION CHECK
+        // =====================================================
+
+        const token = sessionStorage.getItem("access_token");
+
+        if (!token) {
+          alert("Please login first.");
+          window.location.href = "/frontend/login";
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/api/accounts/get-user-info`,
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            },
+          );
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            sessionStorage.removeItem("access_token");
+            sessionStorage.removeItem("refresh_token");
+
+            alert(data.message || "Unable to verify your account.");
+
+            window.location.href = "/frontend/login";
+            return;
+          }
+
+          console.log("USER INFO:", data);
+
+          // =====================================================
+          // GET USER INFORMATION
+          // =====================================================
+
+          const user = data.data || data;
+
+          const userType = user.user_type;
+          const accountStatus = user.status;
+          const verificationStatus = user.verification_status;
+          const profileStatus = user.profile_status;
+
+          console.log("User Type:", userType);
+          console.log("Account Status:", accountStatus);
+          console.log("Verification Status:", verificationStatus);
+          console.log("Profile Status:", profileStatus);
+
+          // =====================================================
+          // 1. ONLY INDIVIDUAL FUNDRAISER CAN CREATE CAMPAIGN
+          // =====================================================
+
+          if (userType !== "Individual Fundraiser") {
+            sessionStorage.removeItem("access_token");
+            sessionStorage.removeItem("refresh_token");
+
+            alert(
+              "Only Individual Fundraisers can create crowdfunding campaigns.",
+            );
+
+            window.location.href = "/frontend/login";
+            return;
+          }
+
+          // =====================================================
+          // 2. ACCOUNT DELETED
+          // =====================================================
+
+          if (accountStatus === "Deleted") {
+            sessionStorage.removeItem("access_token");
+            sessionStorage.removeItem("refresh_token");
+
+            alert("Your account has been deleted. You can sign up again.");
+
+            window.location.href = "/frontend/signup";
+            return;
+          }
+
+          // =====================================================
+          // 3. ACCOUNT NOT ACTIVE
+          // =====================================================
+
+          if (accountStatus !== "Active") {
+            sessionStorage.removeItem("access_token");
+            sessionStorage.removeItem("refresh_token");
+
+            alert(
+              `Your account is ${accountStatus.toLowerCase()} and you cannot create a campaign.`,
+            );
+
+            window.location.href = "/frontend/signup";
+            return;
+          }
+
+          // =====================================================
+          // 4. PROFILE / KYC REJECTED
+          // =====================================================
+
+          if (
+            profileStatus === "Verification Rejected" ||
+            verificationStatus === "Rejected"
+          ) {
+            alert(
+              "Your profile has been rejected. Please resubmit your information and documents.",
+            );
+
+            window.location.href = "/frontend/profile/fundraiser";
+            return;
+          }
+
+          // =====================================================
+          // 5. PROFILE NOT VERIFIED
+          // =====================================================
+
+          const profileNotVerified =
+            verificationStatus === "Not Submitted" ||
+            verificationStatus === "Pending" ||
+            profileStatus === "Basic Info" ||
+            profileStatus === "Profile Completed" ||
+            profileStatus === "Verification Pending";
+
+          if (profileNotVerified) {
+            alert(
+              "Your profile isn't verified. Please complete your profile verification before creating a campaign.",
+            );
+
+            window.location.href = "/frontend/profile/fundraiser";
+            return;
+          }
+
+          // =====================================================
+          // 6. FINAL ACCESS CHECK
+          // =====================================================
+
+          if (
+            verificationStatus !== "Approved" ||
+            profileStatus !== "Verified"
+          ) {
+            alert(
+              "Your profile isn't verified. Please complete your profile verification before creating a campaign.",
+            );
+
+            window.location.href = "/frontend/profile/fundraiser";
+            return;
+          }
+
+          // =====================================================
+          // USER IS ALLOWED
+          // Continue loading campaign page
+          // =====================================================
+
+          console.log("Campaign creation access granted.");
+
+          // =====================================================
+          // YOUR EXISTING CAMPAIGN CODE STARTS HERE
+          // =====================================================
+
+          const form = document.getElementById("campaignForm");
+
+          // ... keep all your existing JavaScript here ...
+        } catch (error) {
+          console.error("USER INFO ERROR:", error);
+
+          alert("Unable to verify your profile. Please login again.");
+
+          sessionStorage.removeItem("access_token");
+          sessionStorage.removeItem("refresh_token");
+
+          window.location.href = "/frontend/login";
+        }
       });
     </script>
   </body>

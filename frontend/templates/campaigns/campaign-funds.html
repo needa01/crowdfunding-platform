@@ -1,0 +1,1401 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Campaign Funds</title>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      body {
+        background: #f5f7fb;
+        color: #1f2937;
+        min-height: 100vh;
+      }
+
+      /* ================= HEADER ================= */
+
+      .header {
+        height: 70px;
+        background: #ffffff;
+        border-bottom: 1px solid #e5e7eb;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        padding: 0 50px;
+      }
+
+      .logo {
+        font-size: 21px;
+        font-weight: 700;
+        color: #111827;
+      }
+
+      .back-btn {
+        text-decoration: none;
+        color: #374151;
+
+        border: 1px solid #d1d5db;
+        padding: 9px 17px;
+
+        border-radius: 8px;
+
+        font-size: 14px;
+
+        transition: 0.2s;
+      }
+
+      .back-btn:hover {
+        background: #f3f4f6;
+      }
+
+      /* ================= CONTAINER ================= */
+
+      .container {
+        max-width: 1150px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+
+      /* ================= PAGE HEADER ================= */
+
+      .page-header {
+        margin-bottom: 30px;
+      }
+
+      .page-header h1 {
+        font-size: 30px;
+        color: #111827;
+        margin-bottom: 8px;
+      }
+
+      .page-header p {
+        color: #6b7280;
+        font-size: 15px;
+      }
+
+      /* ================= INFO BANNER ================= */
+
+      .info-banner {
+        background: #ffffff;
+
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+
+        padding: 16px 18px;
+
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+
+        margin-bottom: 30px;
+      }
+
+      .info-icon {
+        width: 28px;
+        height: 28px;
+
+        border-radius: 50%;
+
+        background: #f3f4f6;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        flex-shrink: 0;
+
+        font-size: 14px;
+      }
+
+      .info-banner-content strong {
+        display: block;
+
+        font-size: 14px;
+
+        color: #374151;
+
+        margin-bottom: 4px;
+      }
+
+      .info-banner-content p {
+        color: #6b7280;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      /* ================= SECTION HEADER ================= */
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        margin-bottom: 18px;
+      }
+
+      .section-header h2 {
+        font-size: 19px;
+        color: #111827;
+      }
+
+      .campaign-count {
+        color: #6b7280;
+        font-size: 13px;
+      }
+
+      /* ================= CAMPAIGNS GRID ================= */
+
+      .campaign-grid {
+        display: grid;
+
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        gap: 22px;
+      }
+
+      /* ================= CAMPAIGN CARD ================= */
+
+      .campaign-card {
+        background: #ffffff;
+
+        border: 1px solid #e5e7eb;
+
+        border-radius: 14px;
+
+        overflow: hidden;
+
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+
+        transition: 0.2s;
+      }
+
+      .campaign-card:hover {
+        transform: translateY(-2px);
+
+        box-shadow: 0 7px 20px rgba(0, 0, 0, 0.07);
+      }
+
+      /* ================= COVER ================= */
+
+      .campaign-cover {
+        width: 100%;
+        height: 190px;
+
+        object-fit: cover;
+
+        display: block;
+
+        background: #f3f4f6;
+      }
+
+      /* ================= CARD BODY ================= */
+
+      .campaign-body {
+        padding: 20px;
+        cursor: pointer;
+      }
+
+      .campaign-body:hover {
+        background: #fafafa;
+      }
+
+      /* ================= CAMPAIGN TITLE ================= */
+
+      .campaign-top {
+        display: flex;
+
+        justify-content: space-between;
+        align-items: flex-start;
+
+        gap: 15px;
+
+        margin-bottom: 18px;
+      }
+
+      .campaign-name {
+        font-size: 17px;
+
+        line-height: 1.4;
+
+        color: #111827;
+
+        font-weight: 600;
+      }
+
+      /* ================= VERIFIED BADGE ================= */
+
+      .verified-badge {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 5px;
+
+        white-space: nowrap;
+
+        background: #ecfdf5;
+
+        color: #047857;
+
+        border: 1px solid #a7f3d0;
+
+        border-radius: 20px;
+
+        padding: 5px 9px;
+
+        font-size: 11px;
+
+        font-weight: 600;
+      }
+
+      /* ================= FUND INFO ================= */
+
+      .fund-box {
+        background: #f9fafb;
+
+        border: 1px solid #e5e7eb;
+
+        border-radius: 10px;
+
+        padding: 15px;
+
+        margin-bottom: 18px;
+      }
+
+      .fund-label {
+        font-size: 12px;
+
+        color: #6b7280;
+
+        margin-bottom: 5px;
+      }
+
+      .fund-value {
+        font-size: 24px;
+
+        font-weight: 700;
+
+        color: #111827;
+      }
+
+      /* ================= CARD FOOTER ================= */
+
+      .campaign-footer {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        gap: 15px;
+      }
+
+      .campaign-status {
+        font-size: 12px;
+
+        color: #047857;
+
+        font-weight: 600;
+      }
+
+      .add-funds-btn {
+        border: none;
+
+        background: #111827;
+
+        color: #ffffff;
+
+        padding: 10px 17px;
+
+        border-radius: 8px;
+
+        font-size: 13px;
+
+        font-weight: 600;
+
+        cursor: pointer;
+
+        transition: 0.2s;
+      }
+
+      .add-funds-btn:hover {
+        background: #000000;
+      }
+
+      /* ================= LOADING ================= */
+
+      .loading {
+        text-align: center;
+
+        padding: 60px 20px;
+
+        color: #6b7280;
+
+        font-size: 14px;
+      }
+
+      /* ================= EMPTY ================= */
+
+      .empty-state {
+        display: none;
+
+        background: #ffffff;
+
+        border: 1px solid #e5e7eb;
+
+        border-radius: 14px;
+
+        padding: 60px 25px;
+
+        text-align: center;
+      }
+
+      .empty-icon {
+        font-size: 35px;
+
+        margin-bottom: 15px;
+      }
+
+      .empty-state h3 {
+        font-size: 18px;
+
+        color: #111827;
+
+        margin-bottom: 8px;
+      }
+
+      .empty-state p {
+        color: #6b7280;
+
+        font-size: 14px;
+
+        line-height: 1.5;
+      }
+
+      /* ================= MODAL ================= */
+
+      .modal-overlay {
+        position: fixed;
+
+        inset: 0;
+
+        background: rgba(17, 24, 39, 0.55);
+
+        display: none;
+
+        align-items: center;
+
+        justify-content: center;
+
+        padding: 20px;
+
+        z-index: 1000;
+      }
+
+      .modal-overlay.active {
+        display: flex;
+      }
+
+      /* ================= MODAL ================= */
+
+      .modal {
+        width: 100%;
+
+        max-width: 480px;
+
+        background: #ffffff;
+
+        border-radius: 15px;
+
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+
+        overflow: hidden;
+
+        animation: modalIn 0.2s ease;
+      }
+
+      @keyframes modalIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* ================= MODAL HEADER ================= */
+
+      .modal-header {
+        padding: 20px 22px;
+
+        border-bottom: 1px solid #e5e7eb;
+
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: flex-start;
+      }
+
+      .modal-header h2 {
+        font-size: 19px;
+
+        color: #111827;
+
+        margin-bottom: 5px;
+      }
+
+      .selected-campaign {
+        color: #6b7280;
+
+        font-size: 12px;
+
+        max-width: 330px;
+
+        line-height: 1.4;
+      }
+
+      .close-btn {
+        border: none;
+
+        background: transparent;
+
+        font-size: 23px;
+
+        color: #6b7280;
+
+        cursor: pointer;
+
+        line-height: 1;
+      }
+
+      .close-btn:hover {
+        color: #111827;
+      }
+
+      /* ================= MODAL BODY ================= */
+
+      /* ================= AMOUNT INPUT ================= */
+
+      .amount-label {
+        display: block;
+
+        font-size: 13px;
+
+        font-weight: 600;
+
+        color: #374151;
+
+        margin-bottom: 8px;
+      }
+
+      .amount-wrapper {
+        position: relative;
+      }
+
+      .currency-symbol {
+        position: absolute;
+
+        left: 15px;
+
+        top: 50%;
+
+        transform: translateY(-50%);
+
+        font-size: 18px;
+
+        font-weight: 600;
+
+        color: #6b7280;
+      }
+
+      .amount-input {
+        width: 100%;
+
+        height: 52px;
+
+        border: 1px solid #d1d5db;
+
+        border-radius: 9px;
+
+        padding: 0 15px 0 40px;
+
+        font-size: 18px;
+
+        outline: none;
+      }
+
+      .amount-input:focus {
+        border-color: #111827;
+
+        box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+      }
+
+      /* ================= QUICK AMOUNTS ================= */
+
+      .quick-amounts {
+        display: flex;
+
+        gap: 8px;
+
+        flex-wrap: wrap;
+
+        margin-top: 10px;
+      }
+
+      .quick-btn {
+        border: 1px solid #d1d5db;
+
+        background: #ffffff;
+
+        color: #374151;
+
+        padding: 7px 12px;
+
+        border-radius: 7px;
+
+        font-size: 12px;
+
+        cursor: pointer;
+      }
+
+      .quick-btn:hover {
+        background: #f3f4f6;
+      }
+
+      /* ================= PAYMENT SUMMARY ================= */
+
+      .payment-summary {
+        margin-top: 22px;
+
+        border-top: 1px solid #e5e7eb;
+
+        padding-top: 18px;
+      }
+
+      .summary-row {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        margin-bottom: 13px;
+
+        font-size: 13px;
+      }
+
+      .summary-label {
+        color: #6b7280;
+      }
+
+      .summary-value {
+        color: #374151;
+
+        font-weight: 500;
+      }
+
+      .total-row {
+        border-top: 1px solid #e5e7eb;
+
+        padding-top: 16px;
+
+        margin-top: 16px;
+
+        margin-bottom: 0;
+      }
+
+      .total-row .summary-label {
+        color: #111827;
+
+        font-weight: 600;
+
+        font-size: 15px;
+      }
+
+      .total-row .summary-value {
+        color: #111827;
+
+        font-size: 19px;
+
+        font-weight: 700;
+      }
+
+      /* ================= FEE NOTE ================= */
+
+      .fee-note {
+        background: #f9fafb;
+
+        border: 1px solid #e5e7eb;
+
+        border-radius: 9px;
+
+        padding: 13px;
+
+        margin-top: 18px;
+
+        display: flex;
+
+        gap: 9px;
+      }
+
+      .fee-note-icon {
+        font-size: 14px;
+      }
+
+      .fee-note p {
+        font-size: 11px;
+
+        color: #6b7280;
+
+        line-height: 1.6;
+      }
+
+      .fee-note strong {
+        color: #374151;
+      }
+
+      /* ================= PAY BUTTON ================= */
+
+      .pay-btn {
+        width: 100%;
+
+        height: 50px;
+
+        border: none;
+
+        border-radius: 9px;
+
+        background: #111827;
+
+        color: #ffffff;
+
+        font-size: 14px;
+
+        font-weight: 600;
+
+        cursor: pointer;
+
+        margin-top: 20px;
+      }
+
+      .pay-btn:hover {
+        background: #000000;
+      }
+
+      .pay-btn:disabled {
+        background: #9ca3af;
+
+        cursor: not-allowed;
+      }
+
+      /* ================= MESSAGES ================= */
+
+      .message {
+        display: none;
+
+        padding: 12px 14px;
+
+        border-radius: 8px;
+
+        font-size: 12px;
+
+        line-height: 1.5;
+
+        margin-top: 15px;
+      }
+
+      .message.error {
+        background: #fef2f2;
+
+        color: #b91c1c;
+
+        border: 1px solid #fecaca;
+      }
+
+      .message.success {
+        background: #ecfdf5;
+
+        color: #047857;
+
+        border: 1px solid #a7f3d0;
+      }
+
+      /* ================= RESPONSIVE ================= */
+
+      @media (max-width: 800px) {
+        .header {
+          padding: 0 20px;
+        }
+
+        .container {
+          margin: 30px auto;
+        }
+
+        .campaign-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .page-header h1 {
+          font-size: 26px;
+        }
+      }
+
+      @media (max-width: 500px) {
+        .campaign-top {
+          flex-direction: column;
+        }
+
+        .campaign-footer {
+          align-items: stretch;
+
+          flex-direction: column;
+        }
+
+        .add-funds-btn {
+          width: 100%;
+        }
+
+        .modal-body {
+          padding: 18px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- ================= HEADER ================= -->
+
+    <header class="header">
+      <div class="logo">Campaign Funds</div>
+
+      <a href="javascript:history.back()" class="back-btn"> ← Back </a>
+    </header>
+
+    <!-- ================= MAIN ================= -->
+
+    <main class="container">
+      <!-- PAGE HEADER -->
+
+      <div class="page-header">
+        <h1>Campaign Funds</h1>
+
+        <p>Manage funds for your verified campaigns.</p>
+      </div>
+
+      <!-- INFORMATION -->
+
+      <div class="info-banner">
+        <div class="info-icon">ℹ️</div>
+
+        <div class="info-banner-content">
+          <strong> Campaign funds are managed separately </strong>
+
+          <p>
+            Funds shown below belong to your verified campaigns and are
+            collected through donations.
+          </p>
+
+          <p>
+            A 2% platform charge and 18% GST on the platform charge are
+            applicable. A 2.36% withdrawal charge will be deducted when campaign
+            funds are withdrawn.
+          </p>
+        </div>
+      </div>
+
+      <!-- SECTION HEADER -->
+
+      <div class="section-header">
+        <h2>Your Verified Campaigns</h2>
+
+        <span class="campaign-count" id="campaignCount"> 0 campaigns </span>
+      </div>
+
+      <!-- ================= LOADING ================= -->
+
+      <div id="loading" class="loading">Loading your verified campaigns...</div>
+
+      <!-- ================= CAMPAIGNS ================= -->
+
+      <div id="campaignGrid" class="campaign-grid"></div>
+
+      <!-- ================= EMPTY ================= -->
+
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">📋</div>
+
+        <h3>No verified campaigns</h3>
+
+        <p>
+          You don't have any verified campaigns yet. Once one of your campaigns
+          is verified, it will appear here.
+        </p>
+      </div>
+    </main>
+
+    <!-- ================= JAVASCRIPT ================= -->
+
+    <script>
+      /* =================================================
+       CONFIGURATION
+    ================================================= */
+
+      const PLATFORM_FEE_PERCENT = 0.02;
+
+      const GST_PERCENT = 0.18;
+
+      /*
+       * Store selected campaign here.
+       */
+
+      let selectedCampaign = null;
+
+      /* =================================================
+       FORMAT CURRENCY
+    ================================================= */
+
+      function formatCurrency(amount) {
+        return new Intl.NumberFormat("en-IN", {
+          style: "currency",
+          currency: "INR",
+          minimumFractionDigits: 2,
+        }).format(Number(amount) || 0);
+      }
+
+      /* =================================================
+       LOAD VERIFIED CAMPAIGNS
+    ================================================= */
+
+      async function loadCampaigns() {
+        const loading = document.getElementById("loading");
+
+        const grid = document.getElementById("campaignGrid");
+
+        const emptyState = document.getElementById("emptyState");
+
+        try {
+          /*
+           * Replace this endpoint with your
+           * actual campaign API.
+           *
+           * Example response:
+           *
+           * {
+           *     "success": true,
+           *     "data": [
+           *         {
+           *             "uuid": "...",
+           *             "campaign_name": "...",
+           *             "cover_photo": "...",
+           *             "wallet_balance": 12500,
+           *             "campaign_status": "VERIFIED"
+           *         }
+           *     ]
+           * }
+           */
+
+          const token = sessionStorage.getItem("access_token");
+          const response = await fetch("/api/campaigns/campaign-funds", {
+            method: "GET",
+
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+
+              /*
+               * Add Authorization here
+               * if your API uses JWT.
+               *
+               * Authorization:
+               * `Bearer ${token}`
+               */
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error("Unable to load campaigns.");
+          }
+
+          const result = await response.json();
+
+          if (!result.success || !Array.isArray(result.data)) {
+            throw new Error(result.message || "Invalid campaign response.");
+          }
+
+          loading.style.display = "none";
+
+          document.getElementById("campaignCount").textContent =
+            `${result.data.length} campaign${result.data.length === 1 ? "" : "s"}`;
+
+          if (result.data.length === 0) {
+            emptyState.style.display = "block";
+
+            return;
+          }
+
+          grid.innerHTML = "";
+
+          result.data.forEach((campaign) => {
+            renderCampaign(campaign);
+          });
+        } catch (error) {
+          console.error("Campaign loading error:", error);
+
+          loading.textContent = "Unable to load your verified campaigns.";
+        }
+      }
+
+      /* =================================================
+       RENDER CAMPAIGN
+    ================================================= */
+
+      function renderCampaign(campaign) {
+        const grid = document.getElementById("campaignGrid");
+
+        const card = document.createElement("div");
+        card.className = "campaign-card";
+
+        const coverPhoto =
+          campaign.cover_photo || "/static/receipts/logo.webp";
+
+        const campaignName = escapeHtml(
+          campaign.campaign_name || "Untitled Campaign",
+        );
+
+        const balance = Number(campaign.wallet_balance || 0);
+
+        card.innerHTML = `
+        <img
+            src="${coverPhoto}"
+            alt="${campaignName}"
+            class="campaign-cover"
+            onerror="this.src='/static/receipts/logo.webp'"
+        >
+
+        <div class="campaign-body">
+            <div class="campaign-top">
+
+                <div class="campaign-name">
+                    ${campaignName}
+                </div>
+
+                <span class="verified-badge">
+                    ✓ Verified
+                </span>
+
+            </div>
+
+            <div class="fund-box">
+                <div class="fund-label">
+                    Campaign Funds Balance
+                </div>
+
+                <div class="fund-value">
+                    ${formatCurrency(balance)}
+                </div>
+            </div>
+        </div>
+    `;
+
+        // Make the entire campaign body clickable
+        const campaignBody = card.querySelector(".campaign-body");
+
+        campaignBody.addEventListener("click", function () {
+          if (!campaign.campaign_slug) {
+            console.error("Campaign slug is missing.");
+            return;
+          }
+
+          window.location.href = `my-campaign/${encodeURIComponent(campaign.campaign_slug)}/funds`;
+        });
+
+        grid.appendChild(card);
+      }
+
+      /* =================================================
+       CLICK OUTSIDE MODAL
+    ================================================= */
+
+      /* =================================================
+       ESCAPE KEY
+    ================================================= */
+
+      /* =================================================
+       SET QUICK AMOUNT
+    ================================================= */
+
+      function setAmount(amount) {
+        document.getElementById("amount").value = amount;
+
+        calculateAmount();
+      }
+
+      /* =================================================
+       CALCULATE FEES
+    ================================================= */
+
+      function calculateAmount() {
+        const amount = Number(document.getElementById("amount").value) || 0;
+
+        if (amount <= 0) {
+          resetCalculation();
+
+          return;
+        }
+
+        /*
+         * Platform charge = 2% of
+         * campaign funds.
+         */
+
+        const platformCharge = amount * PLATFORM_FEE_PERCENT;
+
+        /*
+         * GST = 18% of platform charge.
+         */
+
+        const gst = platformCharge * GST_PERCENT;
+
+        /*
+         * Total amount paid through Razorpay.
+         */
+
+        const total = amount + platformCharge + gst;
+
+        document.getElementById("fundAmount").textContent =
+          formatCurrency(amount);
+
+        document.getElementById("platformCharge").textContent =
+          formatCurrency(platformCharge);
+
+        document.getElementById("gstAmount").textContent = formatCurrency(gst);
+
+        document.getElementById("totalAmount").textContent =
+          formatCurrency(total);
+
+        document.getElementById("payButton").disabled = false;
+      }
+
+      /* =================================================
+       RESET CALCULATION
+    ================================================= */
+
+      function resetCalculation() {
+        document.getElementById("fundAmount").textContent = formatCurrency(0);
+
+        document.getElementById("platformCharge").textContent =
+          formatCurrency(0);
+
+        document.getElementById("gstAmount").textContent = formatCurrency(0);
+
+        document.getElementById("totalAmount").textContent = formatCurrency(0);
+
+        document.getElementById("payButton").disabled = true;
+      }
+
+      /* =================================================
+       ADD FUNDS
+    ================================================= */
+
+      async function addFunds() {
+        if (!selectedCampaign) {
+          showError("Please select a campaign.");
+
+          return;
+        }
+
+        const amount = Number(document.getElementById("amount").value);
+
+        if (!amount || amount <= 0) {
+          showError("Please enter a valid amount.");
+
+          return;
+        }
+
+        const platformCharge = amount * PLATFORM_FEE_PERCENT;
+
+        const gst = platformCharge * GST_PERCENT;
+
+        const totalAmount = amount + platformCharge + gst;
+
+        const button = document.getElementById("payButton");
+
+        button.disabled = true;
+
+        button.textContent = "Creating Payment...";
+
+        hideMessages();
+
+        try {
+          /*
+           * IMPORTANT:
+           *
+           * Do NOT rely on the frontend
+           * values for payment calculation.
+           *
+           * Your Django backend should
+           * recalculate:
+           *
+           * amount
+           * platform charge
+           * GST
+           * total amount
+           *
+           * and create the Razorpay order.
+           */
+
+          const response = await fetch("/api/campaigns/add-funds", {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+
+              /*
+               * Add JWT here
+               * if required.
+               */
+            },
+
+            body: JSON.stringify({
+              campaign_uuid: selectedCampaign.uuid,
+
+              amount: amount,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (!response.ok || !result.success) {
+            throw new Error(
+              result.message || result.error || "Unable to create payment.",
+            );
+          }
+
+          /*
+           * Expected response:
+           *
+           * {
+           *   success: true,
+           *   data: {
+           *
+           *      razorpay_key: "...",
+           *      razorpay_order_id: "...",
+           *      amount: 511800,
+           *      currency: "INR",
+           *      transaction_uuid: "..."
+           *
+           *   }
+           * }
+           */
+
+          openRazorpayCheckout(result.data);
+        } catch (error) {
+          console.error("Add funds error:", error);
+
+          showError(error.message || "Unable to create payment.");
+
+          resetPayButton();
+        }
+      }
+
+      /* =================================================
+       RAZORPAY CHECKOUT
+    ================================================= */
+
+      function openRazorpayCheckout(paymentData) {
+        const options = {
+          key: paymentData.razorpay_key,
+
+          amount: paymentData.amount,
+
+          currency: paymentData.currency || "INR",
+
+          name: "Your Platform Name",
+
+          description: "Campaign Funds",
+
+          order_id: paymentData.razorpay_order_id,
+
+          handler: function (response) {
+            verifyPayment(response, paymentData);
+          },
+
+          modal: {
+            ondismiss: function () {
+              resetPayButton();
+            },
+          },
+        };
+
+        if (typeof Razorpay === "undefined") {
+          showError("Razorpay checkout is not loaded.");
+
+          resetPayButton();
+
+          return;
+        }
+
+        const razorpay = new Razorpay(options);
+
+        razorpay.on("payment.failed", function (response) {
+          console.error("Razorpay payment failed:", response);
+
+          showError("Payment failed. Please try again.");
+
+          resetPayButton();
+        });
+
+        razorpay.open();
+      }
+
+      /* =================================================
+       VERIFY PAYMENT
+    ================================================= */
+
+      async function verifyPayment(razorpayResponse, paymentData) {
+        const button = document.getElementById("payButton");
+
+        button.disabled = true;
+
+        button.textContent = "Verifying Payment...";
+
+        try {
+          const response = await fetch("/api/campaigns/verify-funds-payment", {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+            },
+
+            body: JSON.stringify({
+              campaign_uuid: selectedCampaign.uuid,
+
+              transaction_uuid: paymentData.transaction_uuid,
+
+              razorpay_payment_id: razorpayResponse.razorpay_payment_id,
+
+              razorpay_order_id: razorpayResponse.razorpay_order_id,
+
+              razorpay_signature: razorpayResponse.razorpay_signature,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (!response.ok || !result.success) {
+            throw new Error(
+              result.message || result.error || "Payment verification failed.",
+            );
+          }
+
+          showSuccess("Payment successful! Campaign funds have been added.");
+
+          /*
+           * Update the campaign balance
+           * immediately if backend returns it.
+           */
+
+          if (result.data && result.data.wallet_balance !== undefined) {
+            document.getElementById("modalCurrentBalance").textContent =
+              formatCurrency(result.data.wallet_balance);
+          }
+
+          /*
+           * Refresh campaigns so the
+           * campaign card also shows
+           * the updated balance.
+           */
+
+          await loadCampaigns();
+        } catch (error) {
+          console.error("Payment verification error:", error);
+
+          showError(error.message || "Payment verification failed.");
+
+          resetPayButton();
+        }
+      }
+
+      /* =================================================
+       SUCCESS MESSAGE
+    ================================================= */
+
+      function showSuccess(message) {
+        const element = document.getElementById("successMessage");
+
+        element.textContent = message;
+
+        element.style.display = "block";
+      }
+
+      /* =================================================
+       ERROR MESSAGE
+    ================================================= */
+
+      function showError(message) {
+        const element = document.getElementById("errorMessage");
+
+        element.textContent = message;
+
+        element.style.display = "block";
+      }
+
+      /* =================================================
+       HIDE MESSAGES
+    ================================================= */
+
+      function hideMessages() {
+        document.getElementById("successMessage").style.display = "none";
+
+        document.getElementById("errorMessage").style.display = "none";
+      }
+
+      /* =================================================
+       RESET BUTTON
+    ================================================= */
+
+      function resetPayButton() {
+        const button = document.getElementById("payButton");
+
+        button.disabled = false;
+
+        button.textContent = "Add Funds & Pay";
+      }
+
+      /* =================================================
+       ESCAPE HTML
+    ================================================= */
+
+      function escapeHtml(value) {
+        const div = document.createElement("div");
+
+        div.textContent = value;
+
+        return div.innerHTML;
+      }
+
+      /* =================================================
+       INITIAL LOAD
+    ================================================= */
+
+      document.addEventListener("DOMContentLoaded", function () {
+        loadCampaigns();
+      });
+    </script>
+  </body>
+</html>

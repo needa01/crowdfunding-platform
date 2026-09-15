@@ -5,7 +5,7 @@ from campaigns.models import Campaign
 from crowdfunding.enums import CampaignStatus
 from verification.models import Document, EntityVerificationRequest
 
-from .models import CampaignPromotionServiceTypes
+
 
 
 class CampaignListSerializer(serializers.ModelSerializer):
@@ -150,12 +150,11 @@ class MyCampaignListSerializer(serializers.ModelSerializer):
 
 class CampaignDocumentSerializer(serializers.ModelSerializer):
     document_url = serializers.SerializerMethodField()
-    document_type = serializers.CharField(source="document_type.name", read_only=True)
+    document_type = serializers.CharField(read_only=True)
 
     class Meta:
         model = Document
         fields = [
-            "uuid",
             "document_type",
             "document_holder_name",
             "document_number",
@@ -176,8 +175,13 @@ class CampaignDocumentSerializer(serializers.ModelSerializer):
         return None
 
 
+
+
+
 class CampaignVerificationSerializer(serializers.ModelSerializer):
     verified_by = serializers.SerializerMethodField()
+    reviewed_at = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
 
     class Meta:
         model = EntityVerificationRequest
@@ -193,12 +197,23 @@ class CampaignVerificationSerializer(serializers.ModelSerializer):
     def get_verified_by(self, obj):
         if obj.reviewed_by:
             return {
-                "uuid": str(obj.reviewed_by.uuid),
-                "name": obj.reviewed_by.get_full_name()
+                "name": obj.reviewed_by.fullname
                 or obj.reviewed_by.username
                 or obj.reviewed_by.email,
                 "email": obj.reviewed_by.email,
             }
+        return None
+    
+    def get_reviewed_at(self, obj):
+        if obj.reviewed_at:
+            return obj.reviewed_at.strftime("%d %b %Y, %I:%M %p")
+
+        return None
+    
+    def get_created_at(self, obj):
+        if obj.created_at:
+            return obj.created_at.strftime("%d %b %Y, %I:%M %p")
+
         return None
 
 
@@ -386,6 +401,12 @@ class MyCampaignDetailSerializer(serializers.ModelSerializer):
     amount_remaining = serializers.SerializerMethodField()
 
     days_left = serializers.SerializerMethodField()
+    
+    start_date = serializers.SerializerMethodField()
+    end_date = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
+    updated_at = serializers.SerializerMethodField()
+
 
     documents = CampaignDocumentSerializer(
         many=True,
@@ -498,15 +519,38 @@ class MyCampaignDetailSerializer(serializers.ModelSerializer):
             "mobile": obj.ngo.user.mobile,
             "address": obj.ngo.address,
         }
+    
+    # =========================================================
+    # DATE FORMATTING
+    # =========================================================
+
+    def get_start_date(self, obj):
+        if not obj.start_date:
+            return None
+
+        return obj.start_date.strftime("%d %b %Y, %I:%M %p")
+
+    def get_end_date(self, obj):
+        if not obj.end_date:
+            return None
+
+        return obj.end_date.strftime("%d %b %Y, %I:%M %p")
+
+    def get_created_at(self, obj):
+        if not obj.created_at:
+            return None
+
+        return obj.created_at.strftime("%d %b %Y, %I:%M %p")
+
+    def get_updated_at(self, obj):
+        if not obj.updated_at:
+            return None
+
+        return obj.updated_at.strftime("%d %b %Y, %I:%M %p")
 
 
-class CampaignPromotionServiceTypesSerializer(serializers.ModelSerializer):
-    service_type = serializers.CharField(source="service_type.value")
+class CampaignPromotionServiceTypesSerializer(serializers.Serializer):
+    service_type = serializers.CharField()
 
-    class Meta:
-        model = CampaignPromotionServiceTypes
-        fields = [
-            "uuid",
-            "service_type",
-            "minimum_amount",
-        ]
+
+

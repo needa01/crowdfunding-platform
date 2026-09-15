@@ -201,10 +201,30 @@
           flex: 1 1 100%;
         }
       }
+      .back-btn {
+        background: transparent;
+        border: 1px solid #d8d8d8;
+        color: #333;
+        padding: 9px 18px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-bottom: 20px;
+        transition: 0.2s;
+      }
+
+      .back-btn:hover {
+        background: #f1f3f5;
+        border-color: #bbb;
+      }
     </style>
   </head>
   <body>
     <div class="container">
+      <button type="button" class="back-btn" onclick="history.back()">
+        ← Back
+      </button>
       <div class="page-title">
         <h2>Create Crowdfunding Campaign</h2>
         <p>Create a fundraising campaign for yourself or your beneficiary.</p>
@@ -516,11 +536,11 @@
                 <div class="col-6">
                   <label>Document Type</label>
 
-                  <select id="document_type">
-                    <option value="" selected disabled>
-                      Select Document Type
-                    </option>
-                  </select>
+                  <input
+                    type="text"
+                    id="document_type"
+                    placeholder="Enter document type"
+                  />
                 </div>
 
                 <div class="col-6">
@@ -530,7 +550,7 @@
                 </div>
 
                 <div class="col-6">
-                  <label>Document Number (Optional)</label>
+                  <label>Document Number</label>
 
                   <input type="text" id="document_number" />
                 </div>
@@ -605,6 +625,45 @@
     <script>
       document.addEventListener("DOMContentLoaded", async function () {
         const form = document.getElementById("campaignForm");
+        function showApiErrors(data, defaultMessage = "Something went wrong.") {
+          const messages = [];
+
+          if (data.message) {
+            messages.push(data.message);
+          }
+
+          if (data.detail) {
+            messages.push(
+              typeof data.detail === "string"
+                ? data.detail
+                : JSON.stringify(data.detail),
+            );
+          }
+
+          if (data.error) {
+            messages.push(
+              typeof data.error === "string"
+                ? data.error
+                : JSON.stringify(data.error),
+            );
+          }
+
+          if (data.errors && typeof data.errors === "object") {
+            Object.entries(data.errors).forEach(([field, errors]) => {
+              if (Array.isArray(errors)) {
+                errors.forEach((error) => {
+                  messages.push(`${field}: ${error}`);
+                });
+              } else if (typeof errors === "object" && errors !== null) {
+                messages.push(`${field}: ${JSON.stringify(errors)}`);
+              } else {
+                messages.push(`${field}: ${errors}`);
+              }
+            });
+          }
+
+          alert(messages.length ? messages.join("\n") : defaultMessage);
+        }
 
         // =====================================================
         // STEPS
@@ -707,7 +766,7 @@
             // Verification status checks
             if (verificationStatus === "Pending") {
               alert("Please verify your profile first.");
-              window.location.href = "/frontend/campaigns";
+              window.location.href = "/frontend/profile/ngo";
               return false;
             }
 
@@ -715,13 +774,13 @@
               alert(
                 "Your profile verification was rejected. Please update your details and submit again.",
               );
-              window.location.href = "/frontend/campaigns";
+              window.location.href = "/frontend/profile/ngo";
               return false;
             }
 
             if (verificationStatus !== "Approved") {
               alert("Please verify your profile first.");
-              window.location.href = "/frontend/campaigns";
+              window.location.href = "/frontend/profile/ngo";
               return false;
             }
 
@@ -744,7 +803,7 @@
           if (beneficiaryGroupType.value === "Group") {
             beneficiaryCountSection.style.display = "block";
 
-            beneficiaryMemberCount.required = true;
+            {% comment %} beneficiaryMemberCount.required = true; {% endcomment %}
 
             beneficiaryMemberCount.min = 2;
           } else {
@@ -771,53 +830,62 @@
         const beneficiaryAge = form.beneficiary_age;
 
         function toggleBeneficiaryFields() {
-          if (beneficiaryType.value === "Me") {
+          if (beneficiaryType.value === "Individual") {
+            // Individual → Individual group only
             beneficiaryGroup.value = "Individual";
             beneficiaryGroup.disabled = true;
+            beneficiaryGroup.required = false;
 
-            beneficiaryName.value = "";
-            beneficiaryName.disabled = true;
+            beneficiaryName.disabled = false;
+            beneficiaryMobile.disabled = false;
+            beneficiaryLocation.disabled = false;
+            beneficiaryAge.disabled = false;
 
-            beneficiaryRelation.value = "";
             beneficiaryRelation.disabled = true;
-
-            beneficiaryMobile.value = "";
-            beneficiaryMobile.disabled = true;
-
-            beneficiaryLocation.value = "";
-            beneficiaryLocation.disabled = true;
+            beneficiaryRelation.value = "";
 
             beneficiaryCountSection.style.display = "none";
             beneficiaryMemberCount.value = "";
             beneficiaryMemberCount.required = false;
-
-            beneficiaryAge.disabled = false;
-          } else {
-            beneficiaryGroup.disabled = false;
+          } else if (
+            beneficiaryType.value === "NGO" ||
+            beneficiaryType.value === "Others"
+          ) {
+            // NGO / Others → Group only
+            beneficiaryGroup.value = "Group";
+            beneficiaryGroup.disabled = true;
+            beneficiaryGroup.required = false;
 
             beneficiaryName.disabled = false;
-
-            beneficiaryRelation.disabled = false;
-
             beneficiaryMobile.disabled = false;
-
             beneficiaryLocation.disabled = false;
 
+            // Group beneficiaries do not use age
+            beneficiaryAge.disabled = true;
+            beneficiaryAge.value = "";
+
+            beneficiaryRelation.disabled = true;
+            beneficiaryRelation.value = "";
+
+            beneficiaryCountSection.style.display = "block";
+            {% comment %} beneficiaryMemberCount.required = true; {% endcomment %}
+            beneficiaryMemberCount.min = 2;
+          } else {
+            beneficiaryGroup.value = "";
+            beneficiaryGroup.disabled = false;
+            beneficiaryGroup.required = true;
+
+            beneficiaryName.disabled = false;
+            beneficiaryMobile.disabled = false;
+            beneficiaryLocation.disabled = false;
             beneficiaryAge.disabled = false;
 
-            toggleBeneficiaryCount();
-          }
-          // -------------------------------
-          // Relation
-          // -------------------------------
+            beneficiaryRelation.disabled = true;
+            beneficiaryRelation.value = "";
 
-          if (beneficiaryType.value === "Relative") {
-            relationSection.style.display = "block";
-            relationField.required = true;
-          } else {
-            relationSection.style.display = "none";
-            relationField.required = false;
-            relationField.value = "";
+            beneficiaryCountSection.style.display = "none";
+            beneficiaryMemberCount.value = "";
+            beneficiaryMemberCount.required = false;
           }
         }
 
@@ -854,20 +922,49 @@
         // DATE VALIDATION
         // =====================================================
 
-        const today = new Date().toISOString().split("T")[0];
-
         const startDate = document.getElementById("start_date");
         const endDate = document.getElementById("end_date");
 
-        startDate.min = today;
-        endDate.min = today;
+        const today = new Date();
 
-        startDate.addEventListener("change", function () {
-          endDate.min = this.value;
+        // Start date = tomorrow
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
 
-          if (endDate.value && endDate.value < this.value) {
-            endDate.value = "";
+        const tomorrowString = tomorrow.toISOString().split("T")[0];
+
+        startDate.min = tomorrowString;
+        startDate.value = tomorrowString;
+
+        // Function: End date = Start date + 7 days
+        function updateEndDate() {
+          if (!startDate.value) {
+            return;
           }
+
+          const start = new Date(startDate.value);
+
+          // Minimum allowed end date = start date + 7 days
+          const minimumEndDate = new Date(start);
+          minimumEndDate.setDate(minimumEndDate.getDate() + 7);
+
+          const minimumEndDateString = minimumEndDate
+            .toISOString()
+            .split("T")[0];
+
+          // Set minimum end date
+          endDate.min = minimumEndDateString;
+
+          // Automatically set end date to start + 7
+          endDate.value = minimumEndDateString;
+        }
+
+        // Initial end date
+        updateEndDate();
+
+        // When start date changes
+        startDate.addEventListener("change", function () {
+          updateEndDate();
         });
 
         toggleBeneficiaryCount();
@@ -899,47 +996,6 @@
         cause.addEventListener("change", toggleMedical);
 
         toggleMedical();
-
-        // =====================================================
-        // LOAD DOCUMENT TYPES
-        // =====================================================
-
-        async function loadDocumentTypes() {
-          const token = sessionStorage.getItem("access_token");
-
-          if (!token) return;
-
-          try {
-            const response = await fetch(
-              "/api/verification/document-types?purpose=Campaign",
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              },
-            );
-
-            const data = await response.json();
-
-            const select = document.getElementById("document_type");
-
-            if (data.success) {
-              console.log("data", data);
-              console.log("data.data", data.data);
-              data.data.forEach((doc) => {
-                select.innerHTML += `
-                                        <option value="${doc.uuid}">
-                                            ${doc.name}
-                                        </option>
-                                    `;
-              });
-            }
-          } catch (err) {
-            console.log(err);
-          }
-        }
-
-        loadDocumentTypes();
 
         // =====================================================
         // NEXT BUTTON STEP 1
@@ -1167,7 +1223,9 @@
             const data = await response.json();
 
             if (!response.ok) {
-              alert(data.message || data.detail || "Unable to save draft");
+              console.error("SAVE DRAFT ERROR:", data);
+
+              showApiErrors(data, "Unable to save campaign draft.");
 
               return;
             }
@@ -1262,7 +1320,6 @@
         addDocumentBtn.addEventListener("click", async function () {
           if (!createdCampaignSlug) {
             alert("Please save campaign before uploading documents.");
-
             return;
           }
 
@@ -1270,60 +1327,59 @@
 
           if (!token) {
             alert("Please login first.");
-
             return;
           }
 
           const type = document.getElementById("document_type");
-
           const holder = document.getElementById("document_holder_name");
-
           const number = document.getElementById("document_number");
-
           const file = document.getElementById("campaign_document");
 
-          if (!type.value) {
-            alert("Select document type.");
+          // -----------------------------
+          // Validation
+          // -----------------------------
 
+          if (!type.value.trim()) {
+            alert("Enter document type.");
+            type.focus();
             return;
           }
 
           if (!holder.value.trim()) {
             alert("Enter document holder name.");
-
+            holder.focus();
             return;
           }
 
           if (file.files.length === 0) {
             alert("Select document file.");
-
+            file.focus();
             return;
           }
+
+          // -----------------------------
+          // Prepare FormData
+          // -----------------------------
 
           const fd = new FormData();
 
           fd.append("campaign_slug", createdCampaignSlug);
-
           fd.append("purpose", "Campaign Verification");
-          console.log(type.value);
-          fd.append("document_type_id", type.value);
-
+          fd.append("document_type", type.value.trim());
           fd.append("document_holder_name", holder.value.trim());
-
           fd.append("document_number", number.value.trim());
-
           fd.append("file_url", file.files[0]);
+
+          console.log("Document Type:", type.value.trim());
 
           try {
             const response = await fetch(
               "/api/verification/campaign/document/upload",
               {
                 method: "POST",
-
                 headers: {
                   Authorization: `Bearer ${token}`,
                 },
-
                 body: fd,
               },
             );
@@ -1331,68 +1387,67 @@
             const data = await response.json();
 
             if (!response.ok) {
-              alert(data.message || "Document upload failed.");
-
+              showApiErrors(data, "Document upload failed.");
               return;
             }
+
+            // -----------------------------
+            // Add document to table
+            // -----------------------------
 
             const tbody = document.querySelector("#documentTable tbody");
 
             tbody.innerHTML += `
-                <tr id="doc-row-${data.document.uuid}">
-                    <td>${type.options[type.selectedIndex].text}</td>
+              <tr id="doc-row-${data.document.uuid}">
+                  <td>${type.value.trim()}</td>
 
-                    <td>${holder.value}</td>
+                  <td>${holder.value.trim()}</td>
 
-                    <td style="color:green">
-                        Uploaded
-                    </td>
+                  <td style="color: green">
+                      Uploaded
+                  </td>
 
-                    <td style="text-align:center">
-                        <button
-                            type="button"
-                            onclick="deleteDocument('${data.document.uuid}')"
-                            style="
-                                border:none;
-                                background:none;
-                                cursor:pointer;
-                                font-size:18px;
-                                color:red;
-                            "
-                            title="Delete Document"
-                        >
-                            <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="20"
-        height="20"
-        fill="#dc3545"
-        viewBox="0 0 16 16"
-    >
-        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0A.5.5 0 0 1 8.5 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2H5V1.5A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5V2h2.5a1 1 0 0 1 1 1zM6 2h4v-.5a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5V2zm-2 2v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4H4z"/>
-    </svg>
-                        </button>
-                    </td>
-                </tr>
-                `;
+                  <td style="text-align: center">
+                      <button
+                          type="button"
+                          onclick="deleteDocument('${data.document.uuid}')"
+                          style="
+                              border: none;
+                              background: none;
+                              cursor: pointer;
+                              font-size: 18px;
+                              color: red;
+                          "
+                          title="Delete Document"
+                      >
+                          <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="20"
+                              height="20"
+                              fill="#dc3545"
+                              viewBox="0 0 16 16"
+                          >
+                              <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0A.5.5 0 0 1 8.5 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                              <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2H5V1.5A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5V2h2.5a1 1 0 0 1 1 1zM6 2h4v-.5a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5V2zm-2 2v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4H4z"/>
+                          </svg>
+                      </button>
+                  </td>
+              </tr>
+          `;
 
-            // reset fields
+            // -----------------------------
+            // Reset fields
+            // -----------------------------
 
-            // Remove uploaded document type from dropdown
-            const uploadedOption = type.options[type.selectedIndex];
-            uploadedOption.remove();
-
-            // Reset form fields
-            type.selectedIndex = 0;
+            type.value = "";
             holder.value = "";
             number.value = "";
             file.value = "";
 
             alert("Document uploaded successfully.");
           } catch (error) {
-            console.log(error);
-
-            //alert("Something went wrong while uploading document.");
+            console.error(error);
+            alert("Something went wrong while uploading document.");
           }
         });
 
@@ -1452,7 +1507,7 @@
 
             sessionStorage.removeItem("draft_campaign_slug");
 
-            window.location.href = "/frontend/profile/my-campaigns";
+            window.location.href = "/frontend/my-campaigns";
           } catch (error) {
             console.log(error);
 

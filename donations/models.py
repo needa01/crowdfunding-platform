@@ -3,6 +3,7 @@ from django.utils import timezone
 from django_enum.fields import EnumField
 import uuid
 from crowdfunding.enums import Currency, DonationStatus, DonationType
+from crowdfunding.upload_paths import receipt_upload_path
 from crowdfunding.utils import generate_donation_number, generate_receipt_number
 from decimal import Decimal
 
@@ -14,17 +15,11 @@ GST_PERCENTAGE = Decimal("18.00")
 
 
 class Donation(models.Model):
-    
-    uuid = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
-    
-    donation_type = EnumField(
-        DonationType, default=DonationType.CAMPAIGN
-    )
-    
+
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    donation_type = EnumField(DonationType, default=DonationType.CAMPAIGN)
+
     unique_donation_number = models.CharField(
         max_length=16,
         unique=True,
@@ -32,55 +27,34 @@ class Donation(models.Model):
         editable=False,
         db_index=True,
     )
-    
+
     campaign = models.ForeignKey(
         "campaigns.Campaign",
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="donations",
         null=True,
-        blank=True
+        blank=True,
     )
 
     donor = models.ForeignKey(
-        "accounts.CustomUser",
-        on_delete=models.CASCADE,
-        related_name="donations"
+        "accounts.CustomUser", on_delete=models.PROTECT, related_name="donations"
     )
 
-    amount = models.DecimalField(
-        max_digits=12,
-        decimal_places=2
-    )
-    
-    currency = EnumField(
-        Currency,
-        default=Currency.INR
-    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+
+    currency = EnumField(Currency, default=Currency.INR)
 
     is_anonymous = models.BooleanField(default=False)
 
-    message = models.TextField(
-        blank=True,
-        null=True
-    )
+    message = models.TextField(blank=True, null=True)
 
-    status = EnumField(
-        DonationStatus,
-        default=DonationStatus.PENDING
-    )
+    status = EnumField(DonationStatus, default=DonationStatus.PENDING)
 
-    donated_at = models.DateTimeField(
-        null=True,
-        blank=True
-    )
+    donated_at = models.DateTimeField(null=True, blank=True)
 
-    created_at = models.DateTimeField(
-        auto_now_add=True
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    updated_at = models.DateTimeField(
-        auto_now=True
-    )
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "donation"
@@ -90,19 +64,13 @@ class Donation(models.Model):
 
     def __str__(self):
         return f"{self.donor} - {self.amount} {self.currency}"
-    
-    
+
+
 class DonationReceipt(models.Model):
-    uuid = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False
-    )
+    uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     donation = models.OneToOneField(
-        "Donation",
-        on_delete=models.CASCADE,
-        related_name="receipt"
+        "Donation", on_delete=models.CASCADE, related_name="receipt"
     )
 
     receipt_num = models.CharField(
@@ -114,15 +82,13 @@ class DonationReceipt(models.Model):
     )
 
     receipt_file = models.FileField(
-        upload_to="documents/receipt/%Y/%m/",
+        upload_to=receipt_upload_path,
         null=True,
         blank=True,
+        max_length=500
     )
 
-    generated_at = models.DateTimeField(
-        null=True,
-        blank=True
-    )
+    generated_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "donation_receipt"
@@ -132,5 +98,3 @@ class DonationReceipt(models.Model):
 
     def __str__(self):
         return self.receipt_num
-
-

@@ -31,7 +31,7 @@
       }
 
       h2 {
-        margin-top: 0;
+        margin-top: 20px;
       }
 
       label {
@@ -104,11 +104,37 @@
         font-size: 20px;
         font-weight: bold;
       }
+      .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+
+        text-decoration: none;
+        color: #374151;
+        background: #f9fafb;
+        border: 1px solid #d1d5db;
+
+        padding: 8px 14px;
+        border-radius: 7px;
+
+        font-size: 14px;
+        font-weight: 500;
+
+        transition: all 0.2s ease;
+      }
+
+      .back-btn:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+        color: #111827;
+      }
     </style>
   </head>
 
   <body>
     <div class="container">
+      <a href="javascript:history.back()" class="back-btn"> ← Back </a>
+
       <h2>Donate to Campaign</h2>
 
       <!-- ============================= -->

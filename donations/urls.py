@@ -18,6 +18,12 @@ urlpatterns = [
         views.get_my_donations,
         name="my_donations",
     ),
+    path("my-contributions", views.my_contributions, name="get_my_contributions"),
+    path(
+        "my-contribution/<uuid:donation_uuid>",
+        views.get_my_contribution_detail,
+        name="my-contribution-detail",
+    ),
     path(
         "<uuid:donation_uuid>",
         views.get_donation_details,

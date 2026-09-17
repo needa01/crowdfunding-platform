@@ -75,6 +75,7 @@ class CustomUser(AbstractUser):
         return self.fullname
 
 
+
 class DonorProfile(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)

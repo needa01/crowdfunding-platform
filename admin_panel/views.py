@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db import DatabaseError, transaction
 from django.shortcuts import render
 from rest_framework.response import Response
@@ -419,6 +421,8 @@ def get_admins(request):
         )
 
 
+
+
 @api_view(["GET"])
 @permission_classes([IsPlatformAdmin])
 def get_promotion_services_list(request,status):
@@ -458,7 +462,7 @@ def get_promotion_services_list(request,status):
         services = (
             CampaignPromotionService.objects
             .filter(promotion_status=promotion_status)
-            .select_related("campaign", "service_type")
+            .select_related("campaign")
             .order_by("-created_at")
         )
 
@@ -474,8 +478,8 @@ def get_promotion_services_list(request,status):
                     "uuid": str(service.uuid),
                     "campaign": {
                         "uuid": str(service.campaign.uuid),
-                        "slug": service.campaign.slug,
-                        "title": service.campaign.title,
+                        "slug": service.campaign.campaign_slug,
+                        "title": service.campaign.campaign_name,
                     },
                     "service_type": (
                         service.service_type
@@ -485,7 +489,7 @@ def get_promotion_services_list(request,status):
                     "amount": str(service.amount),
                     "fee": str(service.fee),
                     "tax": str(service.tax),
-                    "currency": service.currency,
+                    "currency": service.currency.value,
                     "promotion_status": (
                         service.promotion_status.value
                         if hasattr(service.promotion_status, "value")
@@ -1530,7 +1534,6 @@ def get_campaign_for_verification(request, campaign_slug):
             "financials": {
                 "goal_amount": campaign.goal_amount,
                 "raised_amount": campaign.raised_amount,
-                "total_charges": campaign.total_charges,
                 "amount_withdrawn": campaign.amount_withdrawn,
             },
         },
@@ -1541,6 +1544,644 @@ def get_campaign_for_verification(request, campaign_slug):
         status=status.HTTP_200_OK,
     )
 
+
+
+
+
+# =============================================================
+# GET PROMOTION SERVICE DETAIL
+# =============================================================
+
+@api_view(["GET"])
+@permission_classes([IsPlatformAdmin])
+def get_promotion_service_detail(request, uuid):
+
+    try:
+
+        # =========================================================
+        # 1. GET PROMOTION SERVICE
+        # =========================================================
+
+        try:
+            promotion_service = (
+                CampaignPromotionService.objects
+                .select_related(
+                    "campaign",
+                    "campaign__created_by",
+                    "campaign__ngo",
+                )
+                .get(uuid=uuid)
+            )
+
+        except CampaignPromotionService.DoesNotExist:
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "Promotion service not found.",
+                },
+                status=404,
+            )
+
+        campaign = promotion_service.campaign
+
+        # =========================================================
+        # 2. SERVICE TYPE
+        # =========================================================
+
+        service_type = promotion_service.service_type
+
+        if hasattr(service_type, "value"):
+            service_type_value = service_type.value
+        else:
+            service_type_value = str(service_type)
+
+        # service_name if your enum contains it
+        service_name = getattr(
+            service_type,
+            "service_name",
+            service_type_value,
+        )
+
+        # =========================================================
+        # 3. PROMOTION STATUS
+        # =========================================================
+
+        promotion_status = promotion_service.promotion_status
+
+        if hasattr(promotion_status, "value"):
+            promotion_status_value = promotion_status.value
+        else:
+            promotion_status_value = str(promotion_status)
+
+        # =========================================================
+        # 4. CAMPAIGN TYPE
+        # =========================================================
+
+        campaign_type = campaign.campaign_type
+
+        if hasattr(campaign_type, "value"):
+            campaign_type_value = campaign_type.value
+        else:
+            campaign_type_value = str(campaign_type)
+
+        # =========================================================
+        # 5. CAMPAIGN STATUS
+        # =========================================================
+
+        campaign_status = campaign.campaign_status
+
+        if hasattr(campaign_status, "value"):
+            campaign_status_value = campaign_status.value
+        else:
+            campaign_status_value = str(campaign_status)
+
+        # =========================================================
+        # 6. CREATED BY
+        # =========================================================
+
+        created_by = campaign.created_by
+
+        creator_data = {
+            "uuid": str(created_by.uuid),
+            "fullname": created_by.fullname,
+            "email": created_by.email,
+            "mobile": created_by.mobile,
+        }
+
+        # =========================================================
+        # 7. NGO DETAILS
+        # =========================================================
+
+        ngo_data = None
+
+        if campaign.ngo:
+
+            ngo_data = {
+                "uuid": str(campaign.ngo.uuid),
+                "name": getattr(
+                    campaign.ngo,
+                    "ngo_name",
+                    None,
+                ),
+            }
+
+        # =========================================================
+        # 8. CAMPAIGN DETAILS
+        # =========================================================
+
+        campaign_data = {
+
+            "uuid": str(campaign.uuid),
+
+            "campaign_name": campaign.campaign_name,
+
+            "campaign_slug": campaign.campaign_slug,
+
+            "campaign_description": campaign.campaign_desc,
+
+            "cover_photo": (
+                request.build_absolute_uri(
+                    campaign.cover_photo.url
+                )
+                if campaign.cover_photo
+                else None
+            ),
+
+            "campaign_type": campaign_type_value,
+
+            "campaign_status": campaign_status_value,
+
+            "goal_amount": str(
+                campaign.goal_amount
+            ),
+
+            "raised_amount": str(
+                campaign.raised_amount
+            ),
+
+
+
+            "amount_withdrawn": str(
+                campaign.amount_withdrawn
+            ),
+
+            "total_donors": campaign.total_donors,
+
+            "total_views": campaign.total_views,
+
+            "start_date": campaign.start_date,
+
+            "end_date": campaign.end_date,
+
+            "cause": (
+                campaign.cause.value
+                if hasattr(campaign.cause, "value")
+                else str(campaign.cause)
+            ),
+
+            "beneficiary_type": (
+                campaign.beneficiary_type.value
+                if hasattr(
+                    campaign.beneficiary_type,
+                    "value",
+                )
+                else str(campaign.beneficiary_type)
+            ),
+
+            "beneficiary_group_type": (
+                campaign.beneficiary_group_type.value
+                if hasattr(
+                    campaign.beneficiary_group_type,
+                    "value",
+                )
+                else str(
+                    campaign.beneficiary_group_type
+                )
+            ),
+
+            "beneficiary_name": campaign.beneficiary_name,
+
+            "beneficiary_relation": (
+                campaign.beneficiary_relation.value
+                if campaign.beneficiary_relation
+                and hasattr(
+                    campaign.beneficiary_relation,
+                    "value",
+                )
+                else (
+                    str(campaign.beneficiary_relation)
+                    if campaign.beneficiary_relation
+                    else None
+                )
+            ),
+
+            "beneficiary_mobile": (
+                campaign.beneficiary_mobile
+            ),
+
+            "beneficiary_member_count": (
+                campaign.beneficiary_member_count
+            ),
+
+            "beneficiary_location": (
+                campaign.beneficiary_location
+            ),
+
+            "beneficiary_age": (
+                campaign.beneficiary_age
+            ),
+
+            "hospital_name": (
+                campaign.hospital_name
+            ),
+
+            "hospital_location": (
+                campaign.hospital_location
+            ),
+
+            "ailment": campaign.ailment,
+
+            "created_at": campaign.created_at,
+
+            "updated_at": campaign.updated_at,
+
+            "created_by": creator_data,
+
+            "ngo": ngo_data,
+        }
+
+        # =========================================================
+        # 9. PROMOTION SERVICE DETAILS
+        # =========================================================
+
+        amount = Decimal(
+            promotion_service.amount or 0
+        )
+
+        fee = Decimal(
+            promotion_service.fee or 0
+        )
+
+        tax = Decimal(
+            promotion_service.tax or 0
+        )
+
+        total = amount + fee + tax
+
+        promotion_data = {
+
+            "uuid": str(
+                promotion_service.uuid
+            ),
+
+            "service_type": service_type_value,
+
+            "service_name": service_name,
+
+            "amount": str(amount),
+
+            "fee": str(fee),
+
+            "tax": str(tax),
+
+            "total": str(total),
+
+            "currency": (
+                promotion_service.currency.value
+                if hasattr(
+                    promotion_service.currency,
+                    "value",
+                )
+                else str(
+                    promotion_service.currency
+                )
+            ),
+
+            "promotion_status": (
+                promotion_status_value
+            ),
+
+            "user_notes": (
+                promotion_service.user_notes
+            ),
+
+            "created_at": (
+                promotion_service.created_at
+            ),
+
+            "updated_at": (
+                promotion_service.updated_at
+            ),
+        }
+
+        # =========================================================
+        # 10. RESPONSE
+        # =========================================================
+
+        return Response(
+            {
+                "success": True,
+
+                "message": (
+                    "Promotion service details "
+                    "fetched successfully."
+                ),
+
+                "promotion_service": promotion_data,
+
+                "campaign": campaign_data,
+            },
+            status=200,
+        )
+
+    except Exception as e:
+
+        return Response(
+            {
+                "success": False,
+
+                "message": (
+                    "Failed to fetch promotion "
+                    "service details."
+                ),
+
+                "error": str(e),
+            },
+            status=500,
+        )
+
+
+# =============================================================
+# UPDATE PROMOTION SERVICE STATUS
+# =============================================================
+
+@api_view(["PATCH"])
+@permission_classes([IsPlatformAdmin])
+@transaction.atomic
+def update_promotion_service_status(request, uuid):
+
+    try:
+
+        # =========================================================
+        # 1. GET PROMOTION SERVICE
+        # =========================================================
+
+        try:
+
+            promotion_service = (
+                CampaignPromotionService.objects
+                .select_for_update()
+                .select_related("campaign")
+                .get(uuid=uuid)
+            )
+
+        except CampaignPromotionService.DoesNotExist:
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "Promotion service not found.",
+                },
+                status=404,
+            )
+
+        # =========================================================
+        # 2. GET NEW STATUS
+        # =========================================================
+
+        requested_status = request.data.get("status")
+
+        if not requested_status:
+
+            return Response(
+                {
+                    "success": False,
+                    "message": "status is required.",
+                },
+                status=400,
+            )
+
+        requested_status = (
+            str(requested_status)
+            .strip()
+            .lower()
+        )
+
+        # =========================================================
+        # 3. ALLOWED STATUS VALUES
+        # =========================================================
+        #
+        # Pending is intentionally NOT present.
+        #
+
+        allowed_statuses = {
+
+            "submitted": PromotionStatus.SUBMITTED,
+
+            "active": PromotionStatus.ACTIVE,
+
+            "completed": PromotionStatus.COMPLETED,
+        }
+
+        if requested_status not in allowed_statuses:
+
+            return Response(
+                {
+                    "success": False,
+
+                    "message": (
+                        "Invalid status. Allowed values are "
+                        "Submitted, Active, and Completed. "
+                        "Pending cannot be selected."
+                    ),
+                },
+                status=400,
+            )
+
+        new_status = allowed_statuses[
+            requested_status
+        ]
+
+        # =========================================================
+        # 4. CURRENT STATUS
+        # =========================================================
+
+        current_status = (
+            promotion_service.promotion_status
+        )
+
+        if hasattr(
+            current_status,
+            "value",
+        ):
+            current_status_value = (
+                current_status.value
+            )
+        else:
+            current_status_value = str(
+                current_status
+            )
+
+        current_status_lower = (
+            current_status_value.lower()
+        )
+
+        # =========================================================
+        # 5. PENDING CANNOT BE UPDATED
+        # =========================================================
+
+        if (
+            current_status_lower
+            == PromotionStatus.PENDING.value.lower()
+        ):
+
+            return Response(
+                {
+                    "success": False,
+
+                    "message": (
+                        "A Pending promotion service "
+                        "cannot be changed by admin."
+                    ),
+                },
+                status=400,
+            )
+
+        # =========================================================
+        # 6. CANCELLED CANNOT BE UPDATED
+        # =========================================================
+
+        if (
+            current_status_lower
+            == PromotionStatus.CANCELLED.value.lower()
+        ):
+
+            return Response(
+                {
+                    "success": False,
+
+                    "message": (
+                        "Cancelled promotion services "
+                        "cannot be changed."
+                    ),
+                },
+                status=400,
+            )
+
+        # =========================================================
+        # 7. SAME STATUS
+        # =========================================================
+
+        if current_status_lower == requested_status:
+
+            return Response(
+                {
+                    "success": False,
+
+                    "message": (
+                        f"Promotion service is already "
+                        f"{current_status_value}."
+                    ),
+                },
+                status=400,
+            )
+
+        # =========================================================
+        # 8. COMPLETED CANNOT GO BACK
+        # =========================================================
+
+    
+
+        # =========================================================
+        # 9. VALID TRANSITIONS
+        # =========================================================
+        #
+        # Submitted -> Active
+        # Submitted -> Completed
+        # Active    -> Submitted
+        # Active    -> Completed
+        #
+
+        valid_transitions = {
+
+            "submitted": {
+                "active",
+                "completed",
+            },
+
+            "active": {
+                "submitted",
+                "completed",
+            },
+            
+            "completed":{
+                "active",
+                "submitted",
+            }
+        }
+
+        allowed_next_statuses = valid_transitions.get(
+            current_status_lower,
+            set(),
+        )
+
+        if requested_status not in allowed_next_statuses:
+
+            return Response(
+                {
+                    "success": False,
+
+                    "message": (
+                        f"Cannot change promotion service "
+                        f"status from {current_status_value} "
+                        f"to {new_status.value}."
+                    ),
+                },
+                status=400,
+            )
+
+        # =========================================================
+        # 10. UPDATE
+        # =========================================================
+
+        promotion_service.promotion_status = (
+            new_status
+        )
+
+        promotion_service.save(
+            update_fields=[
+                "promotion_status",
+                "updated_at",
+            ]
+        )
+
+        # =========================================================
+        # 11. RESPONSE
+        # =========================================================
+
+        return Response(
+            {
+                "success": True,
+
+                "message": (
+                    "Promotion service status "
+                    "updated successfully."
+                ),
+
+                "promotion_service": {
+
+                    "uuid": str(
+                        promotion_service.uuid
+                    ),
+
+                    "previous_status": (
+                        current_status_value
+                    ),
+
+                    "new_status": (
+                        new_status.value
+                    ),
+                },
+            },
+            status=200,
+        )
+
+    except Exception as e:
+
+        return Response(
+            {
+                "success": False,
+
+                "message": (
+                    "Failed to update promotion "
+                    "service status."
+                ),
+
+                "error": str(e),
+            },
+            status=500,
+        )
 
 @api_view(["POST"])
 @permission_classes([IsSuperAdmin])

@@ -46,7 +46,6 @@ class CampaignAdmin(admin.ModelAdmin):
     readonly_fields = (
         "uuid",
         "raised_amount",
-        "total_charges",
         "amount_withdrawn",
         "total_donors",
         "total_views",
@@ -84,7 +83,6 @@ class CampaignAdmin(admin.ModelAdmin):
                 "fields": (
                     "goal_amount",
                     "raised_amount",
-                    "total_charges",
                     "amount_withdrawn",
                 )
             },

@@ -63,9 +63,19 @@ urlpatterns = [
         name="my_donations",
     ),
     path(
+        "my-contributions",
+        views.my_contributions,
+        name="my_contributions",
+    ),
+    path(
         "donations/<uuid:donation_uuid>",
         views.get_donation_details,
         name="get_donation_details",
+    ),
+    path(
+        "my-contribution/<uuid:contribution_uuid>",
+        views.get_contribution_details,
+        name="get_contribution_details",
     ),
     # payment urls
     path(
@@ -101,6 +111,7 @@ urlpatterns = [
         "admin/campaign-management", views.admin_campaigns_view, name="admin_campaigns"
     ),
     path("admin/admin-management", views.admin_admins_view, name="admin_admins"),
+    path("admin/promotion-services-management", views.admin_promotion_services_view, name="admin_admins"),
     path("admin/create-admin", views.admin_create_view, name="admin_create"),
     path(
         "admin/donor-verification/<uuid:user_uuid>",
@@ -126,5 +137,10 @@ urlpatterns = [
         "admin/campaign-verification/<slug:campaign_slug>",
         views.admin_campaign_verification_view,
         name="admin_campaign_verification",
+    ),
+    path(
+        "admin/campaign-promotion/<uuid:uuid>",
+        views.admin_promotion_service_update_view,
+        name="admin_promotion_service_update_view",
     ),
 ]

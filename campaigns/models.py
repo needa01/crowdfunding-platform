@@ -100,12 +100,6 @@ class Campaign(models.Model):
         default=0,
     )
 
-    total_charges = models.DecimalField(
-        max_digits=15,
-        decimal_places=2,
-        default=0,
-    )
-
     amount_withdrawn = models.DecimalField(
         max_digits=15,
         decimal_places=2,
@@ -756,7 +750,7 @@ class CampaignPromotionService(models.Model):
         verbose_name_plural = "Campaign Promotion Services"
 
     def __str__(self):
-        return f"{self.campaign.campaign_name} ({self.service_type.service_name})"
+        return f"{self.campaign.campaign_name} ({self.service_type.value})"
 
     def clean(self):
 

@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404, render
-from django.db.models import F
+from django.db.models import F, Prefetch
 from rest_framework import status
 from rest_framework.decorators import (
     api_view,
@@ -1091,15 +1091,33 @@ def my_campaign_detail(request, campaign_slug):
 
     try:
 
-        campaign = Campaign.objects.select_related(
-            "created_by",
-            "ngo",
-        ).get(campaign_slug=campaign_slug)
+        campaign = (
+            Campaign.objects
+            .select_related(
+                "created_by",
+                "ngo",
+            )
+            .prefetch_related(
+                Prefetch(
+                    "services",
+                    queryset=CampaignPromotionService.objects.all().order_by(
+                        "-created_at"
+                    ),
+                )
+            )
+            .get(
+                campaign_slug=campaign_slug,
+                created_by=request.user,
+            )
+        )
 
     except Campaign.DoesNotExist:
 
         return Response(
-            {"success": False, "message": "Campaign not found."},
+            {
+                "success": False,
+                "message": "Campaign not found.",
+            },
             status=404,
         )
 
@@ -1116,6 +1134,8 @@ def my_campaign_detail(request, campaign_slug):
             "data": serializer.data,
         }
     )
+
+
 
 
 @api_view(["GET"])

@@ -1,0 +1,1072 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>My Contributions | CSR</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        background: #f6f8fb;
+        color: #1f2937;
+      }
+
+      .page {
+        padding: 30px;
+        max-width: 1400px;
+        margin: auto;
+      }
+
+      /* Header */
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 28px;
+      }
+
+      .page-header h1 {
+        font-size: 27px;
+        font-weight: 600;
+        color: #172033;
+      }
+
+      .page-header p {
+        margin-top: 5px;
+        color: #6b7280;
+        font-size: 14px;
+      }
+
+      /* Summary Cards */
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+        margin-bottom: 28px;
+      }
+
+      .summary-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 22px;
+        border: 1px solid #e7eaf0;
+      }
+
+      .summary-label {
+        color: #6b7280;
+        font-size: 13px;
+        margin-bottom: 9px;
+      }
+
+      .summary-value {
+        font-size: 25px;
+        font-weight: 600;
+        color: #172033;
+      }
+
+      .summary-description {
+        margin-top: 6px;
+        font-size: 12px;
+        color: #9ca3af;
+      }
+
+      /* Main Card */
+      .content-card {
+        background: #fff;
+        border: 1px solid #e7eaf0;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .content-header {
+        padding: 22px 24px;
+        border-bottom: 1px solid #e7eaf0;
+      }
+
+      .content-header h2 {
+        font-size: 18px;
+        font-weight: 600;
+        color: #172033;
+      }
+
+      .content-header p {
+        margin-top: 4px;
+        font-size: 13px;
+        color: #6b7280;
+      }
+
+      /* Filters */
+      .filters {
+        display: flex;
+        gap: 12px;
+        padding: 18px 24px;
+        border-bottom: 1px solid #e7eaf0;
+        flex-wrap: wrap;
+      }
+
+      .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+      }
+
+      .filter-group label {
+        font-size: 11px;
+        color: #6b7280;
+        font-weight: 500;
+      }
+
+      .filter-input,
+      .filter-select {
+        height: 40px;
+        min-width: 160px;
+        padding: 0 12px;
+        border: 1px solid #dfe3e9;
+        border-radius: 7px;
+        background: #fff;
+        font-family: inherit;
+        font-size: 13px;
+        color: #374151;
+        outline: none;
+      }
+
+      .filter-input:focus,
+      .filter-select:focus {
+        border-color: #4f46e5;
+      }
+
+      .filter-search {
+        flex: 1;
+        min-width: 220px;
+      }
+
+      .filter-search input {
+        width: 100%;
+      }
+
+      .reset-btn {
+        height: 40px;
+        padding: 0 17px;
+        margin-top: 20px;
+        border: 1px solid #dfe3e9;
+        background: #fff;
+        border-radius: 7px;
+        font-family: inherit;
+        font-size: 13px;
+        cursor: pointer;
+        color: #374151;
+      }
+
+      .reset-btn:hover {
+        background: #f9fafb;
+      }
+
+      /* Table */
+      .table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 950px;
+      }
+
+      thead {
+        background: #f9fafb;
+      }
+
+      th {
+        text-align: left;
+        padding: 14px 20px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #6b7280;
+        white-space: nowrap;
+        border-bottom: 1px solid #e7eaf0;
+      }
+
+      td {
+        padding: 17px 20px;
+        font-size: 13px;
+        border-bottom: 1px solid #f0f1f4;
+        vertical-align: middle;
+      }
+
+      tbody tr:hover {
+        background: #fafbfc;
+      }
+
+      .campaign-name {
+        font-weight: 500;
+        color: #172033;
+      }
+
+      .campaign-type {
+        font-size: 11px;
+        color: #7c3aed;
+        margin-top: 3px;
+      }
+
+      .platform-type {
+        color: #2563eb;
+      }
+
+      .amount {
+        font-weight: 600;
+        color: #172033;
+      }
+
+      .date {
+        color: #6b7280;
+        white-space: nowrap;
+      }
+
+      .payment-id {
+        font-size: 12px;
+        color: #4b5563;
+        word-break: break-all;
+      }
+
+      /* Status */
+      .status {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      .status.paid {
+        background: #ecfdf3;
+        color: #16834d;
+      }
+
+      .status.pending {
+        background: #fff7ed;
+        color: #c2410c;
+      }
+
+      .status.failed {
+        background: #fef2f2;
+        color: #dc2626;
+      }
+
+      .status.refunded {
+        background: #eff6ff;
+        color: #2563eb;
+      }
+
+      /* Actions */
+      .action-btn {
+        border: 0;
+        background: transparent;
+        color: #4f46e5;
+        font-family: inherit;
+        font-size: 12px;
+        cursor: pointer;
+        font-weight: 500;
+        padding: 5px 0;
+      }
+
+      .action-btn:hover {
+        text-decoration: underline;
+      }
+
+      /* Empty State */
+      .empty-state {
+        text-align: center;
+        padding: 65px 20px;
+        display: none;
+      }
+
+      .empty-state h3 {
+        font-size: 17px;
+        color: #374151;
+        margin-bottom: 7px;
+      }
+
+      .empty-state p {
+        color: #9ca3af;
+        font-size: 13px;
+      }
+
+      /* Pagination */
+      .pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 17px 24px;
+        border-top: 1px solid #e7eaf0;
+      }
+
+      .pagination-info {
+        font-size: 12px;
+        color: #6b7280;
+      }
+
+      .pagination-buttons {
+        display: flex;
+        gap: 6px;
+      }
+
+      .page-btn {
+        min-width: 34px;
+        height: 34px;
+        border: 1px solid #dfe3e9;
+        background: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 12px;
+        color: #374151;
+      }
+
+      .page-btn.active {
+        background: #4f46e5;
+        color: #fff;
+        border-color: #4f46e5;
+      }
+
+      .page-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      /* Responsive */
+      @media (max-width: 1000px) {
+        .summary-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 650px) {
+        .page {
+          padding: 18px;
+        }
+
+        .page-header {
+          align-items: flex-start;
+        }
+
+        .page-header h1 {
+          font-size: 22px;
+        }
+
+        .summary-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .filters {
+          flex-direction: column;
+        }
+
+        .filter-input,
+        .filter-select,
+        .filter-search {
+          width: 100%;
+          min-width: 100%;
+        }
+
+        .reset-btn {
+          margin-top: 0;
+        }
+
+        .pagination {
+          flex-direction: column;
+          gap: 14px;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="page">
+      <!-- Header -->
+      <div class="page-header">
+        <div>
+          <h1>My Contributions</h1>
+          <p>
+            View and manage your CSR contributions across campaigns and the
+            platform.
+          </p>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <section class="summary-grid">
+        <div class="summary-card">
+          <div class="summary-label">Total Contributions</div>
+          <div class="summary-value" id="totalContributions">₹0</div>
+          <div class="summary-description">Total amount contributed</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-label">Campaigns Supported</div>
+          <div class="summary-value" id="campaignsSupported">0</div>
+          <div class="summary-description">Unique campaigns supported</div>
+        </div>
+
+        <div class="summary-card">
+          <div class="summary-label">Active Contributions</div>
+          <div class="summary-value" id="activeContributions">₹0</div>
+          <div class="summary-description">
+            Contributions to active campaigns
+          </div>
+        </div>
+      </section>
+
+      <!-- Contributions -->
+      <section class="content-card">
+        <div class="content-header">
+          <h2>Contribution History</h2>
+          <p>All successful and unsuccessful CSR contribution transactions.</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+          <div class="filter-group filter-search">
+            <label for="searchInput">SEARCH</label>
+
+            <input
+              type="text"
+              id="searchInput"
+              class="filter-input"
+              placeholder="Search campaign, donation number or payment ID..."
+            />
+          </div>
+
+          <div class="filter-group">
+            <label for="statusFilter">CAMPAIGN STATUS</label>
+
+            <select id="statusFilter" class="filter-select">
+              <option value="">All</option>
+              <option value="Active">Active</option>
+              <option value="Completed">Completed</option>
+              <option value="Closed">Closed</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="paymentFilter">PAYMENT STATUS</label>
+
+            <select id="paymentFilter" class="filter-select">
+              <option value="">All</option>
+              <option value="Paid">Paid</option>
+              <option value="Pending">Pending</option>
+              <option value="Failed">Failed</option>
+              <option value="Refunded">Refunded</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="dateFilter">DATE</label>
+
+            <input type="date" id="dateFilter" class="filter-input" />
+          </div>
+
+          <button type="button" class="reset-btn" onclick="resetFilters()">
+            Reset
+          </button>
+        </div>
+
+        <!-- Table -->
+        <div class="table-wrapper">
+          <table id="contributionTable">
+            <thead>
+              <tr>
+                <th>CAMPAIGN / PLATFORM</th>
+                <th>BENEFICIARY</th>
+                <th>CONTRIBUTION</th>
+                <th>CAMPAIGN STATUS</th>
+                <th>PAYMENT STATUS</th>
+                <th>DATE</th>
+                <th>PAYMENT ID</th>
+                <th>ACTION</th>
+              </tr>
+            </thead>
+
+            <tbody></tbody>
+          </table>
+
+          <div class="empty-state" id="emptyState">
+            <h3>No contributions found</h3>
+            <p>Try changing your search or filter criteria.</p>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+          <div class="pagination-info">Showing 0–0 of 0 contributions</div>
+
+          <div class="pagination-buttons"></div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const API_URL = "/api/donations/my-contributions";
+
+      let currentPage = 1;
+
+      const pageSize = 4;
+
+      /* =========================================================
+       LOAD CONTRIBUTIONS
+    ========================================================= */
+      function viewContribution(donationUuid) {
+        if (!donationUuid) {
+          return;
+        }
+
+        window.location.href = `/frontend/my-contribution/${encodeURIComponent(donationUuid)}`;
+      }
+
+      async function loadContributions(page = 1) {
+        currentPage = page;
+
+        const params = new URLSearchParams();
+
+        params.append("page", page);
+        params.append("page_size", pageSize);
+
+        /* Search */
+
+        const search = document.getElementById("searchInput").value.trim();
+
+        if (search) {
+          params.append("search", search);
+        }
+
+        /* Campaign Status */
+
+        const campaignStatus = document.getElementById("statusFilter").value;
+
+        if (campaignStatus) {
+          params.append("campaign_status", campaignStatus);
+        }
+
+        /* Payment Status */
+
+        const paymentStatus = document.getElementById("paymentFilter").value;
+
+        if (paymentStatus) {
+          params.append("payment_status", paymentStatus);
+        }
+
+        /* Date */
+
+        const selectedDate = document.getElementById("dateFilter").value;
+
+        if (selectedDate) {
+          params.append("date", selectedDate);
+        }
+
+        try {
+          const token = sessionStorage.getItem("access_token");
+
+          const headers = {
+            "Content-Type": "application/json",
+          };
+
+          if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+          }
+
+          const response = await fetch(`${API_URL}?${params.toString()}`, {
+            method: "GET",
+            headers: headers,
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(
+              data.message || data.detail || "Unable to load contributions.",
+            );
+          }
+
+          if (!data.success) {
+            throw new Error(data.message || "Unable to load contributions.");
+          }
+
+          /* =====================================================
+               SUMMARY
+            ===================================================== */
+
+          const summary = data.summary || {};
+
+          document.getElementById("totalContributions").textContent =
+            formatCurrency(summary.total_contributions);
+
+          document.getElementById("campaignsSupported").textContent = Number(
+            summary.campaigns_supported || 0,
+          ).toLocaleString("en-IN");
+
+          document.getElementById("activeContributions").textContent =
+            formatCurrency(summary.active_contributions);
+
+          /* =====================================================
+               TABLE
+            ===================================================== */
+
+          const tbody = document.querySelector("#contributionTable tbody");
+
+          tbody.innerHTML = "";
+
+          const contributions = data.contributions || [];
+
+          if (contributions.length === 0) {
+            document.getElementById("contributionTable").style.display = "none";
+
+            document.getElementById("emptyState").style.display = "block";
+          } else {
+            document.getElementById("contributionTable").style.display =
+              "table";
+
+            document.getElementById("emptyState").style.display = "none";
+
+            contributions.forEach((contribution) => {
+              const row = document.createElement("tr");
+
+              /* =================================================
+                           DATA
+                        ================================================= */
+
+              const donation = contribution.donation || {};
+              const donationUuid = donation.uuid || null;
+
+              let viewButtonHtml = `
+    <span
+        style="
+            color:#9ca3af;
+            font-size:12px;
+        "
+    >
+        -
+    </span>
+`;
+
+              if (donationUuid) {
+                viewButtonHtml = `
+        <button
+            type="button"
+            class="action-btn"
+            onclick="viewContribution('${escapeHtml(donationUuid)}')"
+        >
+            View
+        </button>
+    `;
+              }
+
+              const campaign = contribution.campaign || null;
+
+              const platform = contribution.platform || null;
+
+              const payment = contribution.payment || {};
+
+              const donationType = String(
+                donation.donation_type || "",
+              ).toUpperCase();
+
+              /* =================================================
+                           CAMPAIGN / PLATFORM
+                        ================================================= */
+
+              let contributionName = "-";
+              let contributionType = "";
+              let beneficiary = "-";
+              let campaignStatus = "-";
+
+              if (donationType === "CAMPAIGN" && campaign) {
+                contributionName = campaign.name || "Campaign";
+
+                contributionType = "CSR Campaign";
+
+                beneficiary = campaign.beneficiary || "-";
+
+                campaignStatus = campaign.status || "-";
+              } else if (donationType === "PLATFORM" && platform) {
+                contributionName = platform.name || "Platform";
+
+                contributionType = "Platform Contribution";
+
+                beneficiary = "Platform";
+
+                campaignStatus = "—";
+              }
+
+              /* =================================================
+                           AMOUNT
+                        ================================================= */
+
+              const amount = Number(donation.amount || payment.amount || 0);
+
+              /* =================================================
+                           PAYMENT STATUS
+                        ================================================= */
+
+              const paymentStatus =
+                contribution.payment_status ||
+                payment.status ||
+                donation.status ||
+                "Pending";
+
+              const normalizedPaymentStatus =
+                String(paymentStatus).toLowerCase();
+
+              let statusClass = "pending";
+
+              if (
+                normalizedPaymentStatus === "paid" ||
+                normalizedPaymentStatus === "success" ||
+                normalizedPaymentStatus === "successful" ||
+                normalizedPaymentStatus === "completed" ||
+                normalizedPaymentStatus === "captured"
+              ) {
+                statusClass = "paid";
+              } else if (normalizedPaymentStatus === "failed") {
+                statusClass = "failed";
+              } else if (normalizedPaymentStatus === "refunded") {
+                statusClass = "refunded";
+              }
+
+              /* =================================================
+                           DATE
+
+                           API already returns:
+                           "15 Sep 2026, 01:53 PM"
+
+                           Therefore display directly.
+                        ================================================= */
+
+              const contributionDate =
+                donation.donated_at ||
+                donation.created_at ||
+                payment.processed_at ||
+                "-";
+
+              /* =================================================
+                           PAYMENT ID
+
+                           API uses payment_id
+                        ================================================= */
+
+              const paymentId = payment.payment_id || "-";
+
+              /* =================================================
+                           NAME TYPE CLASS
+                        ================================================= */
+
+              const typeClass =
+                donationType === "PLATFORM" ? "platform-type" : "";
+
+              /* =================================================
+                           ROW
+                        ================================================= */
+
+              row.innerHTML = `
+
+                            <td>
+
+                                <div class="campaign-name">
+                                    ${escapeHtml(contributionName)}
+                                </div>
+
+                                <div
+                                    class="campaign-type ${typeClass}"
+                                >
+                                    ${escapeHtml(contributionType)}
+                                </div>
+
+                            </td>
+
+
+                            <td>
+                                ${escapeHtml(beneficiary)}
+                            </td>
+
+
+                            <td>
+
+                                <span class="amount">
+                                    ₹${amount.toLocaleString("en-IN", {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                ${
+                                  campaignStatus === "—"
+                                    ? "—"
+                                    : escapeHtml(campaignStatus)
+                                }
+
+                            </td>
+
+
+                            <td>
+
+                                <span
+                                    class="status ${statusClass}"
+                                >
+                                    ${escapeHtml(paymentStatus)}
+                                </span>
+
+                            </td>
+
+
+                            <td class="date">
+
+                                ${escapeHtml(contributionDate)}
+
+                            </td>
+
+
+                            <td>
+
+                                <span class="payment-id">
+                                    ${escapeHtml(paymentId)}
+                                </span>
+
+                            </td>
+                            <td>
+                                ${viewButtonHtml}
+                            </td>
+
+
+                            
+
+                        `;
+
+              tbody.appendChild(row);
+            });
+          }
+
+          /* =====================================================
+               PAGINATION
+            ===================================================== */
+
+          updatePagination(data.pagination || {});
+        } catch (error) {
+          console.error("MY CONTRIBUTIONS API ERROR:", error);
+
+          document.querySelector("#contributionTable tbody").innerHTML = "";
+
+          document.getElementById("contributionTable").style.display = "none";
+
+          document.getElementById("emptyState").style.display = "block";
+
+          document.querySelector("#emptyState h3").textContent =
+            "Unable to load contributions";
+
+          document.querySelector("#emptyState p").textContent =
+            error.message ||
+            "Something went wrong while loading your contributions.";
+        }
+      }
+
+      /* =========================================================
+       CURRENCY FORMAT
+    ========================================================= */
+
+      function formatCurrency(value) {
+        const amount = Number(value || 0);
+
+        return `₹${amount.toLocaleString("en-IN", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`;
+      }
+
+      /* =========================================================
+       PAGINATION
+    ========================================================= */
+
+      function updatePagination(pagination) {
+        const paginationInfo = document.querySelector(".pagination-info");
+
+        const paginationButtons = document.querySelector(".pagination-buttons");
+
+        const page = Number(pagination.current_page || 1);
+
+        const totalRecords = Number(pagination.total_records || 0);
+
+        const totalPages = Number(pagination.total_pages || 1);
+
+        const pageSizeFromApi = Number(pagination.page_size || pageSize);
+
+        const start = totalRecords === 0 ? 0 : (page - 1) * pageSizeFromApi + 1;
+
+        const end = Math.min(page * pageSizeFromApi, totalRecords);
+
+        paginationInfo.textContent = `Showing ${start}–${end} of ${totalRecords} contributions`;
+
+        paginationButtons.innerHTML = "";
+
+        /* =====================================================
+           PREVIOUS
+        ===================================================== */
+
+        const previousButton = document.createElement("button");
+
+        previousButton.className = "page-btn";
+
+        previousButton.innerHTML = "‹";
+
+        previousButton.disabled = !pagination.has_previous;
+
+        previousButton.onclick = function () {
+          if (pagination.has_previous && pagination.previous_page) {
+            loadContributions(pagination.previous_page);
+          }
+        };
+
+        paginationButtons.appendChild(previousButton);
+
+        /* =====================================================
+           PAGE NUMBERS
+        ===================================================== */
+
+        for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
+          const pageButton = document.createElement("button");
+
+          pageButton.className = "page-btn";
+
+          if (pageNumber === page) {
+            pageButton.classList.add("active");
+          }
+
+          pageButton.textContent = pageNumber;
+
+          pageButton.onclick = function () {
+            loadContributions(pageNumber);
+          };
+
+          paginationButtons.appendChild(pageButton);
+        }
+
+        /* =====================================================
+           NEXT
+        ===================================================== */
+
+        const nextButton = document.createElement("button");
+
+        nextButton.className = "page-btn";
+
+        nextButton.innerHTML = "›";
+
+        nextButton.disabled = !pagination.has_next;
+
+        nextButton.onclick = function () {
+          if (pagination.has_next && pagination.next_page) {
+            loadContributions(pagination.next_page);
+          }
+        };
+
+        paginationButtons.appendChild(nextButton);
+      }
+
+      /* =========================================================
+       RESET FILTERS
+    ========================================================= */
+
+      function resetFilters() {
+        document.getElementById("searchInput").value = "";
+
+        document.getElementById("statusFilter").value = "";
+
+        document.getElementById("paymentFilter").value = "";
+
+        document.getElementById("dateFilter").value = "";
+
+        loadContributions(1);
+      }
+
+      /* =========================================================
+       HTML ESCAPE
+    ========================================================= */
+
+      function escapeHtml(value) {
+        if (value === null || value === undefined) {
+          return "";
+        }
+
+        return String(value)
+          .replace(/&/g, "&amp;")
+
+          .replace(/</g, "&lt;")
+
+          .replace(/>/g, "&gt;")
+
+          .replace(/"/g, "&quot;")
+
+          .replace(/'/g, "&#039;");
+      }
+
+      /* =========================================================
+       FILTER EVENTS
+    ========================================================= */
+
+      let searchTimeout;
+
+      document
+        .getElementById("searchInput")
+        .addEventListener("input", function () {
+          clearTimeout(searchTimeout);
+
+          searchTimeout = setTimeout(function () {
+            loadContributions(1);
+          }, 400);
+        });
+
+      document
+        .getElementById("statusFilter")
+        .addEventListener("change", function () {
+          loadContributions(1);
+        });
+
+      document
+        .getElementById("paymentFilter")
+        .addEventListener("change", function () {
+          loadContributions(1);
+        });
+
+      document
+        .getElementById("dateFilter")
+        .addEventListener("change", function () {
+          loadContributions(1);
+        });
+
+      /* =========================================================
+       INITIAL API CALL
+    ========================================================= */
+
+      document.addEventListener("DOMContentLoaded", function () {
+        loadContributions(1);
+      });
+    </script>
+  </body>
+</html>

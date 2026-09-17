@@ -178,7 +178,7 @@
     window.location.href = "/frontend/admin/login";
   }
 
-  const BASE_URL = process.env.API_BASE_URL;
+  const BASE_URL = "{{API_BASE_URL}}";
 
   // =========================================================
   // GET STATUS FROM URL
@@ -366,7 +366,7 @@
 
     try {
       const response = await fetch(
-        `${BASE_URL}/api/admin/promotion-services/${status}/`,
+        `${BASE_URL}/api/admin/promotion-services/${status}`,
         {
           method: "GET",
 
@@ -550,9 +550,11 @@
     if (!uuid) {
       return;
     }
+        //"admin/campaign-promotion/update/<uuid:uuid>",
+    
 
     window.location.href =
-      `/frontend/admin/promotion-service-verification/${uuid}`;
+      `/frontend/admin/campaign-promotion/${uuid}`;
   }
 
   // =========================================================

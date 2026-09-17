@@ -1,7 +1,7 @@
 from django.utils import timezone
 from rest_framework import serializers
 
-from campaigns.models import Campaign
+from campaigns.models import Campaign, CampaignPromotionService
 from crowdfunding.enums import CampaignStatus
 from verification.models import Document, EntityVerificationRequest
 
@@ -151,6 +151,7 @@ class MyCampaignListSerializer(serializers.ModelSerializer):
 class CampaignDocumentSerializer(serializers.ModelSerializer):
     document_url = serializers.SerializerMethodField()
     document_type = serializers.CharField(read_only=True)
+    created_at = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
@@ -171,6 +172,12 @@ class CampaignDocumentSerializer(serializers.ModelSerializer):
             if request:
                 return request.build_absolute_uri(obj.file_url.url)
             return obj.file_url.url
+
+        return None
+    
+    def get_created_at(self, obj):
+        if obj.created_at:
+            return obj.created_at.strftime("%d %b %Y, %I:%M %p")
 
         return None
 
@@ -282,7 +289,6 @@ class CampaignDetailSerializer(serializers.ModelSerializer):
             "wallet_balance",  # <-- Add here
             "progress_percentage",
             "amount_remaining",
-            "total_charges",
             "amount_withdrawn",
             "beneficiary_type",
             "beneficiary_group_type",
@@ -388,6 +394,67 @@ class CampaignDetailSerializer(serializers.ModelSerializer):
         return 0
 
 
+
+class CampaignPromotionServiceSerializer(serializers.ModelSerializer):
+
+    service_type = serializers.SerializerMethodField()
+    currency = serializers.SerializerMethodField()
+    promotion_status = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
+    updated_at = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CampaignPromotionService
+        fields = [
+            "uuid",
+            "service_type",
+            "amount",
+            "fee",
+            "tax",
+            "currency",
+            "promotion_status",
+            "user_notes",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_service_type(self, obj):
+        if not obj.service_type:
+            return None
+
+        return obj.service_type.value
+        
+
+    def get_currency(self, obj):
+        return (
+            obj.currency.value
+            if hasattr(obj.currency, "value")
+            else str(obj.currency)
+        )
+
+    def get_promotion_status(self, obj):
+        return (
+            obj.promotion_status.value
+            if hasattr(obj.promotion_status, "value")
+            else str(obj.promotion_status)
+        )
+    
+    def get_created_at(self, obj):
+        if not obj.created_at:
+            return None
+    
+        return obj.created_at.strftime("%d %b %Y, %I:%M %p")
+    
+    def get_updated_at(self, obj):
+        if not obj.updated_at:
+            return None
+    
+        return obj.updated_at.strftime("%d %b %Y, %I:%M %p")
+
+
+
+
+
 class MyCampaignDetailSerializer(serializers.ModelSerializer):
 
     created_by = CampaignCreatorSerializer(read_only=True)
@@ -414,6 +481,7 @@ class MyCampaignDetailSerializer(serializers.ModelSerializer):
     )
 
     verification = serializers.SerializerMethodField()
+    promotion_services = serializers.SerializerMethodField()
 
     class Meta:
         model = Campaign
@@ -431,7 +499,6 @@ class MyCampaignDetailSerializer(serializers.ModelSerializer):
             "raised_amount",
             "progress_percentage",
             "amount_remaining",
-            "total_charges",
             "amount_withdrawn",
             "beneficiary_type",
             "beneficiary_group_type",
@@ -455,6 +522,7 @@ class MyCampaignDetailSerializer(serializers.ModelSerializer):
             "ngo",
             "documents",
             "verification",
+            "promotion_services",
         ]
 
     def get_campaign_status(self, obj):
@@ -547,10 +615,28 @@ class MyCampaignDetailSerializer(serializers.ModelSerializer):
             return None
 
         return obj.updated_at.strftime("%d %b %Y, %I:%M %p")
+    
+    def get_promotion_services(self, obj):
+        services = obj.services.all().order_by("-created_at")
+
+        return CampaignPromotionServiceSerializer(
+            services,
+            many=True,
+            context=self.context,
+        ).data
 
 
 class CampaignPromotionServiceTypesSerializer(serializers.Serializer):
     service_type = serializers.CharField()
+    
+    
+
+
+
+
+
+
+
 
 
 

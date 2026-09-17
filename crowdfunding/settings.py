@@ -174,6 +174,11 @@ USE_I18N = True
 
 USE_TZ = True
 
+API_BASE_URL = os.getenv(
+    "API_BASE_URL"
+)
+print("api",API_BASE_URL)
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

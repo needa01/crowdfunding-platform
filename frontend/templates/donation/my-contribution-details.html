@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Contribution Details</title>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet"
+    />
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Poppins", sans-serif;
+            background: #f5f7fb;
+            color: #1f2937;
+        }
+
+        .page-container {
+            max-width: 1250px;
+            margin: 0 auto;
+            padding: 30px 24px 60px;
+        }
+
+        /* =====================================================
+           HEADER
+        ===================================================== */
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .back-btn {
+            width: 42px;
+            height: 42px;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 20px;
+            color: #374151;
+            transition: 0.2s;
+        }
+
+        .back-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .page-title {
+            font-size: 25px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .page-subtitle {
+            margin-top: 3px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        /* =====================================================
+           TOP STATUS
+        ===================================================== */
+
+        .status-card {
+            background: #ffffff;
+            border-radius: 14px;
+            border: 1px solid #e5e7eb;
+            padding: 22px 25px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .amount-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 14px 20px;
+            min-width: 150px;
+        }
+
+        .amount-label {
+            font-size: 11px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .amount-value {
+            margin-top: 4px;
+            font-size: 23px;
+            font-weight: 700;
+            color: #166534;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 13px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-default {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        /* =====================================================
+           RECEIPT ACTION
+        ===================================================== */
+
+        .receipt-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 9px;
+            padding: 11px 19px;
+            font-family: "Poppins", sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-primary {
+            background: #111827;
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background: #000000;
+        }
+
+        .btn-secondary {
+            background: #ffffff;
+            color: #111827;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #f9fafb;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* =====================================================
+           GRID
+        ===================================================== */
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 24px;
+        }
+
+        .card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 20px;
+            padding-bottom: 13px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        /* =====================================================
+           DETAIL ROWS
+        ===================================================== */
+
+        .detail-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .detail-row {
+            display: grid;
+            grid-template-columns: 190px 1fr;
+            gap: 20px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+        }
+
+        .detail-value {
+            font-size: 13px;
+            color: #111827;
+            word-break: break-word;
+        }
+
+        .detail-value strong {
+            font-weight: 600;
+        }
+
+        .payment-id {
+            font-family: monospace;
+            font-size: 12px;
+            color: #374151;
+            word-break: break-all;
+        }
+
+        /* =====================================================
+           CAMPAIGN CARD
+        ===================================================== */
+
+        .campaign-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .campaign-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .campaign-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .meta-badge {
+            display: inline-block;
+            padding: 5px 9px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            color: #6b7280;
+            font-size: 11px;
+        }
+
+        /* =====================================================
+           RECEIPT INFO
+        ===================================================== */
+
+        .receipt-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 17px;
+        }
+
+        .receipt-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+
+        .receipt-number {
+            font-size: 13px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .receipt-message {
+            font-size: 12px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        /* =====================================================
+           LOADING
+        ===================================================== */
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 350px;
+        }
+
+        .spinner {
+            width: 35px;
+            height: 35px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #111827;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* =====================================================
+           ERROR
+        ===================================================== */
+
+        .error-box {
+            background: #ffffff;
+            border: 1px solid #fecaca;
+            border-radius: 14px;
+            padding: 30px;
+            text-align: center;
+            color: #991b1b;
+        }
+
+        .error-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 7px;
+        }
+
+        .error-message {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+
+        /* =====================================================
+           TOAST
+        ===================================================== */
+
+        .toast {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            z-index: 9999;
+            min-width: 280px;
+            max-width: 400px;
+            padding: 14px 18px;
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            display: none;
+        }
+
+        .toast.success {
+            background: #166534;
+        }
+
+        .toast.error {
+            background: #991b1b;
+        }
+
+        /* =====================================================
+           RESPONSIVE
+        ===================================================== */
+
+        @media (max-width: 850px) {
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card.full-width {
+                grid-column: auto;
+            }
+
+            .status-card {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .status-left {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .receipt-actions {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .page-container {
+                padding: 20px 15px 40px;
+            }
+
+            .page-header {
+                align-items: flex-start;
+            }
+
+            .page-title {
+                font-size: 21px;
+            }
+
+            .detail-row {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+
+            .status-left {
+                gap: 10px;
+            }
+
+            .amount-box {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="page-container">
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="page-header">
+
+        <div class="header-left">
+
+            <button
+                type="button"
+                class="back-btn"
+                onclick="goBack()"
+            >
+                ←
+            </button>
+
+            <div>
+                <div class="page-title">
+                    Contribution Details
+                </div>
+
+                <div class="page-subtitle">
+                    View your CSR contribution and receipt details
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         MAIN CONTENT
+    ====================================================== -->
+
+    <div id="loadingContainer" class="loading">
+
+        <div class="spinner"></div>
+
+    </div>
+
+
+    <div
+        id="errorContainer"
+        style="display:none;"
+    >
+        <div class="error-box">
+
+            <div class="error-title">
+                Unable to Load Contribution
+            </div>
+
+            <div
+                id="errorMessage"
+                class="error-message"
+            >
+                Something went wrong.
+            </div>
+
+            <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="loadContribution()"
+            >
+                Try Again
+            </button>
+
+        </div>
+    </div>
+
+
+    <div
+        id="contentContainer"
+        style="display:none;"
+    >
+
+        <!-- =================================================
+             STATUS / AMOUNT
+        ================================================== -->
+
+        <div class="status-card">
+
+            <div class="status-left">
+
+                <div class="amount-box">
+
+                    <div class="amount-label">
+                        Contribution Amount
+                    </div>
+
+                    <div
+                        id="contributionAmount"
+                        class="amount-value"
+                    >
+                        ₹0.00
+                    </div>
+
+                </div>
+
+                <div>
+
+                    <div
+                        id="donationNumber"
+                        style="
+                            font-size:13px;
+                            font-weight:600;
+                            color:#111827;
+                            margin-bottom:7px;
+                        "
+                    >
+                        -
+                    </div>
+
+                    <div
+                        id="donationDate"
+                        style="
+                            font-size:12px;
+                            color:#6b7280;
+                            margin-bottom:8px;
+                        "
+                    >
+                        -
+                    </div>
+
+                    <span
+                        id="donationStatus"
+                        class="status-badge status-default"
+                    >
+                        -
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="receipt-actions">
+
+                <button
+                    id="generateReceiptBtn"
+                    type="button"
+                    class="btn btn-primary"
+                    onclick="generateReceipt()"
+                    style="display:none;"
+                >
+                    Generate Receipt
+                </button>
+
+                <button
+                    id="downloadReceiptBtn"
+                    type="button"
+                    class="btn btn-primary"
+                    onclick="downloadReceipt()"
+                    style="display:none;"
+                >
+                    Download Receipt
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             DETAIL GRID
+        ================================================== -->
+
+        <div class="content-grid">
+
+            <!-- =============================================
+                 CSR DETAILS
+            ============================================== -->
+
+            <div class="card">
+
+                <div class="card-title">
+                    CSR Organization Details
+                </div>
+
+                <div
+                    id="csrDetails"
+                    class="detail-list"
+                >
+                </div>
+
+            </div>
+
+
+            <!-- =============================================
+                 CONTRIBUTION DETAILS
+            ============================================== -->
+
+            <div class="card">
+
+                <div class="card-title">
+                    Contribution Details
+                </div>
+
+                <div
+                    id="contributionDetails"
+                    class="detail-list"
+                >
+                </div>
+
+            </div>
+
+
+            <!-- =============================================
+                 CAMPAIGN / PLATFORM
+            ============================================== -->
+
+            <div
+                id="campaignCard"
+                class="card"
+                style="display:none;"
+            >
+
+                <div class="card-title">
+                    Campaign Details
+                </div>
+
+                <div id="campaignDetails">
+                </div>
+
+            </div>
+
+
+            <div
+                id="platformCard"
+                class="card"
+                style="display:none;"
+            >
+
+                <div class="card-title">
+                    Platform Contribution
+                </div>
+
+                <div id="platformDetails">
+                </div>
+
+            </div>
+
+
+            <!-- =============================================
+                 PAYMENT DETAILS
+            ============================================== -->
+
+            <div class="card">
+
+                <div class="card-title">
+                    Payment Details
+                </div>
+
+                <div
+                    id="paymentDetails"
+                    class="detail-list"
+                >
+                </div>
+
+            </div>
+
+
+            <!-- =============================================
+                 RECEIPT DETAILS
+            ============================================== -->
+
+            <div class="card full-width">
+
+                <div class="card-title">
+                    Receipt
+                </div>
+
+                <div
+                    id="receiptDetails"
+                    class="receipt-box"
+                >
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div
+    id="toast"
+    class="toast"
+>
+</div>
+
+
+<script>
+
+    /* =====================================================
+       CONFIGURATION
+    ====================================================== */
+
+    const API_BASE = "/api/donations";
+
+    const DETAIL_API =
+        `${API_BASE}/my-contribution`;
+
+    const GENERATE_RECEIPT_API =
+        `${API_BASE}`;
+
+    const DOWNLOAD_RECEIPT_API =
+        `${API_BASE}`;
+
+
+    /* =====================================================
+       GET DONATION UUID FROM URL
+    ====================================================== */
+
+    function getDonationUuid() {
+
+        const pathParts =
+            window.location.pathname
+                .split("/")
+                .filter(Boolean);
+
+        /*
+         Expected:
+
+         /frontend/my-contribution/<uuid>
+
+         Last element = UUID
+        */
+
+        return pathParts[pathParts.length - 1];
+
+    }
+
+
+    const donationUuid =
+        getDonationUuid();
+
+
+    /* =====================================================
+       AUTH HEADERS
+    ====================================================== */
+
+    function getHeaders() {
+
+        const token =
+            sessionStorage.getItem("access_token");
+
+        const headers = {
+            "Content-Type": "application/json",
+        };
+
+        if (token) {
+
+            headers["Authorization"] =
+                `Bearer ${token}`;
+
+        }
+
+        return headers;
+
+    }
+
+
+    /* =====================================================
+       ESCAPE HTML
+    ====================================================== */
+
+    function escapeHtml(value) {
+
+        if (
+            value === null ||
+            value === undefined
+        ) {
+            return "";
+        }
+
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+    }
+
+
+    /* =====================================================
+       FORMAT CURRENCY
+    ====================================================== */
+
+    function formatAmount(
+        amount,
+        currency = "INR"
+    ) {
+
+        const numericAmount =
+            Number(amount || 0);
+
+        if (currency === "INR") {
+
+            return numericAmount.toLocaleString(
+                "en-IN",
+                {
+                    style: "currency",
+                    currency: "INR",
+                    minimumFractionDigits: 2,
+                }
+            );
+
+        }
+
+        return `${currency} ${numericAmount.toFixed(2)}`;
+
+    }
+
+
+    /* =====================================================
+       SHOW TOAST
+    ====================================================== */
+
+    function showToast(
+        message,
+        type = "success"
+    ) {
+
+        const toast =
+            document.getElementById("toast");
+
+        toast.textContent =
+            message;
+
+        toast.className =
+            `toast ${type}`;
+
+        toast.style.display =
+            "block";
+
+        setTimeout(() => {
+
+            toast.style.display =
+                "none";
+
+        }, 3500);
+
+    }
+
+
+    /* =====================================================
+       STATUS CLASS
+    ====================================================== */
+
+    function getStatusClass(status) {
+
+        const value =
+            String(status || "").toLowerCase();
+
+        if (
+            value === "success" ||
+            value === "successful" ||
+            value === "completed" ||
+            value === "paid" ||
+            value === "captured"
+        ) {
+            return "status-success";
+        }
+
+        if (
+            value === "pending" ||
+            value === "processing"
+        ) {
+            return "status-pending";
+        }
+
+        if (
+            value === "failed" ||
+            value === "cancelled" ||
+            value === "refunded"
+        ) {
+            return "status-failed";
+        }
+
+        return "status-default";
+
+    }
+
+
+    /* =====================================================
+       DETAIL ROW
+    ====================================================== */
+
+    function detailRow(
+        label,
+        value,
+        extraClass = ""
+    ) {
+
+        return `
+            <div class="detail-row">
+
+                <div class="detail-label">
+                    ${escapeHtml(label)}
+                </div>
+
+                <div class="detail-value ${extraClass}">
+                    ${escapeHtml(
+                        value === null ||
+                        value === undefined ||
+                        value === ""
+                            ? "-"
+                            : value
+                    )}
+                </div>
+
+            </div>
+        `;
+
+    }
+
+
+    /* =====================================================
+       LOAD CONTRIBUTION
+    ====================================================== */
+
+    async function loadContribution() {
+
+        if (!donationUuid) {
+
+            showError(
+                "Invalid contribution URL."
+            );
+
+            return;
+
+        }
+
+        document
+            .getElementById("loadingContainer")
+            .style.display = "flex";
+
+        document
+            .getElementById("contentContainer")
+            .style.display = "none";
+
+        document
+            .getElementById("errorContainer")
+            .style.display = "none";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${DETAIL_API}/${encodeURIComponent(donationUuid)}`,
+                    {
+                        method: "GET",
+                        headers: getHeaders(),
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.message ||
+                    "Unable to load contribution."
+                );
+
+            }
+
+
+            renderContribution(
+                result.data
+            );
+
+
+            document
+                .getElementById("loadingContainer")
+                .style.display = "none";
+
+            document
+                .getElementById("contentContainer")
+                .style.display = "block";
+
+        }
+        catch (error) {
+
+            console.error(
+                "Contribution detail error:",
+                error
+            );
+
+            showError(
+                error.message ||
+                "Unable to load contribution."
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       RENDER CONTRIBUTION
+    ====================================================== */
+
+    function renderContribution(data) {
+
+        const contribution =
+            data.contribution || {};
+
+        const csr =
+            data.csr || {};
+
+        const campaign =
+            data.campaign;
+
+        const platform =
+            data.platform;
+
+        const payment =
+            data.payment;
+
+        const receipt =
+            data.receipt;
+
+        const receiptAction =
+            data.receipt_action;
+
+
+        /* ================================================
+           TOP SECTION
+        ================================================= */
+
+        document
+            .getElementById("contributionAmount")
+            .textContent =
+                formatAmount(
+                    contribution.amount,
+                    contribution.currency
+                );
+
+
+        document
+            .getElementById("donationNumber")
+            .textContent =
+                contribution.donation_number || "-";
+
+
+        document
+            .getElementById("donationDate")
+            .textContent =
+                contribution.donated_at || "-";
+
+
+        const statusElement =
+            document.getElementById(
+                "donationStatus"
+            );
+
+        statusElement.textContent =
+            contribution.status || "-";
+
+        statusElement.className =
+            `status-badge ${getStatusClass(
+                contribution.status
+            )}`;
+
+
+        /* ================================================
+           CSR DETAILS
+        ================================================= */
+
+        document
+            .getElementById("csrDetails")
+            .innerHTML =
+
+            detailRow(
+                "CSR Name",
+                csr.csr_name
+            )
+
+            +
+
+            detailRow(
+                "CSR Registration No.",
+                csr.csr_registration_number
+            )
+
+            +
+
+            detailRow(
+                "Contact Person",
+                csr.contact_person_name
+            )
+
+            +
+
+            detailRow(
+                "Designation",
+                csr.contact_person_designation
+            )
+
+            +
+
+            detailRow(
+                "Email",
+                csr.email
+            )
+
+            +
+
+            detailRow(
+                "Mobile",
+                csr.mobile
+            )
+
+            +
+
+            detailRow(
+                "Address",
+                buildAddress(csr)
+            )
+
+            +
+
+            detailRow(
+                "Website",
+                csr.website
+            );
+
+
+        /* ================================================
+           CONTRIBUTION DETAILS
+        ================================================= */
+
+        document
+            .getElementById("contributionDetails")
+            .innerHTML =
+
+            detailRow(
+                "Donation Number",
+                contribution.donation_number
+            )
+
+            +
+
+            detailRow(
+                "Contribution Type",
+                formatDonationType(
+                    contribution.donation_type
+                )
+            )
+
+            +
+
+            detailRow(
+                "Amount",
+                formatAmount(
+                    contribution.amount,
+                    contribution.currency
+                )
+            )
+
+            +
+
+            detailRow(
+                "Currency",
+                contribution.currency
+            )
+
+            +
+
+            detailRow(
+                "Status",
+                contribution.status
+            )
+
+            +
+
+            detailRow(
+                "Contribution Date",
+                contribution.donated_at
+            )
+
+            +
+
+            detailRow(
+                "Message",
+                contribution.message
+            );
+
+
+        /* ================================================
+           CAMPAIGN
+        ================================================= */
+
+        const campaignCard =
+            document.getElementById(
+                "campaignCard"
+            );
+
+        if (campaign) {
+
+            campaignCard.style.display =
+                "block";
+
+            document
+                .getElementById("campaignDetails")
+                .innerHTML = `
+
+                    <div class="campaign-box">
+
+                        <div class="campaign-name">
+                            ${escapeHtml(
+                                campaign.name || "-"
+                            )}
+                        </div>
+
+                        <div class="campaign-meta">
+
+                            <span class="meta-badge">
+                                Beneficiary:
+                                ${escapeHtml(
+                                    campaign.beneficiary || "-"
+                                )}
+                            </span>
+
+                            <span class="meta-badge">
+                                Status:
+                                ${escapeHtml(
+                                    campaign.status || "-"
+                                )}
+                            </span>
+
+                        </div>
+
+                        <div
+                            style="
+                                margin-top:10px;
+                                font-size:11px;
+                                color:#6b7280;
+                                word-break:break-all;
+                            "
+                        >
+                            Slug:
+                            ${escapeHtml(
+                                campaign.slug || "-"
+                            )}
+                        </div>
+
+                    </div>
+                `;
+
+        }
+        else {
+
+            campaignCard.style.display =
+                "none";
+
+        }
+
+
+        /* ================================================
+           PLATFORM
+        ================================================= */
+
+        const platformCard =
+            document.getElementById(
+                "platformCard"
+            );
+
+        if (platform) {
+
+            platformCard.style.display =
+                "block";
+
+            document
+                .getElementById("platformDetails")
+                .innerHTML = `
+
+                    <div class="campaign-box">
+
+                        <div class="campaign-name">
+                            ${escapeHtml(
+                                platform.name || "Platform"
+                            )}
+                        </div>
+
+                        <div
+                            style="
+                                font-size:12px;
+                                line-height:1.7;
+                                color:#6b7280;
+                            "
+                        >
+                            ${escapeHtml(
+                                platform.description || ""
+                            )}
+                        </div>
+
+                    </div>
+                `;
+
+        }
+        else {
+
+            platformCard.style.display =
+                "none";
+
+        }
+
+
+        /* ================================================
+           PAYMENT
+        ================================================= */
+
+        if (payment) {
+
+            document
+                .getElementById("paymentDetails")
+                .innerHTML =
+
+                detailRow(
+                    "Gateway",
+                    payment.gateway
+                )
+
+                +
+
+                detailRow(
+                    "Payment ID",
+                    payment.payment_id,
+                    "payment-id"
+                )
+
+                +
+
+                detailRow(
+                    "Payment Method",
+                    payment.payment_method
+                )
+
+                +
+
+                detailRow(
+                    "Amount",
+                    formatAmount(
+                        payment.amount,
+                        payment.currency
+                    )
+                )
+
+                +
+
+                detailRow(
+                    "Payment Status",
+                    payment.status
+                )
+
+                +
+
+                detailRow(
+                    "Processed At",
+                    payment.processed_at
+                )
+
+                +
+
+                detailRow(
+                    "Refund ID",
+                    payment.refund_id
+                )
+
+                +
+
+                detailRow(
+                    "Refund Amount",
+                    payment.refund_amount
+                        ? formatAmount(
+                            payment.refund_amount,
+                            payment.currency
+                        )
+                        : "-"
+                )
+
+                +
+
+                detailRow(
+                    "Refunded At",
+                    payment.refunded_at
+                );
+
+        }
+        else {
+
+            document
+                .getElementById("paymentDetails")
+                .innerHTML =
+
+                `
+                    <div
+                        style="
+                            padding:15px 0;
+                            font-size:13px;
+                            color:#6b7280;
+                        "
+                    >
+                        No payment transaction found.
+                    </div>
+                `;
+
+        }
+
+
+        /* ================================================
+           RECEIPT
+        ================================================= */
+
+        renderReceipt(
+            receipt,
+            receiptAction
+        );
+
+    }
+
+
+    /* =====================================================
+       BUILD CSR ADDRESS
+    ====================================================== */
+
+    function buildAddress(csr) {
+
+        const parts = [];
+
+        if (csr.address) {
+            parts.push(csr.address);
+        }
+
+        if (csr.city) {
+            parts.push(csr.city);
+        }
+
+        if (csr.state) {
+            parts.push(csr.state);
+        }
+
+        if (csr.country) {
+            parts.push(csr.country);
+        }
+
+        if (csr.pincode) {
+            parts.push(csr.pincode);
+        }
+
+        return parts.length
+            ? parts.join(", ")
+            : "-";
+
+    }
+
+
+    /* =====================================================
+       FORMAT DONATION TYPE
+    ====================================================== */
+
+    function formatDonationType(type) {
+
+        const value =
+            String(type || "")
+                .toUpperCase();
+
+        if (value === "CAMPAIGN") {
+
+            return "Campaign Contribution";
+
+        }
+
+        if (value === "PLATFORM") {
+
+            return "Platform Contribution";
+
+        }
+
+        return type || "-";
+
+    }
+
+
+    /* =====================================================
+       RENDER RECEIPT
+    ====================================================== */
+
+    function renderReceipt(
+        receipt,
+        receiptAction
+    ) {
+
+        const receiptContainer =
+            document.getElementById(
+                "receiptDetails"
+            );
+
+        const generateButton =
+            document.getElementById(
+                "generateReceiptBtn"
+            );
+
+        const downloadButton =
+            document.getElementById(
+                "downloadReceiptBtn"
+            );
+
+
+        generateButton.style.display =
+            "none";
+
+        downloadButton.style.display =
+            "none";
+
+
+        /* ================================================
+           GENERATE
+        ================================================= */
+
+        if (
+            receiptAction === "GENERATE"
+        ) {
+
+            receiptContainer.innerHTML = `
+
+                <div class="receipt-status">
+
+                    <div>
+
+                        <div class="receipt-number">
+                            Receipt not generated
+                        </div>
+
+                        <div class="receipt-message">
+                            Your contribution was successful.
+                            Generate your CSR contribution receipt
+                            to download the PDF.
+                        </div>
+
+                    </div>
+
+                    <span
+                        class="
+                            status-badge
+                            status-pending
+                        "
+                    >
+                        Not Generated
+                    </span>
+
+                </div>
+            `;
+
+            generateButton.style.display =
+                "inline-block";
+
+            return;
+
+        }
+
+
+        /* ================================================
+           DOWNLOAD
+        ================================================= */
+
+        if (
+            receiptAction === "DOWNLOAD"
+        ) {
+
+            receiptContainer.innerHTML = `
+
+                <div class="receipt-status">
+
+                    <div>
+
+                        <div class="receipt-number">
+                            Receipt No:
+                            ${escapeHtml(
+                                receipt?.receipt_number || "-"
+                            )}
+                        </div>
+
+                        <div class="receipt-message">
+
+                            Generated:
+                            ${escapeHtml(
+                                receipt?.generated_at || "-"
+                            )}
+
+                        </div>
+
+                    </div>
+
+                    <span
+                        class="
+                            status-badge
+                            status-success
+                        "
+                    >
+                        Generated
+                    </span>
+
+                </div>
+            `;
+
+            downloadButton.style.display =
+                "inline-block";
+
+            return;
+
+        }
+
+
+        /* ================================================
+           NOT AVAILABLE
+        ================================================= */
+
+        receiptContainer.innerHTML = `
+
+            <div class="receipt-status">
+
+                <div>
+
+                    <div class="receipt-number">
+                        Receipt unavailable
+                    </div>
+
+                    <div class="receipt-message">
+                        A receipt can only be generated
+                        after a successful contribution.
+                    </div>
+
+                </div>
+
+                <span
+                    class="
+                        status-badge
+                        status-default
+                    "
+                >
+                    Not Available
+                </span>
+
+            </div>
+        `;
+
+    }
+
+
+    /* =====================================================
+       GENERATE RECEIPT
+    ====================================================== */
+
+    async function generateReceipt() {
+
+        const button =
+            document.getElementById(
+                "generateReceiptBtn"
+            );
+
+        if (!donationUuid) {
+            return;
+        }
+
+
+        const originalText =
+            button.textContent;
+
+        button.disabled =
+            true;
+
+        button.textContent =
+            "Generating...";
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${GENERATE_RECEIPT_API}/${encodeURIComponent(
+                        donationUuid
+                    )}/generate-receipt/`,
+                    {
+                        method: "POST",
+                        headers: getHeaders(),
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            if (
+                !response.ok ||
+                !result.success
+            ) {
+
+                throw new Error(
+                    result.message ||
+                    "Unable to generate receipt."
+                );
+
+            }
+
+
+            showToast(
+                result.message ||
+                "Receipt generated successfully.",
+                "success"
+            );
+
+
+            /*
+             * Reload the contribution detail.
+             *
+             * This makes the page retrieve the newly
+             * generated receipt and change the button
+             * from Generate to Download.
+             */
+
+            await loadContribution();
+
+        }
+        catch (error) {
+
+            console.error(
+                "Generate receipt error:",
+                error
+            );
+
+            showToast(
+                error.message ||
+                "Unable to generate receipt.",
+                "error"
+            );
+
+            button.disabled =
+                false;
+
+            button.textContent =
+                originalText;
+
+        }
+
+    }
+
+
+    /* =====================================================
+       DOWNLOAD RECEIPT
+    ====================================================== */
+
+    function downloadReceipt() {
+
+        if (!donationUuid) {
+            return;
+        }
+
+        const token =
+            sessionStorage.getItem(
+                "access_token"
+            );
+
+        const url =
+            `${DOWNLOAD_RECEIPT_API}/${encodeURIComponent(
+                donationUuid
+            )}/download-receipt/`;
+
+
+        /*
+         * If your download endpoint accepts
+         * Authorization headers, fetch the file first.
+         */
+
+        fetch(
+            url,
+            {
+                method: "GET",
+                headers: getHeaders(),
+            }
+        )
+        .then(async response => {
+
+            if (!response.ok) {
+
+                let message =
+                    "Unable to download receipt.";
+
+                try {
+
+                    const result =
+                        await response.json();
+
+                    message =
+                        result.message ||
+                        message;
+
+                }
+                catch (e) {
+                    // Response may be a PDF/error page.
+                }
+
+                throw new Error(message);
+
+            }
+
+            return response.blob();
+
+        })
+        .then(blob => {
+
+            const blobUrl =
+                window.URL.createObjectURL(blob);
+
+            const link =
+                document.createElement("a");
+
+            link.href =
+                blobUrl;
+
+            link.download =
+                `CSR-Receipt-${donationUuid}.pdf`;
+
+            document.body.appendChild(link);
+
+            link.click();
+
+            link.remove();
+
+            window.URL.revokeObjectURL(
+                blobUrl
+            );
+
+        })
+        .catch(error => {
+
+            console.error(
+                "Download receipt error:",
+                error
+            );
+
+            showToast(
+                error.message ||
+                "Unable to download receipt.",
+                "error"
+            );
+
+        });
+
+    }
+
+
+    /* =====================================================
+       BACK
+    ====================================================== */
+
+    function goBack() {
+
+        if (
+            document.referrer &&
+            document.referrer.startsWith(
+                window.location.origin
+            )
+        ) {
+
+            window.history.back();
+
+        }
+        else {
+
+            window.location.href =
+                "/frontend/my-contributions/";
+
+        }
+
+    }
+
+
+    /* =====================================================
+       INITIAL LOAD
+    ====================================================== */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            loadContribution();
+
+        }
+    );
+
+</script>
+
+</body>
+</html>

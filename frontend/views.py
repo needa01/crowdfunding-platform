@@ -124,6 +124,8 @@ def create_platform_donation(request):
     
 def my_donations(request):
     return render(request, 'donation/my-donations.html')
+def my_contributions(request):
+    return render(request, 'donation/my-contributions.html')
 
 def get_donation_details(request, donation_uuid):
     return render(
@@ -131,6 +133,14 @@ def get_donation_details(request, donation_uuid):
         "donation/donation-details.html",
         {
             "donation_uuid": donation_uuid,
+        },
+    )
+def get_contribution_details(request, contribution_uuid):
+    return render(
+        request,
+        "donation/my-contribution-details.html",
+        {
+            "contribution_uuid": contribution_uuid,
         },
     )
     
@@ -169,6 +179,9 @@ def admin_campaigns_view(request):
 
 def admin_admins_view(request):
     return render(request, 'platform_admin/management/admins.html')
+
+def admin_promotion_services_view(request):
+    return render(request, 'platform_admin/management/promotion_services.html')
 
 def admin_create_view(request):
     return render(request, 'platform_admin/create-admin.html')
@@ -210,3 +223,9 @@ def admin_campaign_verification_view(request, campaign_slug):
         {"campaign_slug": campaign_slug},
     )
     
+def admin_promotion_service_update_view(request, uuid):
+    return render(
+        request,
+        "platform_admin/verification_page/promotion_service.html",
+        {"uuid":uuid},
+    )

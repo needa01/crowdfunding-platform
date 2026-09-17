@@ -1,10 +1,8 @@
 <!doctype html>
-
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-
     <title>My Campaign</title>
 
     <link
@@ -43,6 +41,42 @@
         margin-bottom: 15px;
       }
 
+      .promotion-card {
+        border: 1px solid #e1e5ea;
+        border-radius: 12px;
+        padding: 18px;
+        margin-bottom: 15px;
+        background: #fff;
+      }
+
+      .promotion-card:last-child {
+        margin-bottom: 0;
+      }
+
+      .promotion-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .promotion-amount {
+        font-size: 20px;
+        font-weight: 700;
+        color: #198754;
+      }
+
+      .promotion-detail {
+        font-size: 14px;
+        color: #6c757d;
+      }
+
+      .promotion-total {
+        border-top: 1px solid #eee;
+        margin-top: 12px;
+        padding-top: 12px;
+        font-weight: 600;
+      }
+
       .timeline {
         border-left: 3px solid #0d6efd;
         padding-left: 20px;
@@ -64,14 +98,24 @@
         border-radius: 50%;
         background: #0d6efd;
       }
+
+      .empty-state {
+        padding: 25px;
+        text-align: center;
+        color: #6c757d;
+        background: #f8f9fa;
+        border-radius: 10px;
+      }
     </style>
   </head>
 
   <body>
     <div class="container py-5">
-
       <!-- Back -->
-      <a href="javascript:history.back()" class="btn btn-outline-secondary mb-4">
+      <a
+        href="javascript:history.back()"
+        class="btn btn-outline-secondary mb-4"
+      >
         ← Back
       </a>
 
@@ -95,10 +139,8 @@
       </div>
 
       <div class="row">
-
         <!-- LEFT COLUMN -->
         <div class="col-lg-8">
-
           <!-- Cover -->
           <div class="card p-3">
             <img id="cover" class="cover" alt="Campaign Cover" />
@@ -168,11 +210,27 @@
             <div id="documents"></div>
           </div>
 
+          <!-- PROMOTION SERVICES -->
+          <div class="card p-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h4 class="mb-1">Promotion Services Availed</h4>
+                <p class="text-muted mb-0">
+                  Promotional services purchased for this campaign
+                </p>
+              </div>
+
+              <span class="badge bg-primary" id="promotionCount"> 0 </span>
+            </div>
+
+            <hr />
+
+            <div id="promotionServices"></div>
+          </div>
         </div>
 
         <!-- RIGHT COLUMN -->
         <div class="col-lg-4">
-
           <!-- Statistics -->
           <div class="card p-4">
             <h4>Statistics</h4>
@@ -198,13 +256,7 @@
             </p>
 
             <div class="progress">
-              <div
-                class="progress-bar"
-                id="progress"
-                style="width: 0%"
-              >
-                0%
-              </div>
+              <div class="progress-bar" id="progress" style="width: 0%">0%</div>
             </div>
           </div>
 
@@ -214,7 +266,6 @@
             <hr />
 
             <table class="table table-bordered align-middle mb-0">
-
               <tr>
                 <th width="35%">Verification Status</th>
                 <td id="verification_Status"></td>
@@ -244,7 +295,6 @@
                 <th>Submitted At</th>
                 <td id="verificationCreatedAt"></td>
               </tr>
-
             </table>
           </div>
 
@@ -254,7 +304,6 @@
             <hr />
 
             <div class="timeline">
-
               <div class="timeline-item">
                 <h6>Campaign Created</h6>
                 <p id="created"></p>
@@ -264,270 +313,202 @@
                 <h6>Last Updated</h6>
                 <p id="updated"></p>
               </div>
-
             </div>
           </div>
 
           <!-- Actions -->
           <div class="card p-4" id="actionsCard">
-
             <h4>Actions</h4>
             <hr />
 
             <!-- Edit Campaign -->
-            <a
-              class="btn btn-primary w-100 mb-2"
-              id="editBtn"
-            >
+            <a class="btn btn-primary w-100 mb-2" id="editBtn">
               Edit Campaign
             </a>
 
             <!-- View Public Page -->
-            <a
-              class="btn btn-warning w-100 mb-2"
-              id="publicBtn"
-            >
+            <a class="btn btn-warning w-100 mb-2" id="publicBtn">
               View Public Page
             </a>
 
             <!-- Promote Campaign -->
-            <a
-              class="btn btn-success w-100 mb-2"
-              id="promoteBtn"
-            >
+            <a class="btn btn-success w-100 mb-2" id="promoteBtn">
               🚀 Promote Campaign
             </a>
-
           </div>
-
         </div>
       </div>
     </div>
 
-
     <script>
+      const slug = new URLSearchParams(window.location.search).get("slug");
 
-      const slug =
-        new URLSearchParams(window.location.search).get("slug");
-
-
-      /*
-       * DOM ELEMENTS
-       */
+      /* =========================================================
+         DOM ELEMENTS
+      ========================================================= */
 
       const title = document.getElementById("title");
-      const campaignStatus =
-        document.getElementById("campaignStatus");
 
-      const verificationStatus =
-        document.getElementById("verificationStatus");
+      const campaignStatus = document.getElementById("campaignStatus");
+
+      const verificationStatus = document.getElementById("verificationStatus");
 
       const cover = document.getElementById("cover");
 
       const raised = document.getElementById("raised");
+
       const raised2 = document.getElementById("raised2");
 
       const goal = document.getElementById("goal");
+
       const goal2 = document.getElementById("goal2");
 
       const category = document.getElementById("category");
+
       const start = document.getElementById("start");
+
       const end = document.getElementById("end");
 
-      const description =
-        document.getElementById("description");
+      const description = document.getElementById("description");
 
-      const beneficiaryName =
-        document.getElementById("beneficiaryName");
+      const beneficiaryName = document.getElementById("beneficiaryName");
 
-      const beneficiaryType =
-        document.getElementById("beneficiaryType");
+      const beneficiaryType = document.getElementById("beneficiaryType");
 
-      const relation =
-        document.getElementById("relation");
+      const relation = document.getElementById("relation");
 
-      const verification_Status =
-        document.getElementById("verification_Status");
+      const verification_Status = document.getElementById(
+        "verification_Status",
+      );
 
-      const verifiedBy =
-        document.getElementById("verifiedBy");
+      const verifiedBy = document.getElementById("verifiedBy");
 
-      const verifiedAt =
-        document.getElementById("verifiedAt");
+      const verifiedAt = document.getElementById("verifiedAt");
 
-      const verificationAiScore =
-        document.getElementById("verificationAiScore");
+      const verificationAiScore = document.getElementById(
+        "verificationAiScore",
+      );
 
-      const verificationRemarks =
-        document.getElementById("verificationRemarks");
+      const verificationRemarks = document.getElementById(
+        "verificationRemarks",
+      );
 
-      const verificationCreatedAt =
-        document.getElementById("verificationCreatedAt");
+      const verificationCreatedAt = document.getElementById(
+        "verificationCreatedAt",
+      );
 
-      const created =
-        document.getElementById("created");
+      const created = document.getElementById("created");
 
-      const updated =
-        document.getElementById("updated");
+      const updated = document.getElementById("updated");
 
-      const donors =
-        document.getElementById("donors");
+      const donors = document.getElementById("donors");
 
-      const progress =
-        document.getElementById("progress");
+      const progress = document.getElementById("progress");
 
-      const documents =
-        document.getElementById("documents");
+      const documents = document.getElementById("documents");
 
-      const actionsCard =
-        document.getElementById("actionsCard");
+      const promotionServices = document.getElementById("promotionServices");
 
-      const editBtn =
-        document.getElementById("editBtn");
+      const promotionCount = document.getElementById("promotionCount");
 
-      const publicBtn =
-        document.getElementById("publicBtn");
+      const actionsCard = document.getElementById("actionsCard");
 
-      const promoteBtn =
-        document.getElementById("promoteBtn");
+      const editBtn = document.getElementById("editBtn");
 
+      const publicBtn = document.getElementById("publicBtn");
 
-      /*
-       * HIDE ACTIONS BY DEFAULT
-       */
+      const promoteBtn = document.getElementById("promoteBtn");
+
+      /* =========================================================
+         HIDE ACTIONS BY DEFAULT
+      ========================================================= */
 
       actionsCard.style.display = "none";
       editBtn.style.display = "none";
       publicBtn.style.display = "none";
       promoteBtn.style.display = "none";
 
-
-      /*
-       * GET CAMPAIGN
-       */
+      /* =========================================================
+         GET CAMPAIGN
+      ========================================================= */
 
       fetch(`/api/campaigns/my-campaign/${slug}`, {
         headers: {
-          Authorization:
-            "Bearer " +
-            sessionStorage.getItem("access_token"),
+          Authorization: "Bearer " + sessionStorage.getItem("access_token"),
         },
       })
-
         .then((r) => r.json())
 
         .then((res) => {
-
           if (!res.success && !res.data) {
-            alert(
-              res.message ||
-              "Unable to load campaign."
-            );
+            alert(res.message || "Unable to load campaign.");
             return;
           }
 
-
           const c = res.data;
 
+          /* =====================================================
+             CAMPAIGN STATUS
+          ===================================================== */
 
-          /*
-           * CAMPAIGN STATUS
-           *
-           * IMPORTANT:
-           * Use the string variable "status"
-           * instead of campaignStatus DOM element.
-           */
+          const status = (c.campaign_status || "").trim().toLowerCase();
 
-          const status =
-            (c.campaign_status || "")
-              .trim()
-              .toLowerCase();
+          const verification = (c.verification?.status || "")
+            .trim()
+            .toLowerCase();
 
+          console.log("Campaign Status:", c.campaign_status);
 
-          const verification =
-            (c.verification?.status || "")
-              .trim()
-              .toLowerCase();
+          console.log("Verification Status:", c.verification?.status);
 
-
-          console.log(
-            "Campaign Status:",
-            c.campaign_status
-          );
-
-          console.log(
-            "Verification Status:",
-            c.verification?.status
-          );
-
-
-          /*
-           * ACTION VISIBILITY
-           */
+          /* =====================================================
+             ACTION VISIBILITY
+          ===================================================== */
 
           if (status === "draft") {
-
             actionsCard.style.display = "block";
 
             editBtn.style.display = "block";
 
-            editBtn.href =
-              `/campaigns/edit?slug=${encodeURIComponent(slug)}`;
+            editBtn.href = `/campaigns/edit?slug=${encodeURIComponent(slug)}`;
           }
 
-
-          /*
-           * ACTIVE CAMPAIGN
-           */
+          /* =====================================================
+             ACTIVE CAMPAIGN
+          ===================================================== */
 
           if (status === "active") {
-
             actionsCard.style.display = "block";
 
             publicBtn.style.display = "block";
 
-            publicBtn.href =
-              `/campaigns/${encodeURIComponent(
-                c.campaign_slug || slug
-              )}`;
+            publicBtn.href = `/campaigns/${encodeURIComponent(
+              c.campaign_slug || slug,
+            )}`;
           }
 
-
-          /*
-           * PROMOTE CAMPAIGN
-           *
-           * Only show promotion after
-           * campaign has been verified.
-           */
+          /* =====================================================
+             PROMOTE CAMPAIGN
+          ===================================================== */
 
           const isVerified =
-            verification === "verified" ||
-            verification === "approved";
+            verification === "verified" || verification === "approved";
 
-
-          if (
-            status === "active" &&
-            isVerified
-          ) {
-
+          if (status === "active" && isVerified) {
             actionsCard.style.display = "block";
 
             promoteBtn.style.display = "block";
 
-            promoteBtn.href =
-              `/frontend/campaign/promote/${encodeURIComponent(
-                c.campaign_slug || slug
-              )}`;
+            promoteBtn.href = `/frontend/campaign/promote/${encodeURIComponent(
+              c.campaign_slug || slug,
+            )}`;
           }
 
+          /* =====================================================
+             CAMPAIGN BASIC INFORMATION
+          ===================================================== */
 
-          /*
-           * CAMPAIGN BASIC INFORMATION
-           */
-
-          title.innerHTML =
-            c.campaign_name || "-";
-
+          title.innerHTML = c.campaign_name || "-";
 
           campaignStatus.innerHTML = `
             <span class="badge bg-primary badge-status">
@@ -535,172 +516,104 @@
             </span>
           `;
 
-
           verificationStatus.innerHTML = `
             <span class="badge bg-warning text-dark badge-status">
               ${c.verification?.status || "-"}
             </span>
           `;
 
+          cover.src = c.cover_photo || "";
 
-          cover.src =
-            c.cover_photo || "";
+          raised.innerHTML = "₹" + (c.raised_amount || 0);
 
+          raised2.innerHTML = "₹" + (c.raised_amount || 0);
 
-          raised.innerHTML =
-            "₹" + (c.raised_amount || 0);
+          goal.innerHTML = "₹" + (c.goal_amount || 0);
 
+          goal2.innerHTML = "₹" + (c.goal_amount || 0);
 
-          raised2.innerHTML =
-            "₹" + (c.raised_amount || 0);
+          category.innerHTML = c.campaign_type || "-";
 
+          start.innerHTML = c.start_date || "-";
 
-          goal.innerHTML =
-            "₹" + (c.goal_amount || 0);
+          end.innerHTML = c.end_date || "-";
 
+          description.innerHTML = c.campaign_desc || "-";
 
-          goal2.innerHTML =
-            "₹" + (c.goal_amount || 0);
+          /* =====================================================
+             BENEFICIARY
+          ===================================================== */
 
+          beneficiaryName.innerHTML = c.beneficiary_name || "-";
 
-          category.innerHTML =
-            c.campaign_type || "-";
+          beneficiaryType.innerHTML = c.beneficiary_type || "-";
 
+          relation.innerHTML = c.beneficiary_relation || "N/A";
 
-          start.innerHTML =
-            c.start_date || "-";
+          /* =====================================================
+             VERIFICATION
+          ===================================================== */
 
+          verification_Status.innerHTML = c.verification?.status || "-";
 
-          end.innerHTML =
-            c.end_date || "-";
+          verifiedBy.innerHTML = c.verification?.verified_by?.name || "-";
 
+          verifiedAt.innerHTML = c.verification?.reviewed_at || "-";
 
-          description.innerHTML =
-            c.campaign_desc || "-";
+          verificationAiScore.innerHTML = c.verification?.ai_score ?? "-";
 
+          verificationRemarks.innerHTML = c.verification?.remarks || "-";
 
-          /*
-           * BENEFICIARY
-           */
+          verificationCreatedAt.innerHTML = c.verification?.created_at || "-";
 
-          beneficiaryName.innerHTML =
-            c.beneficiary_name || "-";
+          /* =====================================================
+             TIMELINE
+          ===================================================== */
 
+          created.innerHTML = c.created_at || "-";
 
-          beneficiaryType.innerHTML =
-            c.beneficiary_type || "-";
+          updated.innerHTML = c.updated_at || "-";
 
+          /* =====================================================
+             DONORS
+          ===================================================== */
 
-          relation.innerHTML =
-            c.beneficiary_relation || "N/A";
+          donors.innerHTML = c.total_donors || 0;
 
+          /* =====================================================
+             PROGRESS
+          ===================================================== */
 
-          /*
-           * VERIFICATION
-           */
+          const goalAmount = Number(c.goal_amount || 0);
 
-          verification_Status.innerHTML =
-            c.verification?.status || "-";
-
-
-          verifiedBy.innerHTML =
-            c.verification?.verified_by.name || "-";
-
-
-          verifiedAt.innerHTML =
-            c.verification?.reviewed_at || "-";
-
-
-          verificationAiScore.innerHTML =
-            c.verification?.ai_score ?? "-";
-
-
-          verificationRemarks.innerHTML =
-            c.verification?.remarks || "-";
-
-
-          verificationCreatedAt.innerHTML =
-            c.verification?.created_at || "-";
-
-
-          /*
-           * TIMELINE
-           */
-
-          created.innerHTML =
-            c.created_at || "-";
-
-
-          updated.innerHTML =
-            c.updated_at || "-";
-
-
-          /*
-           * DONORS
-           */
-
-          donors.innerHTML =
-            c.total_donors || 0;
-
-
-          /*
-           * PROGRESS
-           */
-
-          const goalAmount =
-            Number(c.goal_amount || 0);
-
-          const raisedAmount =
-            Number(c.raised_amount || 0);
-
+          const raisedAmount = Number(c.raised_amount || 0);
 
           let percent = 0;
 
           if (goalAmount > 0) {
-
-            percent =
-              (raisedAmount / goalAmount) * 100;
+            percent = (raisedAmount / goalAmount) * 100;
           }
 
+          percent = Math.min(percent, 100);
 
-          /*
-           * Don't allow progress bar
-           * to exceed 100%.
-           */
+          progress.style.width = percent + "%";
 
-          percent =
-            Math.min(percent, 100);
+          progress.innerHTML = Math.round(percent) + "%";
 
-
-          progress.style.width =
-            percent + "%";
-
-
-          progress.innerHTML =
-            Math.round(percent) + "%";
-
-
-          /*
-           * DOCUMENTS
-           */
+          /* =====================================================
+             DOCUMENTS
+          ===================================================== */
 
           let docs = "";
 
-          if (
-            c.documents &&
-            c.documents.length > 0
-          ) {
-
+          if (c.documents && c.documents.length > 0) {
             c.documents.forEach((doc) => {
-
               docs += `
-
                 <div class="document-card">
 
                   <div class="d-flex justify-content-between">
 
                     <div>
-
                       <h5>
                         ${doc.document_type || "-"}
                       </h5>
@@ -712,11 +625,9 @@
                       <span class="badge bg-secondary">
                         ${doc.verification_status || "-"}
                       </span>
-
                     </div>
 
                     <div>
-
                       <a
                         href="${doc.document_url}"
                         target="_blank"
@@ -724,7 +635,6 @@
                       >
                         View
                       </a>
-
                     </div>
 
                   </div>
@@ -732,35 +642,193 @@
                 </div>
               `;
             });
-
           } else {
-
             docs = `
-              <p class="text-muted">
+              <div class="empty-state">
                 No documents available.
-              </p>
+              </div>
             `;
           }
 
-
           documents.innerHTML = docs;
 
+          // =========================================================
+          // PROMOTION SERVICES
+          // =========================================================
+
+          const promotionServices =
+            document.getElementById("promotionServices");
+          const promotionCount = document.getElementById("promotionCount");
+
+          const services = Array.isArray(c.promotion_services)
+            ? c.promotion_services
+            : [];
+
+          promotionCount.textContent = services.length;
+
+          if (services.length === 0) {
+            promotionServices.innerHTML = `
+    <div class="empty-state">
+      No promotion services have been availed for this campaign.
+    </div>
+  `;
+          } else {
+            let promotionsHTML = "";
+
+            services.forEach((service) => {
+              const amount = Number(service.amount || 0);
+              const fee = Number(service.fee || 0);
+              const tax = Number(service.tax || 0);
+              const total = amount + fee + tax;
+
+              // Support both:
+              // "Google Ads"
+              // and
+              // { value: "GOOGLE_ADS", name: "Google Ads" }
+              const serviceType =
+                typeof service.service_type === "object"
+                  ? service.service_type?.name
+                  : service.service_type;
+
+              const status = service.promotion_status || "-";
+              const statusLower = String(status).toLowerCase();
+
+              let statusClass = "bg-secondary";
+
+              if (statusLower === "active") {
+                statusClass = "bg-success";
+              } else if (statusLower === "pending") {
+                statusClass = "bg-warning text-dark";
+              } else if (statusLower === "submitted") {
+                statusClass = "bg-info text-dark";
+              } else if (statusLower === "completed") {
+                statusClass = "bg-primary";
+              } else if (
+                statusLower === "rejected" ||
+                statusLower === "failed"
+              ) {
+                statusClass = "bg-danger";
+              }
+
+              const notes =
+                service.user_notes && String(service.user_notes).trim()
+                  ? service.user_notes
+                  : "No notes";
+
+              promotionsHTML += `
+      <div class="promotion-card mb-3">
+
+        <div class="d-flex justify-content-between align-items-start mb-3">
+
+          <div>
+            <div class="promotion-title">
+              ${serviceType || "-"}
+            </div>
+
+            <div class="promotion-detail">
+              Promotion Service
+            </div>
+          </div>
+
+          <span class="badge ${statusClass}">
+            ${status}
+          </span>
+
+        </div>
+
+        <div class="row g-3">
+
+          <div class="col-md-6">
+            <div class="promotion-detail">
+              Service Amount
+            </div>
+
+            <div class="promotion-amount">
+              ₹${amount.toFixed(2)}
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="promotion-detail">
+              Currency
+            </div>
+
+            <div class="fw-semibold">
+              ${service.currency || "INR"}
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="promotion-detail">
+              Fee
+            </div>
+
+            <div class="fw-semibold">
+              ₹${fee.toFixed(2)}
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="promotion-detail">
+              Tax
+            </div>
+
+            <div class="fw-semibold">
+              ₹${tax.toFixed(2)}
+            </div>
+          </div>
+
+        </div>
+
+        <div class="promotion-total d-flex justify-content-between mt-3 pt-3 border-top">
+
+          <span>
+            Total Paid
+          </span>
+
+          <span class="text-success fw-bold">
+            ₹${total.toFixed(2)}
+          </span>
+
+        </div>
+
+        <div class="mt-3">
+
+          <div class="promotion-detail">
+            Notes
+          </div>
+
+          <div>
+            ${notes}
+          </div>
+
+        </div>
+
+        <div class="mt-3 pt-2 border-top text-muted small">
+
+          <div>
+            Created: ${service.created_at || "-"}
+          </div>
+
+          <div>
+            Last Updated: ${service.updated_at || "-"}
+          </div>
+
+        </div>
+
+      </div>
+    `;
+            });
+
+            promotionServices.innerHTML = promotionsHTML;
+          }
         })
 
         .catch((error) => {
+          console.error("Campaign loading error:", error);
 
-          console.error(
-            "Campaign loading error:",
-            error
-          );
-
-          alert(
-            "Something went wrong while loading the campaign."
-          );
+          alert("Something went wrong while loading the campaign.");
         });
-
     </script>
-
   </body>
 </html>
-

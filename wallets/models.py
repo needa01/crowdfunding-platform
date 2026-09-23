@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 from django_enum.fields import EnumField
 import uuid
 from crowdfunding.enums import Currency, WalletTransactionType, WalletType
@@ -48,6 +49,14 @@ class Wallet(models.Model):
         verbose_name = "Wallet"
         verbose_name_plural = "Wallets"
         ordering = ["-created_at"]
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=["wallet_type"],
+                condition=Q(wallet_type=WalletType.PLATFORM),
+                name="only_one_platform_wallet",
+            ),
+        ]
 
     def clean(self):
         from django.core.exceptions import ValidationError

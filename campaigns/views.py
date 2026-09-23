@@ -405,7 +405,7 @@ def create_campaign(request):
     # --------------------------------------------------
 
     try:
-        print(campaign_data)
+        print("campaign_data", campaign_data)
         campaign = Campaign.objects.create(**campaign_data)
 
     except ValidationError as e:

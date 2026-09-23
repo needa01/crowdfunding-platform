@@ -30,6 +30,7 @@ from crowdfunding.enums import (
     VerificationType,
     VerificationStatus,
 )
+from django.core.validators import MaxValueValidator
 from crowdfunding.upload_paths import campaign_profile_upload_path
 from organizations.models import NGOProfile
 from django.core.exceptions import ValidationError
@@ -150,6 +151,9 @@ class Campaign(models.Model):
     beneficiary_age = models.PositiveIntegerField(
         null=True,
         blank=True,
+            validators=[
+        MaxValueValidator(122),
+    ],
     )
 
     hospital_name = models.CharField(

@@ -3,7 +3,7 @@ import uuid
 from django.db import models
 from django.conf import settings
 from django_enum.fields import EnumField
-
+from django.core.validators import RegexValidator
 from crowdfunding.enums import KYC_Status, NGOType, Status
 
 class NGOProfile(models.Model):
@@ -49,7 +49,17 @@ class NGOProfile(models.Model):
     city = models.CharField(max_length=100, null=True, blank=True)
     state = models.CharField(max_length=100, null=True, blank=True)
     country = models.CharField(max_length=100, null=True, blank=True)
-    pincode = models.CharField(max_length=10, null=True, blank=True)
+    pincode = models.CharField(
+    max_length=6,
+    null=True,
+    blank=True,
+    validators=[
+        RegexValidator(
+            regex=r"^\d{6}$",
+            message="Pincode must be exactly 6 digits."
+        )
+    ],
+)
     
     website = models.URLField(
         blank=True,
@@ -107,7 +117,17 @@ class CSRProfile(models.Model):
     city = models.CharField(max_length=100, null=True, blank=True)
     state = models.CharField(max_length=100, null=True, blank=True)
     country = models.CharField(max_length=100, null=True, blank=True)
-    pincode = models.CharField(max_length=10, null=True, blank=True)
+    pincode = models.CharField(
+    max_length=6,
+    null=True,
+    blank=True,
+    validators=[
+        RegexValidator(
+            regex=r"^\d{6}$",
+            message="Pincode must be exactly 6 digits."
+        )
+    ],
+)
     
     
     website = models.URLField(

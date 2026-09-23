@@ -14,7 +14,10 @@ from crowdfunding.enums import (
     UserType,
     VerificationStatus,
 )
-from crowdfunding.upload_paths import cancelled_cheque_upload_path, profile_picture_upload_path
+from crowdfunding.upload_paths import (
+    cancelled_cheque_upload_path,
+    profile_picture_upload_path,
+)
 
 
 class CustomUser(AbstractUser):
@@ -38,10 +41,7 @@ class CustomUser(AbstractUser):
 
     # profile_picture = models.URLField(null=True, blank=True)
     profile_picture = models.FileField(
-        upload_to=profile_picture_upload_path,
-        null=True,
-        blank=True,
-        max_length=500
+        upload_to=profile_picture_upload_path, null=True, blank=True, max_length=500
     )
 
     user_type = EnumField(UserType, default=UserType.DONOR)
@@ -75,7 +75,6 @@ class CustomUser(AbstractUser):
         return self.fullname
 
 
-
 class DonorProfile(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
@@ -84,7 +83,17 @@ class DonorProfile(models.Model):
     city = models.CharField(max_length=100, null=True, blank=True)
     state = models.CharField(max_length=100, null=True, blank=True)
     country = models.CharField(max_length=100, null=True, blank=True)
-    pincode = models.CharField(max_length=10, null=True, blank=True)
+    pincode = models.CharField(
+    max_length=6,
+    null=True,
+    blank=True,
+    validators=[
+        RegexValidator(
+            regex=r"^\d{6}$",
+            message="Pincode must be exactly 6 digits."
+        )
+    ],
+)
 
     class Meta:
         db_table = "donor_profile"
@@ -106,8 +115,17 @@ class IndividualProfile(models.Model):
     city = models.CharField(max_length=255)
     state = models.CharField(max_length=100)
     country = models.CharField(max_length=100)
-    pincode = models.CharField(max_length=10)
-
+    pincode = models.CharField(
+    max_length=6,
+    null=True,
+    blank=True,
+    validators=[
+        RegexValidator(
+            regex=r"^\d{6}$",
+            message="Pincode must be exactly 6 digits."
+        )
+    ],
+)
     class Meta:
         db_table = "individual_fundraiser_profile"
         verbose_name = "Indivdual Fundraiser Profile"
@@ -185,10 +203,7 @@ class BankAccount(models.Model):
     branch_name = models.CharField(max_length=255, null=True)
 
     cancelled_cheque = models.FileField(
-        upload_to=cancelled_cheque_upload_path,
-        null=True,
-        blank=True,
-        max_length=500
+        upload_to=cancelled_cheque_upload_path, null=True, blank=True, max_length=500
     )
 
     verification_status = EnumField(

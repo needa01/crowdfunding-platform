@@ -623,10 +623,10 @@
     </div>
 
     <script>
-
+        const API_BASE = "{{API_BASE_URL}}";
       document.addEventListener("DOMContentLoaded", function () {
         const form = document.getElementById("campaignForm");
-        const API_BASE = "{{API_BASE_URL}}";
+
 
         // =====================================================
         // STEPS
@@ -1369,7 +1369,7 @@
           }
         });
       });
-
+      
       document.addEventListener("DOMContentLoaded", async function () {
         // =====================================================
         // USER ACCESS / PROFILE VERIFICATION CHECK

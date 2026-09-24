@@ -1015,17 +1015,15 @@ def verify_profile(request):
     Rules:
 
     1. Every required document must exist.
-    2. Bank account must exist.
-    3. If ANY document OR bank account is Pending
+    3. If ANY document is Pending
        -> Profile cannot be approved/rejected.
 
     4. Approve Profile
        -> All documents Approved
-       -> Bank Approved
 
     5. Reject Profile
        -> Nothing Pending
-       -> At least one document OR bank account Rejected
+       -> At least one document  Rejected
     """
 
     user_id = request.data.get("user_id")
@@ -1157,17 +1155,7 @@ def verify_profile(request):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-    # --------------------------------------------------
-    # Fetch Bank Account
-    # --------------------------------------------------
-
-    try:
-        bank_account = BankAccount.objects.get(user=user)
-    except BankAccount.DoesNotExist:
-        return Response(
-            {"success": False, "message": "Bank account not found."},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+    
 
     # --------------------------------------------------
     # Collect Verification Statuses
@@ -1175,7 +1163,7 @@ def verify_profile(request):
 
     document_statuses = list(documents.values_list("verification_status", flat=True))
 
-    bank_status = bank_account.verification_status
+
 
     # --------------------------------------------------
     # Check Pending Verification
@@ -1185,15 +1173,15 @@ def verify_profile(request):
         status == VerificationStatus.PENDING for status in document_statuses
     )
 
-    has_pending_bank = bank_status == VerificationStatus.PENDING
 
-    if has_pending_document or has_pending_bank:
+
+    if has_pending_document :
         return Response(
             {
                 "success": False,
                 "message": (
                     "Please complete verification of all documents "
-                    "and the bank account before verifying the profile."
+                    "before verifying the profile."
                 ),
             },
             status=status.HTTP_400_BAD_REQUEST,
@@ -1207,17 +1195,17 @@ def verify_profile(request):
         status == VerificationStatus.APPROVED for status in document_statuses
     )
 
-    bank_approved = bank_status == VerificationStatus.APPROVED
+    
 
     has_rejected_document = any(
         status == VerificationStatus.REJECTED for status in document_statuses
     )
 
-    bank_rejected = bank_status == VerificationStatus.REJECTED
+    
 
-    all_verified = all_documents_approved and bank_approved
+    all_verified = all_documents_approved 
 
-    has_any_rejection = has_rejected_document or bank_rejected
+    has_any_rejection = has_rejected_document 
 
     # --------------------------------------------------
     # Approve Profile
@@ -1231,7 +1219,7 @@ def verify_profile(request):
                     "success": False,
                     "message": (
                         "Profile can only be approved when all submitted "
-                        "documents and the bank account are approved."
+                        "documents are approved."
                     ),
                 },
                 status=status.HTTP_400_BAD_REQUEST,

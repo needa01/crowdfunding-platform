@@ -268,34 +268,95 @@
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
       }
       .back-btn {
-  background: transparent;
-  border: 1px solid #d1d5db;
-  color: #374151;
-  padding: 9px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  margin-bottom: 20px;
-  transition: 0.2s ease;
-}
+        background: transparent;
+        border: 1px solid #d1d5db;
+        color: #374151;
+        padding: 9px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-bottom: 20px;
+        transition: 0.2s ease;
+      }
 
-.back-btn:hover {
-  background: #f3f4f6;
-  border-color: #9ca3af;
-}
+      .back-btn:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+      }
+      .bank-status {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 8px 14px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .bank-approved {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .bank-pending {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .bank-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .bank-missing {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .bank-verification-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 15px;
+      }
+
+      .bank-btn {
+        border: none !important;
+        padding: 11px 20px !important;
+        border-radius: 6px !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        transition: 0.2s ease !important;
+        color: #ffffff !important;
+      }
+
+      .bank-approve-btn {
+        background: #16a34a !important;
+      }
+
+      .bank-approve-btn:hover {
+        background: #15803d !important;
+      }
+
+      .bank-reject-btn {
+        background: #dc2626 !important;
+      }
+
+      .bank-reject-btn:hover {
+        background: #b91c1c !important;
+      }
+
+      .bank-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed !important;
+      }
     </style>
   </head>
 
   <body>
     <div class="container">
-      <button
-  type="button"
-  class="back-btn"
-  onclick="history.back()"
->
-  ← Back
-</button>
+      <button type="button" class="back-btn" onclick="history.back()">
+        ← Back
+      </button>
 
       <h1>Campaign Verification</h1>
 
@@ -582,7 +643,105 @@
       <!-- (Shown only for Medical campaigns) -->
       <!-- Continues in Part 3 -->
       <!-- ========================================================= -->
+      <!-- ========================================================= -->
+      <!-- Beneficiary Bank Account -->
+      <!-- ========================================================= -->
 
+      <div class="card">
+        <div class="section-title">Beneficiary Bank Account</div>
+
+        <div
+          id="bank-account-not-found"
+          class="hidden"
+          style="
+            padding: 14px 16px;
+            border-radius: 8px;
+            background: #fee2e2;
+            color: #991b1b;
+            font-weight: 600;
+          "
+        >
+          Beneficiary bank account details are not available for this campaign.
+          The campaign cannot be verified until a bank account is provided.
+        </div>
+
+        <div id="bank-account-details">
+          <div class="grid">
+            <div class="field">
+              <label>Account Holder Name</label>
+              <input id="bank-account-holder" readonly />
+            </div>
+
+            <div class="field">
+              <label>Bank Name</label>
+              <input id="bank-name" readonly />
+            </div>
+
+            <div class="field">
+              <label>Account Number</label>
+              <input id="bank-account-number" readonly />
+            </div>
+
+            <div class="field">
+              <label>IFSC Code</label>
+              <input id="bank-ifsc" readonly />
+            </div>
+
+            <div class="field">
+              <label>Branch Name</label>
+              <input id="bank-branch" readonly />
+            </div>
+
+            <div class="field">
+              <label>Bank Verification Status</label>
+              <input id="bank-verification-status" readonly />
+            </div>
+
+            <div class="field">
+              <label>Reviewed By</label>
+              <input id="bank-reviewed-by" readonly />
+            </div>
+
+            <div class="field">
+              <label>Reviewed At</label>
+              <input id="bank-reviewed-at" readonly />
+            </div>
+          </div>
+
+          <div class="remarks-box">
+            <label>Bank Verification Remarks</label>
+            <textarea
+              id="bank-verification-remarks"
+              placeholder="Enter remarks for bank verification..."
+            ></textarea>
+          </div>
+
+          <div class="bank-verification-actions">
+            <button
+              type="button"
+              id="approve-bank"
+              class="bank-btn bank-approve-btn"
+              onclick="verifyBankAccount('Approved')"
+            >
+              Approve Bank Account
+            </button>
+
+            <button
+              type="button"
+              id="reject-bank"
+              class="bank-btn bank-reject-btn"
+              onclick="verifyBankAccount('Rejected')"
+            >
+              Reject Bank Account
+            </button>
+          </div>
+
+          <div
+            id="bank-verification-message"
+            style="margin-top: 15px; font-weight: 600"
+          ></div>
+        </div>
+      </div>
       <!-- ========================================================= -->
       <!-- Medical Details -->
       <!-- ========================================================= -->
@@ -628,8 +787,6 @@
             <label>Raised Amount</label>
             <input id="financial-raised" readonly />
           </div>
-
-
 
           <div class="field">
             <label>Amount Withdrawn</label>
@@ -914,6 +1071,78 @@
       }
 
       // ==========================================================
+      // Beneficiary Bank Account
+      // ==========================================================
+
+      function populateBankAccount(data) {
+        const bank = data.bank_account;
+
+        const details = document.getElementById("bank-account-details");
+        const notFound = document.getElementById("bank-account-not-found");
+
+        if (!bank) {
+          details.classList.add("hidden");
+          notFound.classList.remove("hidden");
+
+          setValue("bank-account-holder", "");
+          setValue("bank-name", "");
+          setValue("bank-account-number", "");
+          setValue("bank-ifsc", "");
+          setValue("bank-branch", "");
+          setValue("bank-verification-status", "");
+          setValue("bank-reviewed-by", "");
+          setValue("bank-reviewed-at", "");
+
+          document.getElementById("bank-verification-remarks").value = "";
+
+          return;
+        }
+
+        details.classList.remove("hidden");
+        notFound.classList.add("hidden");
+
+        setValue("bank-account-holder", bank.account_holder_name);
+
+        setValue("bank-name", bank.bank_name);
+
+        setValue("bank-account-number", bank.account_number);
+
+        setValue("bank-ifsc", bank.ifsc_code);
+
+        setValue("bank-branch", bank.branch_name);
+
+        setValue("bank-verification-status", bank.verification_status);
+
+        setValue("bank-reviewed-by", bank.reviewed_by);
+
+        setValue("bank-reviewed-at", formatDate(bank.reviewed_at));
+
+        document.getElementById("bank-verification-remarks").value =
+          bank.verification_remarks || "";
+
+        // -------------------------------------------------------
+        // Visual bank verification status
+        // -------------------------------------------------------
+
+        const status = (bank.verification_status || "Pending").toLowerCase();
+
+        const message = document.getElementById("bank-verification-message");
+
+        if (status === "approved" || status === "verified") {
+          message.textContent = "✓ Beneficiary bank account has been verified.";
+          message.style.color = "#16a34a";
+        } else if (status === "rejected") {
+          message.textContent =
+            "✕ Beneficiary bank account verification was rejected.";
+          message.style.color = "#dc2626";
+        } else {
+          message.textContent =
+            "⚠ Beneficiary bank account verification is pending.";
+          message.style.color = "#d97706";
+        }
+      }
+
+      // ==========================================================
       // Medical Details
       // ==========================================================
 
@@ -977,10 +1206,7 @@
               </div>
 
               <div class="grid">
-                  <div class="field">
-                      <label>Document Holder</label>
-                      <input readonly value="${doc.document_holder_name || ""}">
-                  </div>
+                  
 
                   <div class="field">
                       <label>Document Number</label>
@@ -1060,7 +1286,63 @@
           );
         });
       }
+      // =========================================================
+      // VERIFY CAMPAIGN BENEFICIARY BANK ACCOUNT
+      // =========================================================
 
+      async function verifyBankAccount(action) {
+        const remarks = document
+          .getElementById("bank-verification-remarks")
+          .value.trim();
+
+        const approveBtn = document.getElementById("approve-bank");
+        const rejectBtn = document.getElementById("reject-bank");
+
+        console.log("remarks:", remarks);
+        console.log("action:", action);
+        console.log("campaign_slug:", campaign_slug);
+
+        approveBtn.disabled = true;
+        rejectBtn.disabled = true;
+
+        try {
+          const response = await fetch(
+            `${API_BASE}/verification/campaign/bankaccount/verify`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                campaign_slug: campaign_slug,
+                verification_status: action,
+                verification_remarks: remarks,
+              }),
+            },
+          );
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            alert(result.message || "Unable to verify bank account.");
+            return;
+          }
+
+          alert(
+            result.message || "Bank account verification updated successfully.",
+          );
+
+          await loadCampaign();
+        } catch (err) {
+          console.error("BANK VERIFICATION ERROR:", err);
+
+          alert("Something went wrong while verifying the bank account.");
+        } finally {
+          approveBtn.disabled = false;
+          rejectBtn.disabled = false;
+        }
+      }
       // ==========================================
       // Verify Document
       // ==========================================
@@ -1123,7 +1405,6 @@
 
         setValue("reviewed-at", formatDate(v.reviewed_at));
         setValue("submitted-at", formatDate(v.created_at));
-
 
         document.getElementById("verification-remarks").value = v.remarks || "";
       }
@@ -1195,6 +1476,8 @@
           populateCampaign(data);
 
           populateBeneficiary(data);
+
+          populateBankAccount(data);
 
           populateMedical(data);
 

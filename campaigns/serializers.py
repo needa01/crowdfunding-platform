@@ -157,7 +157,6 @@ class CampaignDocumentSerializer(serializers.ModelSerializer):
         model = Document
         fields = [
             "document_type",
-            "document_holder_name",
             "document_number",
             "document_url",
             "verification_status",

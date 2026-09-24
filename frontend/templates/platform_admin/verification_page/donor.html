@@ -113,12 +113,7 @@
         background: #dc2626;
       }
 
-      .bank-layout {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 25px;
-        align-items: start;
-      }
+
 
       .doc-card {
         border: 1px solid #e5e7eb;
@@ -208,9 +203,7 @@
           grid-template-columns: 1fr;
         }
 
-        .bank-layout {
-          grid-template-columns: 1fr;
-        }
+
       }
 
       .documents-grid {
@@ -361,97 +354,7 @@
         </div>
       </div>
 
-      <!-- ================= Bank ================= -->
 
-      <div class="card">
-        <div class="section-title">Bank Details</div>
-
-        <div class="bank-layout">
-          <!-- Left -->
-
-          <div>
-            <div class="grid">
-              <div class="field">
-                <label>Account Holder</label>
-                <input id="account-holder" readonly />
-              </div>
-
-              <div class="field">
-                <label>Bank Name</label>
-                <input id="bank-name" readonly />
-              </div>
-
-              <div class="field">
-                <label>Account Number</label>
-                <input id="account-number" readonly />
-              </div>
-
-              <div class="field">
-                <label>IFSC Code</label>
-                <input id="ifsc-code" readonly />
-              </div>
-
-              <div class="field">
-                <label>Branch</label>
-                <input id="branch-name" readonly />
-              </div>
-
-              <div class="field">
-                <label>Account Type</label>
-                <input id="account-type" readonly />
-              </div>
-            </div>
-          </div>
-
-          <!-- Right -->
-
-          <div>
-            <div class="doc-card">
-              <div class="doc-header">
-                <h3>Cancelled Cheque</h3>
-
-                <span id="cheque-status" class="status pending"> Pending </span>
-              </div>
-
-              <div class="field">
-                <label>Uploaded Document</label>
-
-                <a id="cheque-link" href="#" target="_blank" class="view-link">
-                  👁 View Document
-                </a>
-              </div>
-
-              <br />
-
-              <div class="remarks-box">
-                <label>Verification Remarks</label>
-
-                <textarea id="cheque-remarks"></textarea>
-              </div>
-
-              <div class="btn-group">
-                <button
-                  id="accept-cheque"
-                  class="accept-btn"
-                  onclick="verifyBankAccount('Approved')"
-                >
-                  Accept
-                </button>
-
-                <button
-                  id="reject-cheque"
-                  class="reject-btn"
-                  onclick="verifyBankAccount('Rejected')"
-                >
-                  Reject
-                </button>
-              </div>
-
-              <div id="cheque-message" class="doc-message"></div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- ================= Documents Section Starts Here ================= -->
 
@@ -538,7 +441,6 @@
 
       const pathParts = window.location.pathname.split("/");
       const donorUUID = pathParts[pathParts.length - 1];
-      let bankAccountUUID = null;
       console.log("donoruuid", donorUUID);
       // -------------------------------
       // Helpers
@@ -615,100 +517,9 @@
         setValue("pincode", data.profile?.pincode);
       }
 
-      // -------------------------------
-      // Bank
-      // -------------------------------
+      
 
-      function populateBank(data) {
-        if (!data.bank) return;
-
-        bankAccountUUID = data.bank.uuid;
-
-        setValue("account-holder", data.bank.account_holder_name);
-        setValue("bank-name", data.bank.bank_name);
-        setValue("account-number", data.bank.account_number);
-        setValue("ifsc-code", data.bank.ifsc_code);
-        setValue("branch-name", data.bank.branch_name);
-      }
-
-      //Verify Bank Account
-      async function verifyBankAccount(action) {
-        const remarks = document.getElementById("cheque-remarks").value.trim();
-
-        const acceptBtn = document.getElementById("accept-cheque");
-        const rejectBtn = document.getElementById("reject-cheque");
-        console.log("rem", remarks);
-        console.log("action", action);
-
-        acceptBtn.disabled = true;
-        rejectBtn.disabled = true;
-
-        try {
-          const response = await fetch(
-            `${API_BASE}/verification/bankaccount/verify`,
-            {
-              method: "POST", // change to POST if your API uses POST
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                user_id: donorUUID,
-                verification_status: action,
-                verification_remarks: remarks,
-              }),
-            },
-          );
-
-          const result = await response.json();
-
-          if (!response.ok) {
-            showMessage(
-              "bank",
-              result.message || "Unable to verify document.",
-              "error",
-            );
-
-            return;
-          }
-
-          showMessage(
-            "bank",
-            result.message || "Bank account verified successfully.",
-            "success",
-          );
-
-          setTimeout(loadDonor, 1000);
-        } catch (err) {
-          console.error(err);
-
-          showMessage("bank", "Something went wrong.", "error");
-        } finally {
-          acceptBtn.disabled = false;
-          rejectBtn.disabled = false;
-        }
-      }
-
-      // -------------------------------------
-      // Cancelled Cheque
-      // -------------------------------------
-
-      function renderCancelledCheque(bank) {
-        if (!bank) return;
-
-        const cheque = bank.cancelled_cheque;
-        if (!cheque) return;
-
-        document.getElementById("cheque-link").href = cheque || "#";
-
-        updateStatusBadge(
-          document.getElementById("cheque-status"),
-          bank.verification_status,
-        );
-
-        document.getElementById("cheque-remarks").value =
-          bank.verification_remarks || "";
-      }
+     
 
       // -------------------------------------
       // Documents
@@ -739,10 +550,7 @@
             </div>
 
             <div class="grid">
-              <div class="field">
-                <label>Name As In Document</label>
-                <input readonly value="${doc.document_holder_name || ""}">
-              </div>
+              
 
               <div class="field">
                 <label>Document Number</label>
@@ -890,17 +698,14 @@
       // ------------------------------------
 
       function canApproveProfile(data) {
-        if (!data.bank) return false;
 
-        const chequeApproved =
-          data.bank.cancelled_cheque &&
-          data.bank.cancelled_cheque.verification_status === "Approved";
+
 
         const documentsApproved = data.documents.every(
           (doc) => doc.verification_status === "Approved",
         );
 
-        return chequeApproved && documentsApproved;
+        return documentsApproved;
       }
 
       // ------------------------------------
@@ -1016,9 +821,7 @@
 
           populateApplicant(data);
 
-          populateBank(data);
 
-          renderCancelledCheque(data.bank);
 
           renderDocuments(data.documents);
 
@@ -1034,11 +837,9 @@
       function showMessage(id, message, type = "success") {
         let container;
 
-        if (id === "bank") {
-          container = document.getElementById("cheque-message");
-        } else {
-          container = document.getElementById(`message-${id}`);
-        }
+        
+        container = document.getElementById(`message-${id}`);
+        
 
         if (!container) {
           console.log("Container not found:", id);

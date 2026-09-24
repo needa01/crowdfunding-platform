@@ -845,9 +845,7 @@
             }
 
             // Populate holder name
-            if (holder) {
-              holder.value = doc.document_holder_name || "";
-            }
+            
 
             // Populate document number
             if (number) {
@@ -930,13 +928,7 @@
           return;
         }
 
-        // -------------------------------------------------
-        // Holder name is mandatory except for TAN
-        // -------------------------------------------------
-        if (documentTypeId !== "TAN_CERTIFICATE" && documentTypeId !== "12A_CERTIFICATE" && documentTypeId !== "80G_CERTIFICATE" && document && !holderInput.value.trim()) {
-          showMessage(messageId, "Please enter document holder name.", "error");
-          return;
-        }
+
 
         // -------------------------------------------------
         // File is always required when uploading
@@ -962,9 +954,6 @@
         fd.append("document_type", documentTypeValue);
 
         // Holder name optional for TAN
-        if (holderInput.value.trim()) {
-          fd.append("document_holder_name", holderInput.value.trim());
-        }
 
         // Document number optional
         if (numberInput.value.trim()) {

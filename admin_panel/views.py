@@ -9,7 +9,7 @@ from django.db.models import Q
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from accounts.models import CustomUser, DonorProfile, IndividualProfile
+from accounts.models import BankAccount, CustomUser, DonorProfile, IndividualProfile
 from admin_panel.serializers import CreateAdminSerializer, DashboardSerializer
 from campaigns.models import Campaign, CampaignPromotionService
 from crowdfunding.enums import (
@@ -654,7 +654,6 @@ def get_donor_for_verification(request, user_id):
                 {
                     "uuid": str(document.uuid),
                     "document_type": document.document_type,
-                    "document_holder_name": document.document_holder_name,
                     "document_number": document.document_number,
                     "file": (
                         request.build_absolute_uri(document.file_url.url)
@@ -843,7 +842,6 @@ def get_fundraiser_for_verification(request, user_id):
                 {
                     "uuid": str(document.uuid),
                     "document_type": document.document_type,
-                    "document_holder_name": document.document_holder_name,
                     "document_number": document.document_number,
                     "file": (
                         request.build_absolute_uri(document.file_url.url)
@@ -1045,7 +1043,6 @@ def get_ngo_for_verification(request, user_id):
                 {
                     "uuid": str(document.uuid),
                     "document_type": document.document_type,
-                    "document_holder_name": document.document_holder_name,
                     "document_number": document.document_number,
                     "file": (
                         request.build_absolute_uri(document.file_url.url)
@@ -1248,7 +1245,6 @@ def get_csr_for_verification(request, user_id):
                 {
                     "uuid": str(document.uuid),
                     "document_type": document.document_type,
-                    "document_holder_name": document.document_holder_name,
                     "document_number": document.document_number,
                     "file": (
                         request.build_absolute_uri(document.file_url.url)
@@ -1333,6 +1329,10 @@ def get_campaign_for_verification(request, campaign_slug):
             status=status.HTTP_404_NOT_FOUND,
         )
 
+    # =========================================================
+    # VERIFICATION REQUEST
+    # =========================================================
+
     verification = (
         EntityVerificationRequest.objects.select_related("reviewed_by")
         .filter(campaign=campaign)
@@ -1340,24 +1340,59 @@ def get_campaign_for_verification(request, campaign_slug):
         .first()
     )
 
+    # =========================================================
+    # CAMPAIGN DOCUMENTS
+    # =========================================================
+
     documents = (
-        Document.objects.select_related(
-            "reviewed_by",
-        )
+        Document.objects.select_related("reviewed_by")
         .filter(
             campaign=campaign,
             purpose=DocumentPurpose.CAMPAIGN_VERIFICATION,
         )
         .order_by("created_at")
     )
-    profile = getattr(campaign.created_by, "individual_profile", None)
-    ngo_profile = getattr(campaign.created_by, "ngo_profile", None)
+
+    # =========================================================
+    # CAMPAIGN BANK ACCOUNT
+    # =========================================================
+
+    bank_account = (
+        BankAccount.objects
+        .filter(campaign=campaign)
+        .first()
+    )
+
+    # =========================================================
+    # PROFILES
+    # =========================================================
+
+    profile = getattr(
+        campaign.created_by,
+        "individual_profile",
+        None,
+    )
+
+    ngo_profile = getattr(
+        campaign.created_by,
+        "ngo_profile",
+        None,
+    )
+
+    # =========================================================
+    # RESPONSE
+    # =========================================================
 
     response = {
         "success": True,
         "message": "Campaign details fetched successfully.",
+
         "data": {
-            # ---------------- Campaign ----------------
+
+            # =====================================================
+            # CAMPAIGN
+            # =====================================================
+
             "campaign": {
                 "campaign_slug": campaign.campaign_slug,
                 "campaign_name": campaign.campaign_name,
@@ -1367,33 +1402,48 @@ def get_campaign_for_verification(request, campaign_slug):
                 "goal_amount": campaign.goal_amount,
                 "raised_amount": campaign.raised_amount,
                 "campaign_status": campaign.campaign_status.value,
+
                 "cover_photo": (
-                    request.build_absolute_uri(campaign.cover_photo.url)
+                    request.build_absolute_uri(
+                        campaign.cover_photo.url
+                    )
                     if campaign.cover_photo
                     else None
                 ),
+
                 "total_donors": campaign.total_donors,
                 "total_views": campaign.total_views,
                 "start_date": campaign.start_date,
                 "end_date": campaign.end_date,
+
                 "created_at": (
-                    campaign.created_at.strftime("%d %b %Y, %I:%M %p")
+                    campaign.created_at.strftime(
+                        "%d %b %Y, %I:%M %p"
+                    )
                     if campaign.created_at
                     else None
                 ),
             },
-            # ---------------- Creator ----------------
+
+            # =====================================================
+            # CREATOR
+            # =====================================================
+
             "creator": {
                 "uuid": str(campaign.created_by.uuid),
                 "fullname": campaign.created_by.fullname,
                 "email": campaign.created_by.email,
                 "mobile": campaign.created_by.mobile,
                 "user_type": campaign.created_by.user_type.value,
+
                 "profile_picture": (
-                    request.build_absolute_uri(campaign.created_by.profile_picture.url)
+                    request.build_absolute_uri(
+                        campaign.created_by.profile_picture.url
+                    )
                     if campaign.created_by.profile_picture
                     else None
                 ),
+
                 # Individual Profile
                 "individual_profile": (
                     {
@@ -1407,6 +1457,7 @@ def get_campaign_for_verification(request, campaign_slug):
                     if profile
                     else None
                 ),
+
                 # NGO Profile
                 "ngo_profile": (
                     {
@@ -1414,8 +1465,12 @@ def get_campaign_for_verification(request, campaign_slug):
                         "ngo_name": ngo_profile.ngo_name,
                         "ngo_type": ngo_profile.ngo_type.value,
                         "registration_number": ngo_profile.reg_num,
-                        "contact_person_name": ngo_profile.contact_person_name,
-                        "contact_person_designation": ngo_profile.contact_person_designation,
+                        "contact_person_name": (
+                            ngo_profile.contact_person_name
+                        ),
+                        "contact_person_designation": (
+                            ngo_profile.contact_person_designation
+                        ),
                         "address": ngo_profile.address,
                         "city": ngo_profile.city,
                         "state": ngo_profile.state,
@@ -1427,22 +1482,34 @@ def get_campaign_for_verification(request, campaign_slug):
                     else None
                 ),
             },
+
+            # =====================================================
+            # NGO
+            # =====================================================
+
             "ngo": (
                 {
                     "uuid": str(campaign.ngo.uuid),
                     "ngo_name": campaign.ngo.ngo_name,
                     "ngo_type": campaign.ngo.ngo_type.value,
                     "registration_number": campaign.ngo.reg_num,
-                    "contact_person_name": campaign.ngo.contact_person_name,
-                    "contact_person_designation": campaign.ngo.contact_person_designation,
+                    "contact_person_name": (
+                        campaign.ngo.contact_person_name
+                    ),
+                    "contact_person_designation": (
+                        campaign.ngo.contact_person_designation
+                    ),
                     "address": campaign.ngo.address,
                     "city": campaign.ngo.city,
                     "state": campaign.ngo.state,
                     "country": campaign.ngo.country,
                     "pincode": campaign.ngo.pincode,
                     "website": campaign.ngo.website,
+
                     "created_at": (
-                        campaign.ngo.created_at.strftime("%d %b %Y, %I:%M %p")
+                        campaign.ngo.created_at.strftime(
+                            "%d %b %Y, %I:%M %p"
+                        )
                         if campaign.ngo.created_at
                         else None
                     ),
@@ -1450,87 +1517,247 @@ def get_campaign_for_verification(request, campaign_slug):
                 if campaign.ngo
                 else None
             ),
+
+            # =====================================================
+            # MEDICAL DETAILS
+            # =====================================================
+
             "medical_details": (
-                (
-                    {
-                        "hospital_name": campaign.hospital_name,
-                        "hospital_location": campaign.hospital_location,
-                        "ailment": campaign.ailment,
-                    }
-                )
+                {
+                    "hospital_name": campaign.hospital_name,
+                    "hospital_location": campaign.hospital_location,
+                    "ailment": campaign.ailment,
+                }
                 if campaign.cause == CampaignCause.MEDICAL
                 else None
             ),
-            # ---------------- Beneficiary ----------------
+
+            # =====================================================
+            # BENEFICIARY
+            # =====================================================
+
             "beneficiary": {
-                "beneficiary_type": campaign.beneficiary_type.value,
-                "beneficiary_group_type": campaign.beneficiary_group_type.value,
+                "beneficiary_type": (
+                    campaign.beneficiary_type.value
+                    if campaign.beneficiary_type
+                    else None
+                ),
+
+                "beneficiary_group_type": (
+                    campaign.beneficiary_group_type.value
+                    if campaign.beneficiary_group_type
+                    else None
+                ),
+
                 "beneficiary_name": campaign.beneficiary_name,
+
                 "beneficiary_relation": (
                     campaign.beneficiary_relation.value
                     if campaign.beneficiary_relation
                     else None
                 ),
+
                 "beneficiary_mobile": campaign.beneficiary_mobile,
                 "beneficiary_location": campaign.beneficiary_location,
-                "beneficiary_member_count": campaign.beneficiary_member_count,
+                "beneficiary_member_count": (
+                    campaign.beneficiary_member_count
+                ),
                 "beneficiary_age": campaign.beneficiary_age,
             },
-            # ---------------- Documents ----------------
+
+            # =====================================================
+            # BANK ACCOUNT
+            # =====================================================
+
+            "bank_account": (
+                {
+                    "uuid": str(bank_account.uuid),
+
+                    "account_holder_name": (
+                        bank_account.account_holder_name
+                    ),
+
+                    "account_number": (
+                        bank_account.account_number
+                    ),
+
+                    "ifsc_code": bank_account.ifsc_code,
+
+                    "bank_name": bank_account.bank_name,
+
+                    "branch_name": bank_account.branch_name,
+
+                    # If your BankAccount model has these fields,
+                    # keep them. Otherwise remove them.
+                    "verification_status": (
+                        bank_account.verification_status.value
+                        if getattr(
+                            bank_account,
+                            "verification_status",
+                            None,
+                        )
+                        else None
+                    ),
+
+                    "verification_remarks": getattr(
+                        bank_account,
+                        "verification_remarks",
+                        None,
+                    ),
+
+                    "reviewed_by": (
+                        bank_account.reviewed_by.fullname
+                        if getattr(
+                            bank_account,
+                            "reviewed_by",
+                            None,
+                        )
+                        else None
+                    ),
+
+                    "reviewed_at": (
+                        bank_account.reviewed_at.strftime(
+                            "%d %b %Y, %I:%M %p"
+                        )
+                        if getattr(
+                            bank_account,
+                            "reviewed_at",
+                            None,
+                        )
+                        else None
+                    ),
+
+                    "created_at": (
+                        bank_account.created_at.strftime(
+                            "%d %b %Y, %I:%M %p"
+                        )
+                        if bank_account.created_at
+                        else None
+                    ),
+                }
+                if bank_account
+                else None
+            ),
+
+            # =====================================================
+            # DOCUMENTS
+            # =====================================================
+
             "documents": [
                 {
                     "uuid": str(document.uuid),
+
                     "document_type": document.document_type,
-                    "document_holder_name": document.document_holder_name,
+
+                    
+
                     "document_number": document.document_number,
+
                     "file": (
-                        request.build_absolute_uri(document.file_url.url)
+                        request.build_absolute_uri(
+                            document.file_url.url
+                        )
                         if document.file_url
                         else None
                     ),
-                    "verification_status": document.verification_status.value,
-                    "verification_remarks": document.verification_remarks,
-                    "reviewed_by": (
-                        document.reviewed_by.fullname if document.reviewed_by else None
+
+                    "verification_status": (
+                        document.verification_status.value
                     ),
+
+                    "verification_remarks": (
+                        document.verification_remarks
+                    ),
+
+                    "reviewed_by": (
+                        document.reviewed_by.fullname
+                        if document.reviewed_by
+                        else None
+                    ),
+
                     "reviewed_at": (
-                        document.reviewed_at.strftime("%d %b %Y, %I:%M %p")
+                        document.reviewed_at.strftime(
+                            "%d %b %Y, %I:%M %p"
+                        )
                         if document.reviewed_at
                         else None
                     ),
+
                     "created_at": (
-                        document.created_at.strftime("%d %b %Y, %I:%M %p")
+                        document.created_at.strftime(
+                            "%d %b %Y, %I:%M %p"
+                        )
                         if document.created_at
                         else None
                     ),
                 }
                 for document in documents
             ],
-            # ---------------- Verification Request ----------------
+
+            # =====================================================
+            # VERIFICATION REQUEST
+            # =====================================================
+
             "verification_request": {
-                "uuid": str(verification.uuid) if verification else None,
-                "verification_type": (
-                    verification.verification_type.value if verification else None
+                "uuid": (
+                    str(verification.uuid)
+                    if verification
+                    else None
                 ),
-                "status": (verification.status.value if verification else None),
-                "ai_score": (verification.ai_result if verification else None),
-                "remarks": (verification.remarks if verification else None),
+
+                "verification_type": (
+                    verification.verification_type.value
+                    if verification
+                    else None
+                ),
+
+                "status": (
+                    verification.status.value
+                    if verification
+                    else None
+                ),
+
+                "ai_score": (
+                    verification.ai_result
+                    if verification
+                    else None
+                ),
+
+                "remarks": (
+                    verification.remarks
+                    if verification
+                    else None
+                ),
+
                 "reviewed_by": (
                     verification.reviewed_by.fullname
-                    if verification and verification.reviewed_by
+                    if verification
+                    and verification.reviewed_by
                     else None
                 ),
+
                 "reviewed_at": (
-                    verification.reviewed_at.strftime("%d %b %Y, %I:%M %p")
-                    if verification and verification.reviewed_at
+                    verification.reviewed_at.strftime(
+                        "%d %b %Y, %I:%M %p"
+                    )
+                    if verification
+                    and verification.reviewed_at
                     else None
                 ),
+
                 "created_at": (
-                    verification.created_at.strftime("%d %b %Y, %I:%M %p")
-                    if verification and verification.created_at
+                    verification.created_at.strftime(
+                        "%d %b %Y, %I:%M %p"
+                    )
+                    if verification
                     else None
                 ),
             },
+
+            # =====================================================
+            # FINANCIALS
+            # =====================================================
+
             "financials": {
                 "goal_amount": campaign.goal_amount,
                 "raised_amount": campaign.raised_amount,
@@ -1543,8 +1770,6 @@ def get_campaign_for_verification(request, campaign_slug):
         response,
         status=status.HTTP_200_OK,
     )
-
-
 
 
 

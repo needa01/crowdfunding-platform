@@ -47,9 +47,8 @@ class Document(models.Model):
         max_length=255,
     )
 
-    document_holder_name = models.CharField(max_length=255)
 
-    document_number = models.CharField(max_length=100)
+    document_number = models.CharField(max_length=100, null=True, blank=True)
 
     file_url = models.FileField(upload_to=document_upload_path, max_length=500)
 
@@ -111,8 +110,22 @@ class Document(models.Model):
             raise ValidationError(
                 {"campaign": "Campaign verification requires a campaign."}
             )
+            
+        
         if not self.document_number:
-            raise ValidationError({"document_number": "Document number is required."})
+
+            if self.user:
+                raise ValidationError(
+                    {
+                        "document_number": (
+                            "Document number is required."
+                        )
+                    }
+                )
+
+            # Campaign document without document number is allowed.
+            self.document_number = None
+            return
         number = self.document_number.strip().upper()
         
 
@@ -164,7 +177,7 @@ class Document(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.document_type} - {self.document_holder_name}"
+        return f"{self.document_type}"
 
 
 

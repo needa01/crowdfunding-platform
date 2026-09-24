@@ -140,7 +140,6 @@ class VerificationEntity(Enum):
 class VerificationStatus(Enum):
     PENDING = "Pending"
     APPROVED = "Approved"
-    UNDER_REVIEW = "Under Review"
     REJECTED = "Rejected"
 
 

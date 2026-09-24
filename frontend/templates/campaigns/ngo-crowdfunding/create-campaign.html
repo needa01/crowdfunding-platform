@@ -543,11 +543,7 @@
                   />
                 </div>
 
-                <div class="col-6">
-                  <label>Document Holder Name</label>
-
-                  <input type="text" id="document_holder_name" />
-                </div>
+                
 
                 <div class="col-6">
                   <label>Document Number</label>
@@ -581,7 +577,6 @@
                   <tr>
                     <th>Document</th>
 
-                    <th>Holder</th>
 
                     <th>Status</th>
                     <th>Action</th>
@@ -1331,7 +1326,6 @@
           }
 
           const type = document.getElementById("document_type");
-          const holder = document.getElementById("document_holder_name");
           const number = document.getElementById("document_number");
           const file = document.getElementById("campaign_document");
 
@@ -1345,11 +1339,7 @@
             return;
           }
 
-          if (!holder.value.trim()) {
-            alert("Enter document holder name.");
-            holder.focus();
-            return;
-          }
+
 
           if (file.files.length === 0) {
             alert("Select document file.");
@@ -1366,7 +1356,6 @@
           fd.append("campaign_slug", createdCampaignSlug);
           fd.append("purpose", "Campaign Verification");
           fd.append("document_type", type.value.trim());
-          fd.append("document_holder_name", holder.value.trim());
           fd.append("document_number", number.value.trim());
           fd.append("file_url", file.files[0]);
 
@@ -1401,7 +1390,7 @@
               <tr id="doc-row-${data.document.uuid}">
                   <td>${type.value.trim()}</td>
 
-                  <td>${holder.value.trim()}</td>
+
 
                   <td style="color: green">
                       Uploaded
@@ -1440,7 +1429,6 @@
             // -----------------------------
 
             type.value = "";
-            holder.value = "";
             number.value = "";
             file.value = "";
 

@@ -10,7 +10,6 @@ class UploadProfileDocumentSerializer(serializers.ModelSerializer):
         model = Document
         fields = [
             "document_type",
-            "document_holder_name",
             "document_number",
             "file_url",
         ]
@@ -24,7 +23,6 @@ class CampaignDocumentSerializer(serializers.ModelSerializer):
         fields = [
             "uuid",
             "document_type",
-            "document_holder_name",
             "document_number",
             "file_url",
             "verification_status",

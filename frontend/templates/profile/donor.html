@@ -202,12 +202,6 @@
       <div class="profile-tabs">
         <button onclick="showSection('personal')">Personal Information</button>
 
-        <button id="bank-tab" onclick="showSection('bank')">
-          Bank Details
-        </button>
-        <button id="documents-tab" onclick="showSection('documents')">
-          Documents
-        </button>
       </div>
 
       <!-- =========================
@@ -226,7 +220,7 @@
 
           <label> Full Name </label>
 
-          <input type="text" id="fullname" />
+          <input type="text" id="fullname" readonly/>
 
           <label> Email </label>
 
@@ -264,162 +258,8 @@
         </form>
       </div>
 
-      <!-- =========================
-     BANK SECTION
-========================= -->
 
-      <!-- =========================
-     BANK SECTION
-========================= -->
 
-      <div id="bank-section" class="section">
-        <h3>Bank Details</h3>
-        <p style="margin-top: 8px; color: #666; font-size: 14px">
-          Upload a cancelled cheque for bank account verification.
-        </p>
-
-        <div class="card">
-          <label> Account Holder Name </label>
-
-          <input type="text" id="account_holder_name" />
-
-          <label> Bank Name </label>
-
-          <input type="text" id="bank_name" />
-
-          <label> Account Number </label>
-
-          <input type="text" id="account_number" />
-
-          <label> IFSC Code </label>
-
-          <input type="text" id="ifsc_code" />
-
-          <label> Branch Name </label>
-
-          <input type="text" id="branch_name" />
-
-          <label>Cancelled Cheque</label>
-
-          <div
-            id="cancelled-cheque-status"
-            style="display: flex; align-items: center; gap: 10px"
-          ></div>
-
-          <input
-            type="file"
-            id="cancelled_cheque"
-            accept=".pdf,.jpg,.jpeg,.png"
-          />
-          <div id="bank-message" class="message-box"></div>
-          <button type="button" class="submit-btn" onclick="saveBankAccount()">
-            Save Bank Details
-          </button>
-        </div>
-      </div>
-      <!-- =========================
-     DOCUMENT SECTION
-========================= -->
-
-      <div id="documents-section" class="section">
-        <h3>Upload Documents for Profile Verification</h3>
-
-        <p style="margin-top: 8px; color: #666; font-size: 14px">
-          Upload your identity documents for profile verification.
-        </p>
-        <!-- PAN Card -->
-
-        <div class="card">
-          <h4>PAN Card</h4>
-
-          <p id="pan-status"></p>
-
-          <label>Name as per PAN Card</label>
-          <input type="text" id="pan_holder_name" />
-
-          <label>PAN Number</label>
-          <input type="text" id="pan_number" />
-
-          <label>Select PAN Card</label>
-          <input type="file" id="pan_file" accept=".pdf,.jpg,.jpeg,.png" />
-
-          <div id="pan-message" class="message-box"></div>
-
-          <button type="button" onclick="uploadDocument('PAN Card')">
-            Upload PAN Card
-          </button>
-        </div>
-
-        <br />
-
-        <!-- Aadhaar Card -->
-
-        <div class="card">
-          <h4>Aadhaar Card</h4>
-
-          <p id="aadhaar-status"></p>
-
-          <label>Name as per Aadhaar Card</label>
-          <input type="text" id="aadhaar_holder_name" />
-
-          <label>Aadhaar Number</label>
-          <input type="text" id="aadhaar_number" />
-
-          <label>Select Aadhaar Card</label>
-          <input type="file" id="aadhaar_file" accept=".pdf,.jpg,.jpeg,.png" />
-
-          <div id="aadhaar-message" class="message-box"></div>
-
-          <button type="button" onclick="uploadDocument('Aadhaar Card')">
-            Upload Aadhaar Card
-          </button>
-        </div>
-        <br />
-
-        <div class="card">
-          <h4>Submit Profile for Verification</h4>
-
-          <p style="margin-top: 8px; color: #666; font-size: 14px">
-            After submitting your profile for verification, you will not be able
-            to edit your profile, bank details or documents until verification
-            is completed.
-          </p>
-          <p
-            id="profile-verification-status"
-            style="font-weight: 600; margin-top: 20px"
-          ></p>
-          <label
-            style="
-              display: flex;
-              align-items: flex-start;
-              margin-top: 18px;
-              font-weight: normal;
-            "
-          >
-            <input
-              type="checkbox"
-              id="verification-consent"
-              style="width: auto; margin-right: 10px; margin-top: 4px"
-            />
-
-            <span>
-              I confirm that all information and uploaded documents are correct.
-              I understand that I cannot modify them after submission until
-              verification is complete.
-            </span>
-          </label>
-
-          <div id="verification-message" class="message-box"></div>
-
-          <button
-            type="button"
-            class="submit-btn"
-            onclick="submitProfileVerification()"
-          >
-            Submit Profile for Verification
-          </button>
-        </div>
-      </div>
     </div>
 
     <script>
@@ -429,13 +269,9 @@
 
       const UPDATE_URL = "/api/accounts/donor-profile/update";
 
-      const BANK_GET_URL = "/api/accounts/bankaccount";
 
-      const BANK_UPDATE_URL = "/api/accounts/bankaccount/update";
 
-      const DOCUMENTS_GET_URL = "/api/verification/profile/documents";
 
-      const PROFILE_VERIFICATION_URL = "/api/verification/profile/submit";
       const form = document.getElementById("donor-profile-form");
 
       const profileImage = document.getElementById("profile_picture");
@@ -444,373 +280,10 @@
 
       let profileStatus = "";
 
-      //Load Bank Account
-      async function loadBankAccount() {
-        try {
-          const response = await fetch(BANK_GET_URL, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
 
-          const result = await response.json();
 
-          if (!result.success) {
-            return;
-          }
 
-          // No bank account exists yet
-          if (!result.has_bank_account || !result.data) {
-            document.getElementById("account_holder_name").value = "";
-            document.getElementById("bank_name").value = "";
-            document.getElementById("account_number").value = "";
-            document.getElementById("ifsc_code").value = "";
-            document.getElementById("branch_name").value = "";
-            document.getElementById("cancelled-cheque-status").innerHTML = "";
 
-            return;
-          }
-          const data = result.data;
-
-          document.getElementById("account_holder_name").value =
-            data.account_holder_name || "";
-
-          document.getElementById("bank_name").value = data.bank_name || "";
-
-          document.getElementById("account_number").value =
-            data.account_number || "";
-
-          document.getElementById("ifsc_code").value = data.ifsc_code || "";
-
-          document.getElementById("branch_name").value = data.branch_name || "";
-          const chequeStatus = document.getElementById(
-            "cancelled-cheque-status",
-          );
-
-          if (data.cancelled_cheque) {
-            chequeStatus.innerHTML = `
-        <span>${getFileName(data.cancelled_cheque)}</span>
-
-        <a
-            href="${data.cancelled_cheque}"
-            target="_blank"
-            title="View Cancelled Cheque"
-            style="margin-left:8px;"
-        >
-            <i class="fa fa-eye"></i>
-        </a>
-
-        <br>
-
-        <small>
-            Verification Status: ${data.verification_status}
-        </small>
-    `;
-          } else {
-            chequeStatus.innerHTML = "";
-          }
-        } catch (error) {
-          console.log("Bank load error", error);
-        }
-      }
-
-      //Save/Update Bank Account
-      async function saveBankAccount() {
-        const formData = new FormData();
-
-        formData.append(
-          "account_holder_name",
-          document.getElementById("account_holder_name").value.trim(),
-        );
-
-        formData.append(
-          "bank_name",
-          document.getElementById("bank_name").value.trim(),
-        );
-
-        formData.append(
-          "account_number",
-          document.getElementById("account_number").value.trim(),
-        );
-
-        formData.append(
-          "ifsc_code",
-          document.getElementById("ifsc_code").value.trim(),
-        );
-
-        formData.append(
-          "branch_name",
-          document.getElementById("branch_name").value.trim(),
-        );
-
-        const cheque = document.getElementById("cancelled_cheque").files[0];
-
-        if (cheque) {
-          formData.append("cancelled_cheque", cheque);
-        }
-
-        const response = await fetch(BANK_UPDATE_URL, {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          showMessage(
-            "bank-message",
-            "Bank details saved successfully",
-            "success",
-          );
-          loadBankAccount();
-        } else if (result.errors) {
-          const messages = Object.values(result.errors).flat().join("<br>");
-
-          showMessage("bank-message", messages, "error");
-        } else {
-          showMessage("bank-message", result.error, "error");
-        }
-      }
-
-      async function loadProfileDocuments() {
-        try {
-          const response = await fetch(DOCUMENTS_GET_URL, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          const result = await response.json();
-
-          if (!result.success) {
-            return;
-          }
-
-          // Default state
-          document.getElementById("pan-status").innerHTML = "Not Uploaded";
-          document.getElementById("aadhaar-status").innerHTML = "Not Uploaded";
-
-          result.documents.forEach((doc) => {
-            if (doc.document_type === "PAN Card") {
-              document.getElementById("pan_holder_name").value =
-                doc.document_holder_name || "";
-
-              document.getElementById("pan_number").value =
-                doc.document_number || "";
-              document.getElementById("pan-status").innerHTML = `
-          <span>
-            ${getFileName(doc.file_url)}
-          </span>
-
-          <a href="${doc.file_url}" 
-             target="_blank"
-             title="View PAN Card"
-             style="margin-left:10px;">
-             <i class="fa fa-eye"></i>
-          </a>
-
-          <br>
-          <small>
-            Verification Status: ${doc.verification_status}
-          </small>
-        `;
-            }
-
-            if (doc.document_type === "Aadhaar Card") {
-              document.getElementById("aadhaar_holder_name").value =
-                doc.document_holder_name || "";
-
-              document.getElementById("aadhaar_number").value =
-                doc.document_number || "";
-
-              document.getElementById("aadhaar-status").innerHTML = `
-          <span>
-            ${getFileName(doc.file_url)}
-          </span>
-
-          <a href="${doc.file_url}" 
-             target="_blank"
-             title="View Aadhaar Card"
-             style="margin-left:10px;">
-             <i class="fa fa-eye"></i>
-          </a>
-
-          <br>
-          <small>
-            Verification Status: ${doc.verification_status}
-          </small>
-        `;
-            }
-          });
-        } catch (error) {
-          console.log("Document load error", error);
-        }
-      }
-
-      const PROFILE_DOCUMENT_MAP = {
-        "PAN CARD": {
-          holderInput: "pan_holder_name",
-          numberInput: "pan_number",
-          fileInput: "pan_file",
-          statusElement: "pan-status",
-          messageBox: "pan-message",
-        },
-
-        "AADHAAR CARD": {
-          holderInput: "aadhaar_holder_name",
-          numberInput: "aadhaar_number",
-          fileInput: "aadhaar_file",
-          statusElement: "aadhaar-status",
-          messageBox: "aadhaar-message",
-        },
-      };
-
-      async function uploadDocument(documentType) {
-        // Convert "PAN Card" -> "PAN CARD"
-        const normalizedType = (documentType || "").trim().toUpperCase();
-
-        const config = PROFILE_DOCUMENT_MAP[normalizedType];
-
-        if (!config) {
-          console.error("Invalid document type:", documentType);
-          return;
-        }
-
-        // ============================================
-        // GET INPUT ELEMENTS
-        // ============================================
-        let validDocumentType = null;
-        if (documentType === "PAN Card" ) {
-          validDocumentType = "PAN_CARD";
-        }
-        else if(documentType === "Aadhaar Card") {
-          validDocumentType = "AADHAAR_CARD";
-        }
-        else {
-          console.error("Invalid document type:", documentType);
-          return;
-        }
-
-        const numberInput = document.getElementById(config.numberInput);
-
-        const fileInput = document.getElementById(config.fileInput);
-
-        const holderNameInput = document.getElementById(config.holderInput);
-
-        const statusElement = document.getElementById(config.statusElement);
-
-        const messageBox = config.messageBox;
-
-        // ============================================
-        // SAFETY CHECK
-        // ============================================
-
-        if (!fileInput) {
-          console.error("File input not found:", config.fileInput);
-          return;
-        }
-
-        if (!holderNameInput) {
-          console.error("Holder name input not found:", config.holderInput);
-          return;
-        }
-
-        // ============================================
-        // GET FILE
-        // ============================================
-
-        const file = fileInput.files[0];
-
-        if (!file) {
-          showMessage(
-            messageBox,
-            `Please select a ${documentType} file.`,
-            "error",
-          );
-          return;
-        }
-
-        // ============================================
-        // CREATE FORM DATA
-        // ============================================
-
-        const formData = new FormData();
-
-        formData.append("purpose", "PROFILE_VERIFICATION");
-
-        formData.append("document_type", validDocumentType);
-
-        formData.append("document_holder_name", holderNameInput.value.trim());
-
-        if (numberInput && numberInput.value.trim()) {
-          formData.append("document_number", numberInput.value.trim());
-        }
-
-        formData.append("file_url", file);
-
-        // ============================================
-        // UPLOAD
-        // ============================================
-
-        try {
-          const response = await fetch(
-            "/api/verification/profile/document/upload",
-            {
-              method: "POST",
-
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-
-              body: formData,
-            },
-          );
-
-          const result = await response.json();
-
-          // ============================================
-          // SUCCESS
-          // ============================================
-
-          if (result.success) {
-            showMessage(
-              messageBox,
-              result.message || `${documentType} uploaded successfully.`,
-              "success",
-            );
-
-            if (statusElement) {
-              statusElement.innerText = "Pending Verification";
-            }
-
-            // Reload documents so filename + eye icon appear
-            await loadProfileDocuments();
-          }
-
-          // ============================================
-          // VALIDATION ERRORS
-          // ============================================
-          else if (result.errors) {
-            const messages = Object.values(result.errors).flat().join("<br>");
-
-            showMessage(messageBox, messages, "error");
-          }
-
-          // ============================================
-          // GENERAL ERROR
-          // ============================================
-          else {
-            showMessage(messageBox, result.error || "Upload failed.", "error");
-          }
-        } catch (error) {
-          console.error("Document upload error:", error);
-
-          showMessage(messageBox, "Document upload failed.", "error");
-        }
-      }
       // =========================
       // Load Profile
       // =========================
@@ -856,27 +329,6 @@
 
           profileStatus = data.profile_status;
 
-          if (
-            profileStatus === "Verification Pending" ||
-            profileStatus === "Verified"
-          ) {
-            document.querySelector("#verification-consent").disabled = true;
-
-            document.querySelector("#verification-consent").checked = true;
-
-            document.querySelector(
-              "#verification-consent",
-            ).parentElement.style.opacity = "0.7";
-
-            document
-              .querySelector("#verification-consent")
-              .closest(".card")
-              .querySelector("button").style.display = "none";
-          }
-          document.getElementById("profile-verification-status").innerHTML =
-            "Current Status : <b>" + profileStatus + "</b>";
-          await loadBankAccount();
-          await loadProfileDocuments();
           toggleEditMode(profileStatus);
         } catch (error) {
           console.error(error);
@@ -884,48 +336,7 @@
         }
       }
 
-      //submit profile verification
-      async function submitProfileVerification() {
-        if (!document.getElementById("verification-consent").checked) {
-          showMessage(
-            "verification-message",
-            "Please accept the declaration before submitting.",
-            "error",
-          );
 
-          return;
-        }
-
-        try {
-          const response = await fetch(PROFILE_VERIFICATION_URL, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          const result = await response.json();
-
-          if (result.success) {
-            showMessage("verification-message", result.message, "success");
-
-            loadProfile();
-          } else {
-            if (result.missing_documents) {
-              showMessage(
-                "verification-message",
-                "Missing Documents:<br>" +
-                  result.missing_documents.join("<br>"),
-                "error",
-              );
-            } else {
-              showMessage("verification-message", result.error, "error");
-            }
-          }
-        } catch (error) {
-          showMessage("verification-message", "Something went wrong.", "error");
-        }
-      }
       //Disable edit after submission
       function toggleEditMode(status) {
         const editable =
@@ -940,10 +351,6 @@
             element.disabled = !editable;
           });
 
-        //Bank Details
-        document.querySelectorAll("#bank-section input").forEach((element) => {
-          element.disabled = !editable;
-        });
 
         //Documents
         document
@@ -961,9 +368,6 @@
             }
           });
 
-        document.querySelectorAll("#bank-section button").forEach((button) => {
-          button.disabled = !editable;
-        });
 
         document.querySelector("#donor-profile-form button").disabled =
           !editable;
@@ -973,9 +377,7 @@
           "#donor-profile-form .submit-btn",
         ).style.display = editable ? "block" : "none";
 
-        // Save Bank Details button
-        document.querySelector("#bank-section .submit-btn").style.display =
-          editable ? "block" : "none";
+
 
         // Upload PAN & Aadhaar buttons
         document
@@ -1003,7 +405,6 @@
 
         const formData = new FormData();
 
-        formData.append("fullname", fullname.value.trim());
         formData.append("occupation", occupation.value.trim());
         formData.append("address", address.value.trim());
         formData.append("city", city.value.trim());

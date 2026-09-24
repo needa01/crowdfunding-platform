@@ -1,4 +1,5 @@
 import random
+import re
 
 from django.shortcuts import render
 import requests
@@ -17,7 +18,13 @@ from accounts.models import (
     Status,
     UserType,
 )
-from crowdfunding.enums import DocOwner, DocumentPurpose, NGOType, VerificationStatus, VerificationType
+from crowdfunding.enums import (
+    DocOwner,
+    DocumentPurpose,
+    NGOType,
+    VerificationStatus,
+    VerificationType,
+)
 from crowdfunding.permissions import (
     CanCompleteProfile,
     CanEditProfile,
@@ -40,23 +47,16 @@ from organizations.models import CSRProfile, NGOProfile
 from verification.models import Document, EntityVerificationRequest
 
 
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def get_user_info(request):
 
     user = request.user
 
-    verification_request = (
-        user.verification_requests
-        .order_by("-created_at")
-        .first()
-    )
+    verification_request = user.verification_requests.order_by("-created_at").first()
 
     verification_status = (
-        verification_request.status.value
-        if verification_request
-        else None
+        verification_request.status.value if verification_request else None
     )
 
     return Response(
@@ -64,7 +64,11 @@ def get_user_info(request):
             "success": True,
             "user_name": user.fullname,
             "user_email": user.email,
-            "user_type": user.user_type.value if not user.is_superuser else UserType.SUPER_ADMIN.value,
+            "user_type": (
+                user.user_type.value
+                if not user.is_superuser
+                else UserType.SUPER_ADMIN.value
+            ),
             "status": user.status.value,
             "profile_status": user.profile_status.value,
             "verification_status": verification_status,
@@ -73,64 +77,87 @@ def get_user_info(request):
     )
 
 
-
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def send_otp(request):
 
-    mobile = request.data.get("mobile")
+    try:
+        mobile = request.data.get("mobile")
 
-    if not mobile:
-        return Response(
-            {"success": False, "error": "Mobile is required"},
-            status=status.HTTP_400_BAD_REQUEST,
+        if not mobile:
+            return Response(
+                {"success": False, "error": "Mobile is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not mobile.isdigit() or len(mobile) != 10:
+            return Response(
+                {
+                    "success": False,
+                    "error": "Mobile number must contain exactly 10 digits.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check if mobile is already verified
+        user = CustomUser.objects.filter(
+            mobile=mobile, is_mobile_verified=True, is_deleted=False
+        ).first()
+
+        if user:
+            return Response(
+                {"success": False, "error": "Mobile number is already verified"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 2. Existing active OTP?
+        if OTP.objects.filter(
+            mobile=mobile, is_verified=False, expires_at__gt=timezone.now()
+        ).exists():
+            return Response(
+                {
+                    "success": False,
+                    "error": "OTP already sent. Please wait before requesting another.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        otp = str(random.randint(100000, 999999))
+        message = f"Your OTP is {otp}. Do not share it with anyone."
+        url = "https://www.fast2sms.com/dev/bulkV2"
+
+        params = {
+            "authorization": settings.FAST2SMS_API_KEY,
+            "route": "q",
+            "message": message,
+            "numbers": mobile,
+        }
+
+        print("OTP", otp)
+
+        OTP.objects.create(
+            mobile=mobile, otp=otp, request_id="aaswh5656", is_verified=False
         )
 
-    # Check if mobile is already verified
-    user = CustomUser.objects.filter(
-        mobile=mobile, is_mobile_verified=True, is_deleted=False
-    ).first()
-
-    if user:
         return Response(
-            {"success": False, "error": "Mobile number is already verified"},
-            status=status.HTTP_400_BAD_REQUEST,
+            {
+                "success": True,
+                "message": "OTP sent successfully.",
+                "request_id": "request_id",
+            },
+            status=status.HTTP_200_OK,
         )
 
-    # 2. Existing active OTP?
-    if OTP.objects.filter(
-        mobile=mobile, is_verified=False, expires_at__gt=timezone.now()
-    ).exists():
+    except Exception as e:
+        print("SEND OTP ERROR:", str(e))
+
         return Response(
             {
                 "success": False,
-                "error": "OTP already sent. Please wait before requesting another.",
+                "error": str(e),
             },
-            status=status.HTTP_400_BAD_REQUEST,
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-
-    otp = str(random.randint(100000, 999999))
-    message = f"Your OTP is {otp}. Do not share it with anyone."
-    url = "https://www.fast2sms.com/dev/bulkV2"
-
-    params = {
-        "authorization": settings.FAST2SMS_API_KEY,
-        "route": "q",
-        "message": message,
-        "numbers": mobile,
-    }
-    print("OTP", otp)
-    OTP.objects.create(
-        mobile=mobile, otp=otp, request_id="aaswh5656", is_verified=False
-    )
-    return Response(
-        {
-            "success": True,
-            "message": "OTP sent successfully.",
-            "request_id": "request_id",
-        },
-        status=status.HTTP_200_OK,
-    )
     # try:
     #     response = requests.get(url, params=params, timeout=10)
     #     print(response.json())
@@ -219,7 +246,7 @@ def send_otp(request):
     #     return Response(
     #         {
     #             "success": False,
-    #             "error": "Something went wrong while sending OTP.",
+    #             "error": str(e),
     #         },
     #         status=status.HTTP_500_INTERNAL_SERVER_ERROR,
     #     )
@@ -694,6 +721,16 @@ def register_individual_profile(request):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+            pincode = str(pincode).strip()
+
+            if not re.fullmatch(r"^\d{6}$", pincode):
+                return Response(
+                    {
+                        "success": False,
+                        "error": "Invalid pincode. Pincode must contain exactly 6 digits.",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             # Check if the user exists
             try:
                 print("check")
@@ -790,6 +827,17 @@ def register_ngo_profile(request):
     ):
         return Response(
             {"success": False, "error": "All fields are required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    pincode = str(pincode).strip()
+
+    if not re.fullmatch(r"^\d{6}$", pincode):
+        return Response(
+            {
+                "success": False,
+                "error": "Invalid pincode. Pincode must contain exactly 6 digits.",
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
     print("check1")
@@ -905,6 +953,17 @@ def register_csr_profile(request):
         )
     print("check2")
 
+    pincode = str(pincode).strip()
+
+    if not re.fullmatch(r"^\d{6}$", pincode):
+        return Response(
+            {
+                "success": False,
+                "error": "Invalid pincode. Pincode must contain exactly 6 digits.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     # Check if the user exists
     try:
         user = CustomUser.objects.get(uuid=user.uuid)
@@ -986,7 +1045,10 @@ def login(request):
             status=status.HTTP_401_UNAUTHORIZED,
         )
 
-    if user.user_type in [UserType.ADMIN, UserType.SUPER_ADMIN] or user.is_superuser is True:
+    if (
+        user.user_type in [UserType.ADMIN, UserType.SUPER_ADMIN]
+        or user.is_superuser is True
+    ):
         return Response(
             {"success": False, "error": "Please use the Admin Portal."},
             status=status.HTTP_403_FORBIDDEN,
@@ -1049,7 +1111,7 @@ def get_donor_profile(request):
     try:
         user = request.user
         profile = DonorProfile.objects.get(user_id=user)
-        
+
         verification = (
             EntityVerificationRequest.objects.filter(
                 user=user,
@@ -1149,30 +1211,26 @@ def update_donor_profile(request):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+            pincode = str(data["pincode"]).strip()
+
+            # Validate pincode
+            if not pincode.isdigit() or len(pincode) != 6:
+                return Response(
+                    {
+                        "success": False,
+                        "error": "Pincode must be exactly 6 digits.",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             profile.occupation = data["occupation"].strip()
             profile.address = data["address"].strip()
             profile.city = data["city"].strip()
             profile.state = data["state"].strip()
             profile.country = data["country"].strip()
-            profile.pincode = data["pincode"].strip()
+            profile.pincode = pincode
 
             profile.save()
-
-        # Update fullname independently
-        if "fullname" in data:
-
-            fullname = data["fullname"].strip()
-
-            if not fullname:
-                return Response(
-                    {
-                        "success": False,
-                        "error": "Full name cannot be empty.",
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            user.fullname = fullname
 
         # Update profile picture independently
         profile_picture = request.FILES.get("profile_picture")
@@ -1318,27 +1376,30 @@ def update_individual_profile(request):
 
             profile.save()
 
-        # Update fullname independently
-        fullname = data.get("fullname")
-
-        if fullname is not None:
-
-            fullname = fullname.strip()
-
-            if not fullname:
-                return Response(
-                    {
-                        "success": False,
-                        "error": "Full name cannot be empty.",
-                    },
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            user.fullname = fullname
-
-        # Update profile picture independently
+        
         if "profile_picture" in data:
-            user.profile_picture = data["profile_picture"]
+
+            new_picture = data.get("profile_picture")
+
+            if new_picture:
+
+                old_picture = user.profile_picture
+
+                user.profile_picture = new_picture
+                
+
+                # Delete old file after successful save
+                if old_picture and old_picture.name:
+                    try:
+                        old_picture.delete(save=False)
+                    except Exception:
+                        pass
+
+            else:
+                user.profile_picture = None
+                
+
+        
 
         user.save()
 
@@ -1358,8 +1419,6 @@ def update_individual_profile(request):
             },
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-
-
 
 
 @api_view(["GET"])
@@ -1445,7 +1504,9 @@ def update_bank_account(request):
                 "branch_name": branch_name,
             },
         )
-        old_cancelled_cheque = None  # Initialize variable to hold the old file reference
+        old_cancelled_cheque = (
+            None  # Initialize variable to hold the old file reference
+        )
 
         # Update existing record
         if not created:

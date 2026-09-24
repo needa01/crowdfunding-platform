@@ -2,6 +2,7 @@ from datetime import timedelta
 import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.db.models import Q
 from django.utils import timezone
 from django.core.validators import MinLengthValidator, RegexValidator
 from django.core.exceptions import ValidationError
@@ -169,9 +170,17 @@ class OTP(models.Model):
 class BankAccount(models.Model):
 
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    campaign = models.OneToOneField(
+        "campaigns.Campaign",
+        on_delete=models.CASCADE,
+        related_name="beneficiary_bank_account",
+        null=True,
+        blank=True,
+    )
 
     user = models.OneToOneField(
-        CustomUser, on_delete=models.CASCADE, related_name="bank_account"
+        CustomUser, on_delete=models.CASCADE, related_name="bank_account", null=True, blank=True
     )
 
     account_holder_name = models.CharField(max_length=255)
@@ -200,10 +209,10 @@ class BankAccount(models.Model):
         validators=[ifsc_validator],
     )
 
-    branch_name = models.CharField(max_length=255, null=True)
+    branch_name = models.CharField(max_length=255)
 
     cancelled_cheque = models.FileField(
-        upload_to=cancelled_cheque_upload_path, null=True, blank=True, max_length=500
+        upload_to=cancelled_cheque_upload_path, max_length=500
     )
 
     verification_status = EnumField(
@@ -230,12 +239,41 @@ class BankAccount(models.Model):
         db_table = "bank_account"
         verbose_name = "Bank Account"
         verbose_name_plural = "Bank Accounts"
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    Q(user__isnull=False, campaign__isnull=True)
+                    | Q(user__isnull=True, campaign__isnull=False)
+                ),
+                name="bank_account_exactly_one_owner",
+            ),
+        ]
+
 
     def __str__(self):
         return f"{self.account_holder_name} - {self.bank_name}"
 
     def clean(self):
+
         errors = {}
+
+        # =====================================================
+        # EXACTLY ONE OWNER
+        # =====================================================
+
+        if self.user_id and self.campaign_id:
+            errors["user"] = (
+                "A bank account cannot belong to both a user and a campaign."
+            )
+
+        elif not self.user_id and not self.campaign_id:
+            errors["user"] = (
+                "A bank account must belong to either a user or a campaign."
+            )
+
+        # =====================================================
+        # CANCELLED CHEQUE
+        # =====================================================
 
         if (
             self.verification_status == VerificationStatus.APPROVED
@@ -243,15 +281,30 @@ class BankAccount(models.Model):
         ):
             errors["cancelled_cheque"] = "Cancelled cheque is required."
 
+        # =====================================================
+        # USER VALIDATION
+        # =====================================================
+
         if self.user and not self.user.is_active:
             errors["user"] = "User is inactive."
 
+        # =====================================================
+        # IFSC
+        # =====================================================
+
+        if self.ifsc_code:
+            self.ifsc_code = self.ifsc_code.upper()
+
         if errors:
             raise ValidationError(errors)
-
+    
+    
     def save(self, *args, **kwargs):
         if self.ifsc_code:
             self.ifsc_code = self.ifsc_code.upper()
 
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+

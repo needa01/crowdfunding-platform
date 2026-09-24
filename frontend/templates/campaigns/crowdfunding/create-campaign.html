@@ -1,4 +1,5 @@
 <!doctype html>
+
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -196,11 +197,23 @@
         opacity: 0.6;
         cursor: not-allowed;
       }
+
+      .bank-note {
+        background: #f0f7ff;
+        border-left: 4px solid #0d6efd;
+        padding: 14px;
+        border-radius: 8px;
+        color: #555;
+        margin-bottom: 20px;
+        font-size: 13px;
+      }
+
       @media (max-width: 768px) {
         .col-6 {
           flex: 1 1 100%;
         }
       }
+
       .back-btn {
         display: inline-block;
         margin-bottom: 20px;
@@ -220,23 +233,26 @@
       }
     </style>
   </head>
+
   <body>
     <div class="container">
       <a href="javascript:history.back()" class="back-btn"> ← Back </a>
+
       <div class="page-title">
         <h2>Create Crowdfunding Campaign</h2>
         <p>Create a fundraising campaign for yourself or your beneficiary.</p>
       </div>
 
       <div class="note">
-        Campaign Type is automatically <strong>Crowdfunding</strong> for
-        Individual Fundraisers.
+        Campaign Type is automatically
+        <strong>Crowdfunding</strong>
+        for Individual Fundraisers.
       </div>
 
       <form id="campaignForm" enctype="multipart/form-data">
-        <!-- =======================
-                STEP INDICATOR
-        ======================== -->
+        <!-- =====================================================
+         STEP INDICATOR
+    ====================================================== -->
 
         <div class="card">
           <div class="card-body">
@@ -264,8 +280,8 @@
         </div>
 
         <!-- =====================================================
-                        STEP 1
-        ====================================================== -->
+         STEP 1
+    ====================================================== -->
 
         <div id="step1">
           <div class="card">
@@ -287,7 +303,6 @@
 
                 <div class="col-12">
                   <label>Campaign Description</label>
-
                   <textarea
                     name="campaign_desc"
                     placeholder="Describe why you're raising funds..."
@@ -297,41 +312,30 @@
 
                 <div class="col-6">
                   <label>Goal Amount (₹)</label>
-
                   <input
-                    type="number"
-                    min="1000"
-                    step="0.01"
-                    name="goal_amount"
-                    required
-                  />
+  type="number"
+  step="1"
+  name="goal_amount"
+  required
+/>
                 </div>
 
                 <div class="col-6">
                   <label>Cause</label>
-
                   <select name="cause" id="cause" required>
                     <option value="" selected disabled>Select Cause</option>
-
                     <option value="Medical">Medical</option>
-
                     <option value="Memorial">Memorial</option>
-
                     <option value="Education">Education</option>
-
                     <option value="Children">Children</option>
-
                     <option value="Women Empowerment">Women Empowerment</option>
-
                     <option value="Animal Welfare">Animal Welfare</option>
-
                     <option value="Others">Others</option>
                   </select>
                 </div>
 
                 <div class="col-6">
                   <label>Campaign Start Date</label>
-
                   <input
                     type="date"
                     name="start_date"
@@ -342,13 +346,11 @@
 
                 <div class="col-6">
                   <label>Campaign End Date</label>
-
                   <input type="date" name="end_date" id="end_date" required />
                 </div>
 
                 <div class="col-12">
                   <label>Cover Photo</label>
-
                   <input
                     type="file"
                     name="cover_photo"
@@ -368,10 +370,12 @@
         </div>
 
         <!-- =====================================================
-                        STEP 2
+         STEP 2
     ====================================================== -->
 
         <div id="step2" style="display: none">
+          <!-- BENEFICIARY -->
+
           <div class="card">
             <div class="card-header">
               <h3>Beneficiary Information</h3>
@@ -425,6 +429,7 @@
 
                   <select name="beneficiary_relation">
                     <option value="" selected disabled>Select</option>
+
                     <option>Father</option>
                     <option>Mother</option>
                     <option>Brother</option>
@@ -471,7 +476,103 @@
             </div>
           </div>
 
-          <!-- Medical -->
+          <!-- =====================================================
+           BANK ACCOUNT
+      ====================================================== -->
+
+          <div class="card">
+            <div class="card-header">
+              <h3>Beneficiary Bank Account</h3>
+            </div>
+
+            <div class="card-body">
+              <div class="bank-note">
+                Please provide the bank account where the campaign funds will be
+                transferred after the campaign is successfully verified and
+                eligible for withdrawal.
+              </div>
+
+              <div class="row">
+                <div class="col-6">
+                  <label>Account Holder Name</label>
+
+                  <input
+                    type="text"
+                    name="account_holder_name"
+                    id="account_holder_name"
+                    placeholder="Enter account holder name"
+                    required
+                  />
+                </div>
+
+                <div class="col-6">
+                  <label>Bank Name</label>
+
+                  <input
+                    type="text"
+                    name="bank_name"
+                    id="bank_name"
+                    placeholder="Enter bank name"
+                    required
+                  />
+                </div>
+
+                <div class="col-6">
+                  <label>Account Number</label>
+
+                  <input
+                    type="text"
+                    name="account_number"
+                    id="account_number"
+                    placeholder="Enter bank account number"
+                    inputmode="numeric"
+                    required
+                  />
+                </div>
+
+                <div class="col-6">
+                  <label>IFSC Code</label>
+
+                  <input
+                    type="text"
+                    name="ifsc_code"
+                    id="ifsc_code"
+                    placeholder="Enter IFSC code"
+                    maxlength="11"
+                    style="text-transform: uppercase"
+                    required
+                  />
+                </div>
+
+                <div class="col-6">
+                  <label>Branch Name</label>
+
+                  <input
+                    type="text"
+                    name="branch_name"
+                    id="branch_name"
+                    placeholder="Enter branch name"
+                    required
+                  />
+                </div>
+
+                <div class="col-6">
+                  <label>Cancelled Cheque</label>
+                  <input
+                    type="file"
+                    name="cancelled_cheque"
+                    id="cancelled_cheque"
+                    accept="image/*,.pdf"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- =====================================================
+           MEDICAL
+      ====================================================== -->
 
           <div class="card" id="medical-section" style="display: none">
             <div class="card-header">
@@ -513,7 +614,7 @@
         </div>
 
         <!-- =====================================================
-                        STEP 3
+         STEP 3
     ====================================================== -->
 
         <div id="step3" style="display: none">
@@ -524,7 +625,7 @@
 
             <div class="card-body">
               <div class="note">
-                <strong>Upload documents to support your campaign.</strong>
+                <strong> Upload documents to support your campaign. </strong>
 
                 <br /><br />
 
@@ -544,13 +645,7 @@
                 </div>
 
                 <div class="col-6">
-                  <label>Document Holder Name</label>
-
-                  <input type="text" id="document_holder_name" />
-                </div>
-
-                <div class="col-6">
-                  <label>Document Number</label>
+                  <label>Document Number <span>(Optional)</span></label>
 
                   <input type="text" id="document_number" />
                 </div>
@@ -580,9 +675,6 @@
                 <thead>
                   <tr>
                     <th>Document</th>
-
-                    <th>Holder</th>
-
                     <th>Status</th>
                     <th>Action</th>
                   </tr>
@@ -623,10 +715,10 @@
     </div>
 
     <script>
-        const API_BASE = "{{API_BASE_URL}}";
+      const API_BASE = "{{API_BASE_URL}}";
+
       document.addEventListener("DOMContentLoaded", function () {
         const form = document.getElementById("campaignForm");
-
 
         // =====================================================
         // STEPS
@@ -637,17 +729,21 @@
         const step3 = document.getElementById("step3");
 
         const indicator1 = document.getElementById("step-indicator-1");
+
         const indicator2 = document.getElementById("step-indicator-2");
+
         const indicator3 = document.getElementById("step-indicator-3");
 
         const nextBtn1 = document.getElementById("nextBtn1");
 
         const prevBtn2 = document.getElementById("prevBtn2");
+
         const prevBtn3 = document.getElementById("prevBtn3");
+
         let createdCampaignSlug = null;
 
-        // Remove any old draft Slug
         sessionStorage.removeItem("draft_campaign_slug");
+
         // =====================================================
         // BENEFICIARY GROUP
         // =====================================================
@@ -682,24 +778,36 @@
 
         beneficiaryGroupType.addEventListener("change", toggleBeneficiaryCount);
 
+        // =====================================================
+        // BENEFICIARY TYPE
+        // =====================================================
+
         const beneficiaryType = document.getElementById("beneficiary_type");
+
         const beneficiaryGroup = document.getElementById(
           "beneficiary_group_type",
         );
 
         const beneficiaryName = form.beneficiary_name;
+
         const beneficiaryRelation = form.beneficiary_relation;
+
         const beneficiaryMobile = form.beneficiary_mobile;
+
         const beneficiaryLocation = form.beneficiary_location;
+
         const beneficiaryAge = form.beneficiary_age;
 
         function toggleBeneficiaryFields() {
           if (beneficiaryType.value === "Me") {
             beneficiaryGroup.value = "Individual";
+
             beneficiaryGroup.disabled = true;
+            beneficiaryGroup.required = false;
 
             beneficiaryName.value = "";
             beneficiaryName.disabled = true;
+            beneficiaryName.required = false;
 
             beneficiaryRelation.value = "";
             beneficiaryRelation.disabled = true;
@@ -711,20 +819,24 @@
             beneficiaryLocation.disabled = true;
 
             beneficiaryCountSection.style.display = "none";
+
             beneficiaryMemberCount.value = "";
             beneficiaryMemberCount.required = false;
 
             beneficiaryAge.disabled = false;
           } else {
             beneficiaryGroup.disabled = false;
+            beneficiaryGroup.required = true;
 
             beneficiaryName.disabled = false;
+            beneficiaryName.required = true;
 
             beneficiaryRelation.disabled = false;
 
             beneficiaryMobile.disabled = false;
 
             beneficiaryLocation.disabled = false;
+            beneficiaryLocation.required = true;
 
             beneficiaryAge.disabled = false;
 
@@ -766,22 +878,19 @@
         // =====================================================
 
         const startDate = document.getElementById("start_date");
+
         const endDate = document.getElementById("end_date");
 
         const today = new Date();
 
-        // Start date = tomorrow
         const tomorrow = new Date(today);
+
         tomorrow.setDate(tomorrow.getDate() + 1);
 
         const tomorrowString = tomorrow.toISOString().split("T")[0];
 
         startDate.min = tomorrowString;
         startDate.value = tomorrowString;
-
-        // =====================================================
-        // SET END DATE = START DATE + 7 DAYS
-        // =====================================================
 
         function updateEndDate() {
           if (!startDate.value) {
@@ -791,26 +900,21 @@
           const start = new Date(startDate.value);
 
           const minimumEndDate = new Date(start);
+
           minimumEndDate.setDate(minimumEndDate.getDate() + 7);
 
           const minimumEndDateString = minimumEndDate
             .toISOString()
             .split("T")[0];
 
-          // Minimum allowed end date
           endDate.min = minimumEndDateString;
 
-          // Automatically set end date to start + 7 days
           endDate.value = minimumEndDateString;
         }
 
-        // Initial value
         updateEndDate();
 
-        // When start date changes
-        startDate.addEventListener("change", function () {
-          updateEndDate();
-        });
+        startDate.addEventListener("change", updateEndDate);
 
         toggleBeneficiaryCount();
 
@@ -828,12 +932,16 @@
           medicalSection.style.display = required ? "block" : "none";
 
           form.hospital_name.required = required;
+
           form.hospital_location.required = required;
+
           form.ailment.required = required;
 
           if (!required) {
             form.hospital_name.value = "";
+
             form.hospital_location.value = "";
+
             form.ailment.value = "";
           }
         }
@@ -841,6 +949,29 @@
         cause.addEventListener("change", toggleMedical);
 
         toggleMedical();
+
+        // =====================================================
+        // BANK ACCOUNT
+        // =====================================================
+
+        const accountHolderName = document.getElementById(
+          "account_holder_name",
+        );
+
+        const accountNumber = document.getElementById("account_number");
+
+        const ifscCode = document.getElementById("ifsc_code");
+
+        const bankName = document.getElementById("bank_name");
+        const cancelledCheque = document.getElementById("cancelled_cheque");
+
+        ifscCode.addEventListener("input", function () {
+          this.value = this.value.toUpperCase();
+        });
+
+        // =====================================================
+        // DELETE DOCUMENT
+        // =====================================================
 
         async function deleteDocument(documentUUID) {
           if (!confirm("Are you sure you want to delete this document?")) {
@@ -869,6 +1000,7 @@
 
             if (!response.ok) {
               alert(data.message || "Unable to delete document.");
+
               return;
             }
 
@@ -877,60 +1009,101 @@
             alert(data.message || "Document deleted successfully.");
           } catch (err) {
             console.error(err);
+
             alert("Something went wrong.");
           }
         }
 
         window.deleteDocument = deleteDocument;
+
         // =====================================================
         // NEXT BUTTON STEP 1
         // =====================================================
 
         nextBtn1.addEventListener("click", function () {
+          // =====================================================
+          // CAMPAIGN NAME
+          // =====================================================
+
           if (!form.campaign_name.value.trim()) {
             alert("Campaign name is required.");
-
+            form.campaign_name.focus();
             return;
           }
+
+          // =====================================================
+          // CAMPAIGN DESCRIPTION
+          // =====================================================
 
           if (!form.campaign_desc.value.trim()) {
             alert("Campaign description is required.");
-
+            form.campaign_desc.focus();
             return;
           }
 
-          if (!form.goal_amount.value) {
+          // =====================================================
+          // GOAL AMOUNT
+          // =====================================================
+
+          const goalAmount = parseFloat(form.goal_amount.value);
+
+          if (!form.goal_amount.value.trim()) {
             alert("Goal amount is required.");
-
+            form.goal_amount.focus();
             return;
           }
+
+          if (isNaN(goalAmount) || goalAmount < 1000) {
+            alert("Goal amount must be at least ₹1,000.");
+            form.goal_amount.focus();
+            return;
+          }
+
+          // =====================================================
+          // CAUSE
+          // =====================================================
 
           if (!form.cause.value) {
             alert("Please select a cause.");
-
+            form.cause.focus();
             return;
           }
+
+          // =====================================================
+          // START DATE
+          // =====================================================
 
           if (!form.start_date.value) {
             alert("Select start date.");
-
+            form.start_date.focus();
             return;
           }
+
+          // =====================================================
+          // END DATE
+          // =====================================================
 
           if (!form.end_date.value) {
             alert("Select end date.");
-
+            form.end_date.focus();
             return;
           }
+
+          // =====================================================
+          // COVER PHOTO
+          // =====================================================
 
           if (form.cover_photo.files.length === 0) {
             alert("Please upload a cover photo.");
-
+            form.cover_photo.focus();
             return;
           }
 
-          step1.style.display = "none";
+          // =====================================================
+          // MOVE TO STEP 2
+          // =====================================================
 
+          step1.style.display = "none";
           step2.style.display = "block";
 
           activateStep(2);
@@ -959,11 +1132,7 @@
         });
 
         // =====================================================
-        // NEXT STEP 2
-        // =====================================================
-
-        // =====================================================
-        // SAVE CAMPAIGN AS DRAFT FROM STEP 2
+        // SAVE CAMPAIGN
         // =====================================================
 
         const saveDraftBtn = document.getElementById("saveDraftBtn");
@@ -971,42 +1140,120 @@
         saveDraftBtn.addEventListener("click", async function () {
           if (!form.campaign_name.value.trim()) {
             alert("Campaign name is required.");
+
             return;
           }
 
           if (!form.beneficiary_type.value) {
             alert("Select beneficiary type.");
+
             return;
           }
 
-          if (!form.beneficiary_type.value) {
-            alert("Select beneficiary type.");
-            return;
-          }
+          // =================================================
+          // BENEFICIARY VALIDATION
+          // =================================================
 
           if (form.beneficiary_type.value !== "Me") {
             if (!form.beneficiary_group_type.value) {
               alert("Select beneficiary group.");
+
               return;
             }
 
             if (!form.beneficiary_name.value.trim()) {
               alert("Beneficiary name is required.");
+
               return;
             }
 
             if (!form.beneficiary_location.value.trim()) {
               alert("Beneficiary location is required.");
+
               return;
             }
+
+            if (
+              form.beneficiary_group_type.value === "Group" &&
+              !form.beneficiary_member_count.value
+            ) {
+              alert("Number of beneficiaries is required.");
+
+              return;
+            }
+          }
+
+          // =================================================
+          // BANK ACCOUNT VALIDATION
+          // =================================================
+
+          if (!accountHolderName.value.trim()) {
+            alert("Account holder name is required.");
+
+            accountHolderName.focus();
+
+            return;
+          }
+
+          if (!bankName.value.trim()) {
+            alert("Bank name is required.");
+
+            bankName.focus();
+
+            return;
+          }
+
+          if (!accountNumber.value.trim()) {
+            alert("Account number is required.");
+
+            accountNumber.focus();
+
+            return;
+          }
+
+          if (!/^[0-9]+$/.test(accountNumber.value.trim())) {
+            alert("Account number must contain only digits.");
+
+            accountNumber.focus();
+
+            return;
+          }
+
+          if (!ifscCode.value.trim()) {
+            alert("IFSC code is required.");
+
+            ifscCode.focus();
+
+            return;
+          }
+
+          if (
+            !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifscCode.value.trim().toUpperCase())
+          ) {
+            alert("Please enter a valid IFSC code.");
+
+            ifscCode.focus();
+
+            return;
+          }
+
+          if (cancelledCheque.files.length === 0) {
+            alert("Please upload the cancelled cheque.");
+            cancelledCheque.focus();
+            return;
           }
 
           const token = sessionStorage.getItem("access_token");
 
           if (!token) {
             alert("Please login first.");
+
             return;
           }
+
+          // =================================================
+          // BUILD FORM DATA
+          // =================================================
 
           const formData = new FormData();
 
@@ -1024,7 +1271,9 @@
 
           formData.append("beneficiary_type", form.beneficiary_type.value);
 
-          formData.append("beneficiary_age", form.beneficiary_age.value);
+          if (form.beneficiary_age.value) {
+            formData.append("beneficiary_age", form.beneficiary_age.value);
+          }
 
           if (form.beneficiary_type.value !== "Me") {
             formData.append(
@@ -1037,10 +1286,12 @@
               form.beneficiary_name.value.trim(),
             );
 
-            formData.append(
-              "beneficiary_mobile",
-              form.beneficiary_mobile.value,
-            );
+            if (form.beneficiary_mobile.value) {
+              formData.append(
+                "beneficiary_mobile",
+                form.beneficiary_mobile.value,
+              );
+            }
 
             formData.append(
               "beneficiary_location",
@@ -1062,13 +1313,47 @@
             }
           }
 
+          // =================================================
+          // BANK ACCOUNT DATA
+          // =================================================
+
+          formData.append(
+            "account_holder_name",
+            accountHolderName.value.trim(),
+          );
+
+          formData.append("account_number", accountNumber.value.trim());
+
+          formData.append("ifsc_code", ifscCode.value.trim().toUpperCase());
+
+          formData.append("bank_name", bankName.value.trim());
+
+          formData.append(
+            "branch_name",
+            document.getElementById("branch_name").value.trim(),
+          );
+
+          formData.append("cancelled_cheque", cancelledCheque.files[0]);
+
+          // =================================================
+          // DATES
+          // =================================================
+
           formData.append("start_date", form.start_date.value);
 
           formData.append("end_date", form.end_date.value);
 
+          // =================================================
+          // COVER PHOTO
+          // =================================================
+
           if (form.cover_photo.files.length) {
             formData.append("cover_photo", form.cover_photo.files[0]);
           }
+
+          // =================================================
+          // MEDICAL
+          // =================================================
 
           if (form.cause.value === "Medical") {
             formData.append("hospital_name", form.hospital_name.value);
@@ -1077,37 +1362,37 @@
 
             formData.append("ailment", form.ailment.value);
           }
+
           console.log("createdCampaignSlug:", createdCampaignSlug);
-          console.log(
-            "sessionStorage:",
-            sessionStorage.getItem("draft_campaign_slug"),
-          );
+
           try {
             let url;
             let method;
 
             if (createdCampaignSlug) {
-              // Existing draft
               url = `/api/campaigns/update-campaigns/${createdCampaignSlug}`;
+
               method = "PATCH";
             } else {
-              // First save
               url = "/api/campaigns/create-campaign";
+
               method = "POST";
             }
 
             const response = await fetch(url, {
               method: method,
+
               headers: {
                 Authorization: `Bearer ${token}`,
               },
+
               body: formData,
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-              let errorMessage = "Unable to save draft";
+              let errorMessage = "Unable to save campaign.";
 
               if (data.message) {
                 errorMessage = data.message;
@@ -1122,17 +1407,19 @@
               }
 
               alert(errorMessage);
+
               return;
             }
+
             console.log(data);
+
             console.log(data.data);
-            console.log(data.data.campaign_slug);
+
             createdCampaignSlug = data.data.campaign_slug;
 
-            // save draft campaign slug
             sessionStorage.setItem("draft_campaign_slug", createdCampaignSlug);
 
-            alert("Campaign saved as draft.");
+            alert("Campaign saved successfully.");
 
             step2.style.display = "none";
 
@@ -1145,9 +1432,9 @@
               behavior: "smooth",
             });
           } catch (error) {
-            console.log(error);
+            console.error(error);
 
-            alert("Something went wrong");
+            alert("Something went wrong.");
           }
         });
 
@@ -1191,20 +1478,12 @@
 
           const type = document.getElementById("document_type");
 
-          const holder = document.getElementById("document_holder_name");
-
           const number = document.getElementById("document_number");
 
           const file = document.getElementById("campaign_document");
 
           if (!type.value) {
             alert("Select document type.");
-
-            return;
-          }
-
-          if (!holder.value.trim()) {
-            alert("Enter document holder name.");
 
             return;
           }
@@ -1223,9 +1502,9 @@
 
           fd.append("document_type", type.value.trim());
 
-          fd.append("document_holder_name", holder.value.trim());
-
-          fd.append("document_number", number.value.trim());
+          if (number.value.trim()) {
+            fd.append("document_number", number.value.trim());
+          }
 
           fd.append("file_url", file.files[0]);
 
@@ -1246,60 +1525,73 @@
             const data = await response.json();
 
             if (!response.ok) {
-              alert(data.message || "Document upload failed.");
+              let errorMessage = "Document upload failed.";
 
+              if (data.message) {
+                errorMessage = data.message;
+              } else if (data.errors) {
+                errorMessage = Object.entries(data.errors)
+                  .map(([field, messages]) => {
+                    const messageText = Array.isArray(messages)
+                      ? messages.join("\n")
+                      : messages;
+
+                    return `${field}: ${messageText}`;
+                  })
+                  .join("\n");
+              }
+
+              alert(errorMessage);
+              console.error("DOCUMENT UPLOAD ERROR:", data);
               return;
             }
 
             const tbody = document.querySelector("#documentTable tbody");
 
             tbody.innerHTML += `
-                <tr id="doc-row-${data.document.uuid}">
-                    <td>${data.document.document_type}</td>
+            <tr id="doc-row-${data.document.uuid}">
 
-                    <td>${holder.value}</td>
+              <td>
+                ${data.document.document_type}
+              </td>
 
-                    <td style="color:green">
-                        Uploaded
-                    </td>
+              
 
-                    <td style="text-align:center">
-                        <button
-                            type="button"
-                            onclick="deleteDocument('${data.document.uuid}')"
-                            style="
-                                border:none;
-                                background:none;
-                                cursor:pointer;
-                                font-size:18px;
-                                color:red;
-                            "
-                            title="Delete Document"
-                        >
-                            <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="20"
-        height="20"
-        fill="#dc3545"
-        viewBox="0 0 16 16"
-    >
-        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0A.5.5 0 0 1 8.5 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1 0-2H5V1.5A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5V2h2.5a1 1 0 0 1 1 1zM6 2h4v-.5a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5V2zm-2 2v9a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4H4z"/>
-    </svg>
-                        </button>
-                    </td>
-                </tr>
-                `;
+              <td style="color:green">
+                Uploaded
+              </td>
 
-            // Reset form fields
+              <td style="text-align:center">
+
+                <button
+                  type="button"
+                  onclick="deleteDocument('${data.document.uuid}')"
+                  style="
+                    border:none;
+                    background:none;
+                    cursor:pointer;
+                    font-size:18px;
+                    color:red;
+                  "
+                  title="Delete Document"
+                >
+
+                  🗑
+
+                </button>
+
+              </td>
+
+            </tr>
+          `;
+
             type.value = "";
-            holder.value = "";
             number.value = "";
             file.value = "";
 
             alert("Document uploaded successfully.");
           } catch (error) {
-            console.log(error);
+            console.error(error);
 
             alert("Something went wrong while uploading document.");
           }
@@ -1314,6 +1606,7 @@
 
           if (!document.getElementById("declaration").checked) {
             alert("Please accept the declaration.");
+
             return;
           }
 
@@ -1321,29 +1614,28 @@
 
           if (!token) {
             alert("Please login first.");
+
             return;
           }
 
           if (!createdCampaignSlug) {
             alert("Please save campaign before uploading documents.");
+
             return;
           }
 
           try {
             alert("Submitting campaign for verification...");
 
-            /*
-                          Change campaign status from DRAFT
-                          to PENDING VERIFICATION
-                      */
-
-            const response = await fetch(`/api/verification/campaign/submit`, {
+            const response = await fetch("/api/verification/campaign/submit", {
               method: "POST",
 
               headers: {
                 Authorization: `Bearer ${token}`,
+
                 "Content-Type": "application/json",
               },
+
               body: JSON.stringify({
                 campaign_slug: createdCampaignSlug,
               }),
@@ -1363,23 +1655,25 @@
 
             window.location.href = "/frontend/my-campaigns";
           } catch (error) {
-            console.log(error);
+            console.error(error);
 
             alert("Something went wrong.");
           }
         });
       });
-      
-      document.addEventListener("DOMContentLoaded", async function () {
-        // =====================================================
-        // USER ACCESS / PROFILE VERIFICATION CHECK
-        // =====================================================
 
+      // =========================================================
+      // USER ACCESS / PROFILE VERIFICATION CHECK
+      // =========================================================
+
+      document.addEventListener("DOMContentLoaded", async function () {
         const token = sessionStorage.getItem("access_token");
 
         if (!token) {
           alert("Please login first.");
+
           window.location.href = "/frontend/login";
+
           return;
         }
 
@@ -1388,8 +1682,10 @@
             `${API_BASE}/api/accounts/get-user-info`,
             {
               method: "GET",
+
               headers: {
                 Authorization: `Bearer ${token}`,
+
                 "Content-Type": "application/json",
               },
             },
@@ -1399,38 +1695,43 @@
 
           if (!response.ok) {
             sessionStorage.removeItem("access_token");
+
             sessionStorage.removeItem("refresh_token");
 
             alert(data.message || "Unable to verify your account.");
 
             window.location.href = "/frontend/login";
+
             return;
           }
 
           console.log("USER INFO:", data);
 
-          // =====================================================
-          // GET USER INFORMATION
-          // =====================================================
-
           const user = data.data || data;
 
           const userType = user.user_type;
+
           const accountStatus = user.status;
+
           const verificationStatus = user.verification_status;
+
           const profileStatus = user.profile_status;
 
           console.log("User Type:", userType);
+
           console.log("Account Status:", accountStatus);
+
           console.log("Verification Status:", verificationStatus);
+
           console.log("Profile Status:", profileStatus);
 
-          // =====================================================
-          // 1. ONLY INDIVIDUAL FUNDRAISER CAN CREATE CAMPAIGN
-          // =====================================================
+          // =================================================
+          // ONLY INDIVIDUAL FUNDRAISER
+          // =================================================
 
           if (userType !== "Individual Fundraiser") {
             sessionStorage.removeItem("access_token");
+
             sessionStorage.removeItem("refresh_token");
 
             alert(
@@ -1438,29 +1739,33 @@
             );
 
             window.location.href = "/frontend/login";
+
             return;
           }
 
-          // =====================================================
-          // 2. ACCOUNT DELETED
-          // =====================================================
+          // =================================================
+          // ACCOUNT DELETED
+          // =================================================
 
           if (accountStatus === "Deleted") {
             sessionStorage.removeItem("access_token");
+
             sessionStorage.removeItem("refresh_token");
 
             alert("Your account has been deleted. You can sign up again.");
 
             window.location.href = "/frontend/signup";
+
             return;
           }
 
-          // =====================================================
-          // 3. ACCOUNT NOT ACTIVE
-          // =====================================================
+          // =================================================
+          // ACCOUNT NOT ACTIVE
+          // =================================================
 
           if (accountStatus !== "Active") {
             sessionStorage.removeItem("access_token");
+
             sessionStorage.removeItem("refresh_token");
 
             alert(
@@ -1468,12 +1773,13 @@
             );
 
             window.location.href = "/frontend/signup";
+
             return;
           }
 
-          // =====================================================
-          // 4. PROFILE / KYC REJECTED
-          // =====================================================
+          // =================================================
+          // PROFILE / KYC REJECTED
+          // =================================================
 
           if (
             profileStatus === "Verification Rejected" ||
@@ -1484,12 +1790,13 @@
             );
 
             window.location.href = "/frontend/profile/fundraiser";
+
             return;
           }
 
-          // =====================================================
-          // 5. PROFILE NOT VERIFIED
-          // =====================================================
+          // =================================================
+          // PROFILE NOT VERIFIED
+          // =================================================
 
           const profileNotVerified =
             verificationStatus === "Not Submitted" ||
@@ -1504,12 +1811,13 @@
             );
 
             window.location.href = "/frontend/profile/fundraiser";
+
             return;
           }
 
-          // =====================================================
-          // 6. FINAL ACCESS CHECK
-          // =====================================================
+          // =================================================
+          // FINAL ACCESS CHECK
+          // =================================================
 
           if (
             verificationStatus !== "Approved" ||
@@ -1520,29 +1828,18 @@
             );
 
             window.location.href = "/frontend/profile/fundraiser";
+
             return;
           }
 
-          // =====================================================
-          // USER IS ALLOWED
-          // Continue loading campaign page
-          // =====================================================
-
           console.log("Campaign creation access granted.");
-
-          // =====================================================
-          // YOUR EXISTING CAMPAIGN CODE STARTS HERE
-          // =====================================================
-
-          const form = document.getElementById("campaignForm");
-
-          // ... keep all your existing JavaScript here ...
         } catch (error) {
           console.error("USER INFO ERROR:", error);
 
           alert("Unable to verify your profile. Please login again.");
 
           sessionStorage.removeItem("access_token");
+
           sessionStorage.removeItem("refresh_token");
 
           window.location.href = "/frontend/login";

@@ -7,6 +7,7 @@ from rest_framework.decorators import (
     authentication_classes,
 )
 from decimal import ROUND_UP
+from accounts.models import BankAccount
 from campaigns.models import RAZORPAY_FEE_PERCENTAGE, GST_PERCENTAGE
 from decimal import Decimal, InvalidOperation
 from django.core.paginator import Paginator
@@ -25,7 +26,6 @@ from campaigns.serializers import (
     CampaignPromotionServiceTypesSerializer,
     MyCampaignDetailSerializer,
     MyCampaignListSerializer,
-    
 )
 from crowdfunding.enums import (
     BeneficiaryType,
@@ -51,7 +51,11 @@ from django.core.exceptions import ValidationError
 from crowdfunding.permissions import IsCampaignCreator
 from donations.models import Donation
 from organizations.models import NGOProfile
-from payments.models import PaymentTransaction, PromotionServicePaymentTransaction, Withdrawal
+from payments.models import (
+    PaymentTransaction,
+    PromotionServicePaymentTransaction,
+    Withdrawal,
+)
 from verification.models import EntityVerificationRequest
 import razorpay
 from django.conf import settings
@@ -154,13 +158,16 @@ def campaign_list(request):
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated, IsCampaignCreator])
+@transaction.atomic
 def create_campaign(request):
 
     user = request.user
+    print("user", request.user)
 
-    # --------------------------------------------------
-    # Only Individual Fundraiser and NGO can create campaigns
-    # --------------------------------------------------
+    # =========================================================
+    # 1. ONLY INDIVIDUAL FUNDRAISER AND NGO CAN CREATE
+    # =========================================================
+    print(user.user_type)
     if user.user_type not in (
         UserType.INDIVIDUAL_FUNDRAISER,
         UserType.NGO,
@@ -173,9 +180,10 @@ def create_campaign(request):
             status=status.HTTP_403_FORBIDDEN,
         )
 
-    # --------------------------------------------------
-    # Profile verification
-    # --------------------------------------------------
+    # =========================================================
+    # 2. PROFILE VERIFICATION
+    # =========================================================
+
     verification = (
         EntityVerificationRequest.objects.filter(user=user)
         .order_by("-created_at")
@@ -186,7 +194,10 @@ def create_campaign(request):
         return Response(
             {
                 "success": False,
-                "message": "Please complete profile verification before creating a campaign.",
+                "message": (
+                    "Please complete profile verification before "
+                    "creating a campaign."
+                ),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -204,7 +215,10 @@ def create_campaign(request):
         return Response(
             {
                 "success": False,
-                "message": "Your verification request was rejected. Please resubmit your documents.",
+                "message": (
+                    "Your verification request was rejected. "
+                    "Please resubmit your documents."
+                ),
             },
             status=status.HTTP_403_FORBIDDEN,
         )
@@ -218,10 +232,10 @@ def create_campaign(request):
             status=status.HTTP_403_FORBIDDEN,
         )
 
-    # --------------------------------------------------
-    # Campaign Type
-    # --------------------------------------------------
-
+    # =========================================================
+    # 3. CAMPAIGN TYPE
+    # =========================================================
+    print("here",user.user_type)
     if user.user_type == UserType.INDIVIDUAL_FUNDRAISER:
 
         campaign_type = CampaignType.CROWDFUNDING
@@ -242,6 +256,7 @@ def create_campaign(request):
 
         try:
             campaign_type = CampaignType(campaign_type)
+
         except ValueError:
             return Response(
                 {
@@ -258,16 +273,21 @@ def create_campaign(request):
             return Response(
                 {
                     "success": False,
-                    "message": "NGOs can only create Crowdfunding or CSR campaigns.",
+                    "message": (
+                        "NGOs can only create Crowdfunding " "or CSR campaigns."
+                    ),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        ngo = get_object_or_404(NGOProfile, user=user)
+        ngo = get_object_or_404(
+            NGOProfile,
+            user=user,
+        )
 
-    # --------------------------------------------------
-    # Validate Cause
-    # --------------------------------------------------
+    # =========================================================
+    # 4. VALIDATE CAUSE
+    # =========================================================
 
     crowdfunding_causes = {
         CampaignCause.MEDICAL,
@@ -305,6 +325,7 @@ def create_campaign(request):
 
     try:
         cause = CampaignCause(cause)
+
     except ValueError:
         return Response(
             {
@@ -318,7 +339,9 @@ def create_campaign(request):
         return Response(
             {
                 "success": False,
-                "message": "Selected cause is not allowed for Crowdfunding campaigns.",
+                "message": (
+                    "Selected cause is not allowed for " "Crowdfunding campaigns."
+                ),
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
@@ -327,28 +350,14 @@ def create_campaign(request):
         return Response(
             {
                 "success": False,
-                "message": "Selected cause is not allowed for CSR campaigns.",
+                "message": ("Selected cause is not allowed for " "CSR campaigns."),
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    # --------------------------------------------------
-    # Build campaign data
-    # --------------------------------------------------
-
-    campaign_data = {
-        "created_by": user,
-        "ngo": ngo,
-        "campaign_type": campaign_type,
-        "campaign_name": request.data.get("campaign_name"),
-        "campaign_desc": request.data.get("campaign_desc"),
-        "cover_photo": request.FILES.get("cover_photo"),
-        "goal_amount": request.data.get("goal_amount"),
-        "cause": cause,
-        "beneficiary_type": request.data.get("beneficiary_type"),
-        "start_date": request.data.get("start_date"),
-        "end_date": request.data.get("end_date"),
-    }
+    # =========================================================
+    # 5. BENEFICIARY TYPE
+    # =========================================================
 
     beneficiary_type = request.data.get("beneficiary_type")
 
@@ -361,36 +370,146 @@ def create_campaign(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    # =========================================================
+    # 6. BENEFICIARY BANK ACCOUNT INPUT
+    # =========================================================
+    #
+    # Bank account is created specifically for this campaign.
+    #
+    # user = None
+    # campaign = newly created campaign
+    #
+    # =========================================================
+
+    account_holder_name = request.data.get("account_holder_name")
+    account_number = request.data.get("account_number")
+    ifsc_code = request.data.get("ifsc_code")
+    bank_name = request.data.get("bank_name")
+    branch_name = request.data.get("branch_name")
+    cancelled_cheque = request.FILES.get("cancelled_cheque")
+
+    bank_required_fields = {
+        "account_holder_name": account_holder_name,
+        "account_number": account_number,
+        "ifsc_code": ifsc_code,
+        "bank_name": bank_name,
+        "branch_name": branch_name,
+        "cancelled_cheque": cancelled_cheque,
+    }
+
+    missing_bank_fields = [
+        field for field, value in bank_required_fields.items() if value in (None, "")
+    ]
+
+    if missing_bank_fields:
+        return Response(
+            {
+                "success": False,
+                "message": "Bank account details are required.",
+                "missing_fields": missing_bank_fields,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # =========================================================
+    # 7. BUILD CAMPAIGN DATA
+    # =========================================================
+
+    campaign_data = {
+        "created_by": user,
+        "ngo": ngo,
+        "campaign_type": campaign_type,
+        "campaign_name": request.data.get("campaign_name"),
+        "campaign_desc": request.data.get("campaign_desc"),
+        "cover_photo": request.FILES.get("cover_photo"),
+        "goal_amount": request.data.get("goal_amount"),
+        "cause": cause,
+        "beneficiary_type": beneficiary_type,
+        "start_date": request.data.get("start_date"),
+        "end_date": request.data.get("end_date"),
+    }
+
+    # =========================================================
+    # 8. BENEFICIARY DETAILS
+    # =========================================================
+
     if beneficiary_type != BeneficiaryType.ME.value:
 
         campaign_data["beneficiary_group_type"] = request.data.get(
             "beneficiary_group_type"
         )
 
-        campaign_data["beneficiary_name"] = request.data.get("beneficiary_name")
+        campaign_data["beneficiary_name"] = request.data.get(
+            "beneficiary_name"
+        )
 
-        campaign_data["beneficiary_mobile"] = request.data.get("beneficiary_mobile")
+        campaign_data["beneficiary_mobile"] = request.data.get(
+            "beneficiary_mobile"
+        )
 
-        campaign_data["beneficiary_location"] = request.data.get("beneficiary_location")
+        campaign_data["beneficiary_location"] = request.data.get(
+            "beneficiary_location"
+        )
+
+        # ---------------------------------------------------------
+        # BENEFICIARY MEMBER COUNT
+        # ---------------------------------------------------------
 
         member_count = request.data.get("beneficiary_member_count")
 
-        campaign_data["beneficiary_member_count"] = (
-            int(member_count) if member_count not in (None, "") else None
-        )
+        if member_count not in (None, ""):
+            try:
+                campaign_data["beneficiary_member_count"] = int(member_count)
+            except (TypeError, ValueError):
+                return Response(
+                    {
+                        "success": False,
+                        "message": (
+                            "beneficiary_member_count must be a valid integer."
+                        ),
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            campaign_data["beneficiary_member_count"] = None
 
-        age = request.data.get("beneficiary_age")
-
-        campaign_data["beneficiary_age"] = int(age) if age not in (None, "") else None
+        # ---------------------------------------------------------
+        # BENEFICIARY RELATION
+        # ---------------------------------------------------------
 
         if user.user_type == UserType.INDIVIDUAL_FUNDRAISER:
             campaign_data["beneficiary_relation"] = request.data.get(
                 "beneficiary_relation"
             )
 
-    # --------------------------------------------------
-    # Medical fields
-    # --------------------------------------------------
+
+    # =========================================================
+    # BENEFICIARY AGE
+    # =========================================================
+    # Age must be handled for ALL beneficiary types,
+    # including "ME".
+
+    age = request.data.get("beneficiary_age")
+
+    if age not in (None, ""):
+        try:
+            campaign_data["beneficiary_age"] = int(age)
+        except (TypeError, ValueError):
+            return Response(
+                {
+                    "success": False,
+                    "message": "beneficiary_age must be a valid integer.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+    else:
+        campaign_data["beneficiary_age"] = None
+
+
+
+    # =========================================================
+    # 9. MEDICAL FIELDS
+    # =========================================================
 
     if cause == CampaignCause.MEDICAL:
 
@@ -400,12 +519,14 @@ def create_campaign(request):
 
         campaign_data["ailment"] = request.data.get("ailment")
 
-    # --------------------------------------------------
-    # Create Campaign
-    # --------------------------------------------------
+    # =========================================================
+    # 10. CREATE CAMPAIGN
+    # =========================================================
 
     try:
-        print("campaign_data", campaign_data)
+
+        print("campaign_data:", campaign_data)
+
         campaign = Campaign.objects.create(**campaign_data)
 
     except ValidationError as e:
@@ -430,9 +551,48 @@ def create_campaign(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
-    # --------------------------------------------------
-    # Success
-    # --------------------------------------------------
+    # =========================================================
+    # 11. CREATE CAMPAIGN BENEFICIARY BANK ACCOUNT
+    # =========================================================
+
+    try:
+
+        bank_account = BankAccount.objects.create(
+            user=None,
+            campaign=campaign,
+            account_holder_name=account_holder_name,
+            account_number=account_number,
+            ifsc_code=ifsc_code,
+            bank_name=bank_name,
+            branch_name=branch_name,
+            cancelled_cheque=cancelled_cheque,
+        )
+
+    except ValidationError as e:
+
+        return Response(
+            {
+                "success": False,
+                "errors": (
+                    e.message_dict if hasattr(e, "message_dict") else e.messages
+                ),
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    except Exception as e:
+
+        return Response(
+            {
+                "success": False,
+                "message": str(e),
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # =========================================================
+    # 12. SUCCESS RESPONSE
+    # =========================================================
 
     return Response(
         {
@@ -444,14 +604,17 @@ def create_campaign(request):
                 "campaign_type": campaign.campaign_type.value,
                 "campaign_status": campaign.campaign_status.value,
                 "created_at": campaign.created_at,
+                "bank_account": {
+                    "uuid": str(bank_account.uuid),
+                    "account_holder_name": (bank_account.account_holder_name),
+                    "account_number": (bank_account.account_number),
+                    "ifsc_code": bank_account.ifsc_code,
+                    "bank_name": bank_account.bank_name,
+                },
             },
         },
         status=status.HTTP_201_CREATED,
     )
-
-
-
-
 
 
 @api_view(["POST"])
@@ -507,9 +670,7 @@ def create_campaign_promotion_payment(request):
     # =========================================================
 
     try:
-        campaign = Campaign.objects.get(
-            campaign_slug=campaign_slug
-        )
+        campaign = Campaign.objects.get(campaign_slug=campaign_slug)
     except Campaign.DoesNotExist:
         return Response(
             {
@@ -557,10 +718,7 @@ def create_campaign_promotion_payment(request):
         verification_type=VerificationType.CAMPAIGN,
     ).first()
 
-    if (
-        not verification
-        or verification.status != VerificationStatus.APPROVED
-    ):
+    if not verification or verification.status != VerificationStatus.APPROVED:
         return Response(
             {
                 "success": False,
@@ -579,8 +737,7 @@ def create_campaign_promotion_payment(request):
 
     # Get all allowed hard-coded promotion types
     allowed_service_types = {
-        service_type.value
-        for service_type in CampaignPromotionServiceType
+        service_type.value for service_type in CampaignPromotionServiceType
     }
 
     for item in services_data:
@@ -597,9 +754,7 @@ def create_campaign_promotion_payment(request):
             return Response(
                 {
                     "success": False,
-                    "message": (
-                        "service_type is required for every service."
-                    ),
+                    "message": ("service_type is required for every service."),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -612,10 +767,7 @@ def create_campaign_promotion_payment(request):
             return Response(
                 {
                     "success": False,
-                    "message": (
-                        f"Invalid promotion service type: "
-                        f"{service_type}."
-                    ),
+                    "message": (f"Invalid promotion service type: " f"{service_type}."),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -628,10 +780,7 @@ def create_campaign_promotion_payment(request):
             return Response(
                 {
                     "success": False,
-                    "message": (
-                        f"Amount is required for service "
-                        f"{service_type}."
-                    ),
+                    "message": (f"Amount is required for service " f"{service_type}."),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -641,18 +790,13 @@ def create_campaign_promotion_payment(request):
         # -----------------------------------------------------
 
         try:
-            amount = Decimal(str(amount)).quantize(
-                Decimal("0.01")
-            )
+            amount = Decimal(str(amount)).quantize(Decimal("0.01"))
         except (InvalidOperation, TypeError, ValueError):
 
             return Response(
                 {
                     "success": False,
-                    "message": (
-                        f"Invalid amount for service "
-                        f"{service_type}."
-                    ),
+                    "message": (f"Invalid amount for service " f"{service_type}."),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
@@ -662,8 +806,7 @@ def create_campaign_promotion_payment(request):
                 {
                     "success": False,
                     "message": (
-                        f"Amount for {service_type} "
-                        "must be greater than zero."
+                        f"Amount for {service_type} " "must be greater than zero."
                     ),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -673,9 +816,7 @@ def create_campaign_promotion_payment(request):
         # CONVERT STRING TO ENUM
         # -----------------------------------------------------
 
-        promotion_service_type = CampaignPromotionServiceType(
-            service_type
-        )
+        promotion_service_type = CampaignPromotionServiceType(service_type)
 
         # -----------------------------------------------------
         # STORE SERVICE
@@ -719,23 +860,13 @@ def create_campaign_promotion_payment(request):
     # ₹3072.52
     # =========================================================
 
-    fee_percentage = (
-        RAZORPAY_FEE_PERCENTAGE / Decimal("100")
-    )
+    fee_percentage = RAZORPAY_FEE_PERCENTAGE / Decimal("100")
 
-    gst_percentage = (
-        GST_PERCENTAGE / Decimal("100")
-    )
+    gst_percentage = GST_PERCENTAGE / Decimal("100")
 
-    denominator = (
-        Decimal("1")
-        - fee_percentage
-        - (fee_percentage * gst_percentage)
-    )
+    denominator = Decimal("1") - fee_percentage - (fee_percentage * gst_percentage)
 
-    final_total = (
-        service_total / denominator
-    ).quantize(
+    final_total = (service_total / denominator).quantize(
         Decimal("0.01"),
         rounding=ROUND_UP,
     )
@@ -744,16 +875,12 @@ def create_campaign_promotion_payment(request):
     # 8. CALCULATE FEE AND GST FOR DISPLAY/STORAGE
     # =========================================================
 
-    total_fee = (
-        final_total * fee_percentage
-    ).quantize(
+    total_fee = (final_total * fee_percentage).quantize(
         Decimal("0.01"),
         rounding=ROUND_UP,
     )
 
-    total_tax = (
-        total_fee * gst_percentage
-    ).quantize(
+    total_tax = (total_fee * gst_percentage).quantize(
         Decimal("0.01"),
         rounding=ROUND_UP,
     )
@@ -778,13 +905,9 @@ def create_campaign_promotion_payment(request):
 
         razorpay_order = razorpay_client.order.create(
             {
-                "amount": int(
-                    final_total * Decimal("100")
-                ),
+                "amount": int(final_total * Decimal("100")),
                 "currency": "INR",
-                "receipt": str(
-                    payment_transaction.uuid
-                ),
+                "receipt": str(payment_transaction.uuid),
             }
         )
 
@@ -801,9 +924,7 @@ def create_campaign_promotion_payment(request):
     # 11. SAVE RAZORPAY ORDER ID
     # =========================================================
 
-    payment_transaction.gateway_order_id = (
-        razorpay_order["id"]
-    )
+    payment_transaction.gateway_order_id = razorpay_order["id"]
 
     payment_transaction.save(
         update_fields=[
@@ -827,40 +948,30 @@ def create_campaign_promotion_payment(request):
         service_amount = item["amount"]
 
         # Proportion of total promotion budget
-        proportion = (
-            service_amount / service_total
-        )
+        proportion = service_amount / service_total
 
-        service_fee = (
-            total_fee * proportion
-        ).quantize(
+        service_fee = (total_fee * proportion).quantize(
             Decimal("0.01"),
             rounding=ROUND_UP,
         )
 
-        service_tax = (
-            total_tax * proportion
-        ).quantize(
+        service_tax = (total_tax * proportion).quantize(
             Decimal("0.01"),
             rounding=ROUND_UP,
         )
 
-        promotion_service = (
-            CampaignPromotionService.objects.create(
-                campaign=campaign,
-                service_type=item["service_type"],
-                amount=service_amount,
-                fee=service_fee,
-                tax=service_tax,
-                currency=Currency.INR,
-                promotion_status=PromotionStatus.PENDING,
-                user_notes=item["user_notes"],
-            )
+        promotion_service = CampaignPromotionService.objects.create(
+            campaign=campaign,
+            service_type=item["service_type"],
+            amount=service_amount,
+            fee=service_fee,
+            tax=service_tax,
+            currency=Currency.INR,
+            promotion_status=PromotionStatus.PENDING,
+            user_notes=item["user_notes"],
         )
 
-        created_services.append(
-            promotion_service
-        )
+        created_services.append(promotion_service)
 
     # =========================================================
     # 13. LINK SERVICES TO PAYMENT TRANSACTION
@@ -882,44 +993,23 @@ def create_campaign_promotion_payment(request):
             "success": True,
             "message": "Promotion payment order created.",
             "data": {
-                "transaction_uuid": str(
-                    payment_transaction.uuid
-                ),
-
-                "razorpay_order_id": (
-                    razorpay_order["id"]
-                ),
-
+                "transaction_uuid": str(payment_transaction.uuid),
+                "razorpay_order_id": (razorpay_order["id"]),
                 # Actual promotion budget
                 "promotion_budget": service_total,
-
                 # Fee charged to customer
                 "razorpay_fee": total_fee,
-
                 # GST on fee
                 "gst": total_tax,
-
                 # Actual amount customer pays
                 "amount": final_total,
-
-                "amount_in_paise": int(
-                    final_total * Decimal("100")
-                ),
-
+                "amount_in_paise": int(final_total * Decimal("100")),
                 "currency": "INR",
-
-                "razorpay_key_id": (
-                    settings.RAZORPAY_KEY_ID
-                ),
-
+                "razorpay_key_id": (settings.RAZORPAY_KEY_ID),
                 "services": [
                     {
-                        "promotion_service_uuid": str(
-                            service.uuid
-                        ),
-                        "service_type": (
-                            service.service_type.value
-                        ),
+                        "promotion_service_uuid": str(service.uuid),
+                        "service_type": (service.service_type.value),
                         "amount": service.amount,
                         "fee": service.fee,
                         "tax": service.tax,
@@ -932,21 +1022,25 @@ def create_campaign_promotion_payment(request):
     )
 
 
-
-
-
-
 @api_view(["PATCH"])
 @permission_classes([IsAuthenticated, IsCampaignCreator])
+@transaction.atomic
 def update_campaign(request, campaign_slug):
+
     print("entered")
+
     campaign = get_object_or_404(
         Campaign,
         campaign_slug=campaign_slug,
         created_by=request.user,
         campaign_status=CampaignStatus.DRAFT,
     )
+
     print("exit")
+
+    # =========================================================
+    # 1. CAMPAIGN FIELDS
+    # =========================================================
 
     fields = [
         "campaign_name",
@@ -970,43 +1064,231 @@ def update_campaign(request, campaign_slug):
 
     for field in fields:
         if field in request.data:
-            setattr(campaign, field, request.data.get(field))
+            setattr(
+                campaign,
+                field,
+                request.data.get(field),
+            )
 
-    if "cause" in request.data:
-        campaign.cause = request.data["cause"]
+    # =========================================================
+    # 2. MEDICAL FIELDS
+    # =========================================================
 
-    # Medical fields
     if campaign.cause == CampaignCause.MEDICAL:
-        campaign.hospital_name = request.data.get("hospital_name")
-        campaign.hospital_location = request.data.get("hospital_location")
-        campaign.ailment = request.data.get("ailment")
+
+        campaign.hospital_name = request.data.get(
+            "hospital_name"
+        )
+
+        campaign.hospital_location = request.data.get(
+            "hospital_location"
+        )
+
+        campaign.ailment = request.data.get(
+            "ailment"
+        )
+
     else:
+
         campaign.hospital_name = None
         campaign.hospital_location = None
         campaign.ailment = None
 
-    for field in ["beneficiary_age", "beneficiary_member_count"]:
+    # =========================================================
+    # 3. INTEGER FIELDS
+    # =========================================================
+
+    for field in [
+        "beneficiary_age",
+        "beneficiary_member_count",
+    ]:
+
         if field in request.data:
+
             value = request.data.get(field)
 
             if value in ["", None]:
-                setattr(campaign, field, None)
+
+                setattr(
+                    campaign,
+                    field,
+                    None,
+                )
+
             else:
-                setattr(campaign, field, int(value))
 
-    # Cover photo
+                try:
+                    setattr(
+                        campaign,
+                        field,
+                        int(value),
+                    )
+
+                except (TypeError, ValueError):
+
+                    return Response(
+                        {
+                            "success": False,
+                            "message": (
+                                f"{field} must be a valid integer."
+                            ),
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+    # =========================================================
+    # 4. COVER PHOTO
+    # =========================================================
+
     if "cover_photo" in request.FILES:
-        campaign.cover_photo = request.FILES["cover_photo"]
 
-    campaign.save()
+        campaign.cover_photo = request.FILES[
+            "cover_photo"
+        ]
+
+    # =========================================================
+    # 5. UPDATE CAMPAIGN
+    # =========================================================
+
+    try:
+
+        campaign.save()
+
+    except ValidationError as e:
+
+        return Response(
+            {
+                "success": False,
+                "errors": (
+                    e.message_dict
+                    if hasattr(e, "message_dict")
+                    else e.messages
+                ),
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # =========================================================
+    # 6. CAMPAIGN BENEFICIARY BANK ACCOUNT
+    # =========================================================
+
+    bank_account = BankAccount.objects.filter(
+        campaign=campaign
+    ).first()
+
+    if not bank_account:
+
+        return Response(
+            {
+                "success": False,
+                "message": (
+                    "Beneficiary bank account was not found."
+                ),
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # =========================================================
+    # 7. UPDATE BANK ACCOUNT FIELDS
+    # =========================================================
+
+    bank_fields = [
+        "account_holder_name",
+        "account_number",
+        "ifsc_code",
+        "bank_name",
+        "branch_name",
+    ]
+
+    for field in bank_fields:
+
+        if field in request.data:
+
+            value = request.data.get(field)
+
+            if value not in [None, ""]:
+
+                setattr(
+                    bank_account,
+                    field,
+                    value,
+                )
+
+    # =========================================================
+    # 8. CANCELLED CHEQUE
+    # =========================================================
+
+    if "cancelled_cheque" in request.FILES:
+
+        bank_account.cancelled_cheque = request.FILES[
+            "cancelled_cheque"
+        ]
+
+    # =========================================================
+    # 9. SAVE BANK ACCOUNT
+    # =========================================================
+
+    try:
+
+        bank_account.save()
+
+    except ValidationError as e:
+
+        return Response(
+            {
+                "success": False,
+                "errors": (
+                    e.message_dict
+                    if hasattr(e, "message_dict")
+                    else e.messages
+                ),
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # =========================================================
+    # 10. SUCCESS RESPONSE
+    # =========================================================
 
     return Response(
         {
             "success": True,
             "message": "Campaign updated successfully.",
-            "data": {"campaign_slug": str(campaign.campaign_slug)},
-        }
+            "data": {
+                "campaign_slug": str(
+                    campaign.campaign_slug
+                ),
+                "bank_account": {
+                    "uuid": str(
+                        bank_account.uuid
+                    ),
+                    "account_holder_name": (
+                        bank_account.account_holder_name
+                    ),
+                    "account_number": (
+                        bank_account.account_number
+                    ),
+                    "ifsc_code": (
+                        bank_account.ifsc_code
+                    ),
+                    "bank_name": (
+                        bank_account.bank_name
+                    ),
+                    "branch_name": (
+                        bank_account.branch_name
+                    ),
+                    "cancelled_cheque": (
+                        bank_account.cancelled_cheque.url
+                        if bank_account.cancelled_cheque
+                        else None
+                    ),
+                },
+            },
+        },
+        status=status.HTTP_200_OK,
     )
+
+
 
 
 @api_view(["GET"])
@@ -1092,8 +1374,7 @@ def my_campaign_detail(request, campaign_slug):
     try:
 
         campaign = (
-            Campaign.objects
-            .select_related(
+            Campaign.objects.select_related(
                 "created_by",
                 "ngo",
             )
@@ -1134,8 +1415,6 @@ def my_campaign_detail(request, campaign_slug):
             "data": serializer.data,
         }
     )
-
-
 
 
 @api_view(["GET"])
@@ -1265,10 +1544,7 @@ def get_promotion_services(request):
         for service_type in CampaignPromotionServiceType
     ]
 
-    serializer = CampaignPromotionServiceTypesSerializer(
-        services,
-        many=True
-    )
+    serializer = CampaignPromotionServiceTypesSerializer(services, many=True)
 
     return Response(
         {
@@ -1278,6 +1554,7 @@ def get_promotion_services(request):
         },
         status=status.HTTP_200_OK,
     )
+
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])

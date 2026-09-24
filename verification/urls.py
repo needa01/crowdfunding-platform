@@ -7,6 +7,7 @@ from .views import (
     get_profile_documents,
     submit_campaign_verification,
     verify_campaign,
+    verify_campaign_bank_account,
     verify_document,
     verify_bankaccount,
 )
@@ -43,6 +44,7 @@ urlpatterns = [
         name="delete_document",
     ),
     path("bankaccount/verify", verify_bankaccount, name="verify_bankaccount"),
+    path("campaign/bankaccount/verify", verify_campaign_bank_account, name="verify_campaign_bank_account"),
     path("profile/verify", views.verify_profile, name="verify-profile"),
     path("campaign/verify", verify_campaign, name="verify-campaign"),
     path("document-types", get_document_types, name="get-document-types"),

@@ -704,8 +704,6 @@
             // =========================
 
             if (doc.document_type === "NGO PAN Card") {
-              document.getElementById("ngo_pan_holder_name").value =
-                doc.document_holder_name || "";
 
               document.getElementById("ngo_pan_number").value =
                 doc.document_number || "";
@@ -717,8 +715,6 @@
             // REGISTRATION CERTIFICATE
             // =========================
             else if (doc.document_type === "Registration Certificate") {
-              document.getElementById("registration_holder_name").value =
-                doc.document_holder_name || "";
 
               document.getElementById("registration_certificate_number").value =
                 doc.document_number || "";
@@ -731,8 +727,6 @@
             // AADHAAR CARD
             // =========================
             else if (doc.document_type === "Aadhaar Card") {
-              document.getElementById("aadhaar_holder_name").value =
-                doc.document_holder_name || "";
 
               document.getElementById("aadhaar_number").value =
                 doc.document_number || "";
@@ -746,7 +740,7 @@
       }
 
       async function uploadDocument(documentType) {
-        let holderNameInput;
+
         let numberInput;
         let fileInput;
         let statusElement;
@@ -756,7 +750,6 @@
         // NGO PAN CARD
         // =========================
         if (documentType === "NGO PAN Card") {
-          holderNameInput = document.getElementById("ngo_pan_holder_name");
 
           numberInput = document.getElementById("ngo_pan_number");
 
@@ -771,7 +764,6 @@
         // REGISTRATION CERTIFICATE
         // =========================
         else if (documentType === "Registration Certificate") {
-          holderNameInput = document.getElementById("registration_holder_name");
 
           numberInput = document.getElementById("registration_number");
 
@@ -786,7 +778,7 @@
         // AADHAAR CARD
         // =========================
         else if (documentType === "Aadhaar Card") {
-          holderNameInput = document.getElementById("aadhaar_holder_name");
+
 
           numberInput = document.getElementById("aadhaar_number");
 
@@ -837,7 +829,6 @@
 
         formData.append("document_type", validDocumentType);
 
-        formData.append("document_holder_name", holderNameInput.value.trim());
 
         formData.append("document_number", numberInput.value.trim());
 

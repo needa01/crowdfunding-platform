@@ -13,8 +13,8 @@ def get_user_type_folder(user):
     user_type = user.user_type
 
     # If your EnumField returns an enum
-    if hasattr(user_type, "value"):
-        user_type = user_type.value
+    if hasattr(user_type, "name"):
+        user_type = user_type.name
 
     return str(user_type).lower()
 
@@ -71,18 +71,52 @@ def document_upload_path(instance, filename):
     return f"documents/{now.year}/{now.month:02d}/{filename}"
 
 
+
+
 def cancelled_cheque_upload_path(instance, filename):
-    user = instance.user
 
-    user_type = get_user_type_folder(user)
+    # =========================================================
+    # CAMPAIGN BENEFICIARY BANK ACCOUNT
+    # =========================================================
+    if instance.campaign:
 
-    return (
-        f"{user_type}/"
-        f"{user.uuid}/"
-        f"cancelled-cheque/"
-        f"{filename}"
+        campaign = instance.campaign
+
+        user = campaign.created_by
+
+        user_type = get_user_type_folder(user)
+        print("upload_path",user_type)
+        return (
+            f"{user_type}/"
+            f"{user.uuid}/"
+            f"campaigns/"
+            f"{campaign.campaign_slug}/"
+            f"cancelled-cheque/"
+            f"{filename}"
+        )
+
+    # =========================================================
+    # NORMAL USER BANK ACCOUNT
+    # =========================================================
+    if instance.user:
+
+        user = instance.user
+
+        user_type = get_user_type_folder(user)
+
+        return (
+            f"{user_type}/"
+            f"{user.uuid}/"
+            f"cancelled-cheque/"
+            f"{filename}"
+        )
+
+    # =========================================================
+    # SAFETY CHECK
+    # =========================================================
+    raise ValueError(
+        "BankAccount must have either a user or a campaign."
     )
-
 
 
 
@@ -107,14 +141,7 @@ def receipt_upload_path(instance, filename):
 def campaign_profile_upload_path(instance, filename):
     user = instance.created_by
 
-    if user.user_type == UserType.NGO:
-        user_type = "ngo"
-
-    elif user.user_type == UserType.INDIVIDUAL_FUNDRAISER:
-        user_type = "fundraiser"
-
-    else:
-        user_type = "other"
+    user_type = get_user_type_folder(user)
 
     return (
         f"{user_type}/"

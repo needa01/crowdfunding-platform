@@ -11,7 +11,6 @@ class DocumentAdmin(admin.ModelAdmin):
 
     list_display = (
         "document_type",
-        "document_holder_name",
         "document_number",
         "display_purpose",
         "display_verification_status",
@@ -30,7 +29,6 @@ class DocumentAdmin(admin.ModelAdmin):
     )
 
     search_fields = (
-        "document_holder_name",
         "document_number",
         "user__fullname",
         "user__email",
@@ -64,7 +62,6 @@ class DocumentAdmin(admin.ModelAdmin):
                     "uuid",
                     "purpose",
                     "document_type",
-                    "document_holder_name",
                     "document_number",
                     "file_url",
                 )

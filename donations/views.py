@@ -543,7 +543,7 @@ def create_platform_donation(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsActiveAccount, IsDonor])
+@permission_classes([IsActiveAccount])
 def get_donation_details(request, donation_uuid):
     try:
         donation = Donation.objects.select_related(
@@ -668,7 +668,7 @@ def get_donation_details(request, donation_uuid):
 
 
 @api_view(["GET"])
-@permission_classes([IsActiveAccount, IsDonor])
+@permission_classes([IsActiveAccount])
 def get_my_donations(request):
 
     try:

@@ -125,12 +125,8 @@ def update_ngo_profile(request):
     # Basic NGO fields update
     # ==========================
 
-    if "ngo_name" in data:
-        ngo_profile.ngo_name = data["ngo_name"]
+    
 
-
-    if "ngo_type" in data:
-        ngo_profile.ngo_type = data["ngo_type"]
 
 
     if "contact_person_name" in data:
@@ -145,27 +141,6 @@ def update_ngo_profile(request):
         ngo_profile.website = data["website"]
 
 
-    # ==========================
-    # Registration Number Update
-    # ==========================
-
-    if "reg_num" in data:
-
-        if NGOProfile.objects.filter(
-            reg_num=data["reg_num"]
-        ).exclude(
-            uuid=ngo_profile.uuid
-        ).exists():
-
-            return Response(
-                {
-                    "success": False,
-                    "message": "Registration number already exists"
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        ngo_profile.reg_num = data["reg_num"]
 
 
 
@@ -206,6 +181,21 @@ def update_ngo_profile(request):
                     "missing_fields": missing_fields
                 },
                 status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        
+        # ==========================
+        # Pincode Validation
+        # ==========================
+        pincode = str(data.get("pincode", "")).strip()
+
+        if not pincode.isdigit() or len(pincode) != 6:
+            return Response(
+                {
+                    "success": False,
+                    "error": "Pincode must contain exactly 6 digits",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
@@ -252,6 +242,9 @@ def update_ngo_profile(request):
         },
         status=status.HTTP_200_OK
     )       
+
+
+
 
 @api_view(["GET"])
 @permission_classes([IsActiveAccount, IsCSR])
@@ -356,8 +349,6 @@ def update_csr_profile(request):
     # Basic CSR Details
     # ==========================
 
-    if "csr_name" in data:
-        csr_profile.csr_name = data["csr_name"]
 
 
     if "contact_person_name" in data:
@@ -374,29 +365,6 @@ def update_csr_profile(request):
         csr_profile.website = data["website"]
 
 
-
-    # ==========================
-    # Registration Number
-    # ==========================
-
-    if "csr_reg_num" in data:
-
-        if CSRProfile.objects.filter(
-            csr_reg_num=data["csr_reg_num"]
-        ).exclude(
-            uuid=csr_profile.uuid
-        ).exists():
-
-            return Response(
-                {
-                    "success": False,
-                    "message": "CSR registration number already exists"
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-
-        csr_profile.csr_reg_num = data["csr_reg_num"]
 
 
 

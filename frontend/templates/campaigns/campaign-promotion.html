@@ -316,6 +316,7 @@
       const API_BASE = "";
 
       const accessToken = sessionStorage.getItem("access_token");
+      const MIN_SERVICE_BUDGET = 3000;
 
       /* ============================================================
        GET CAMPAIGN SLUG FROM URL
@@ -552,7 +553,7 @@
 
             const serviceName = service.service_type || "Promotion Service";
 
-            const minimumAmount = Number(service.minimum_amount || 0);
+            const minimumAmount = MIN_SERVICE_BUDGET;
 
             let icon = "📢";
 
@@ -700,60 +701,67 @@
 
             const notesInput = col.querySelector(".service-notes");
 
-            /* ====================================================
-                       CARD CLICK
-                    ==================================================== */
+            checkbox.addEventListener("change", function () {
+              const checked = checkbox.checked;
+              const serviceKey = service.service_type;
+              const minimumAmount = MIN_SERVICE_BUDGET;
 
-            card.addEventListener("click", function (event) {
-              /*
-                             Don't toggle checkbox when
-                             clicking inside input/textarea.
-                            */
+              console.log(
+                "CHECKBOX CHANGE:",
+                service.service_type,
+                "checked:",
+                checked,
+              );
 
-              if (
-                event.target === checkbox ||
-                event.target === budgetInput ||
-                event.target === notesInput
-              ) {
-                return;
+              if (checked) {
+                card.classList.add("selected");
+                inputSection.style.display = "block";
+
+                // Add service only if it is not already selected
+                const exists = selected.some(
+                  (item) => item.service.service_type === serviceKey,
+                );
+
+                if (!exists) {
+                  selected.push({
+                    service: service,
+                    amount: minimumAmount,
+                    user_notes: "",
+                  });
+                }
+
+                if (!budgetInput.value) {
+                  budgetInput.value = minimumAmount;
+                }
+              } else {
+                card.classList.remove("selected");
+                inputSection.style.display = "none";
+
+                selected = selected.filter(
+                  (item) => item.service.service_type !== serviceKey,
+                );
               }
 
-              checkbox.checked = !checkbox.checked;
-
-              handleServiceSelection(
-                service,
-                checkbox.checked,
-                card,
-                inputSection,
+              console.log(
+                "SELECTED SERVICES:",
+                selected.map((item) => item.service.service_type),
               );
+
+              updateSummary();
             });
-
-            /* ====================================================
-                       CHECKBOX CLICK
-                    ==================================================== */
-
-            checkbox.addEventListener("change", function () {
-              handleServiceSelection(
-                service,
-                checkbox.checked,
-                card,
-                inputSection,
-              );
-            });
-
             /* ====================================================
                        BUDGET CHANGE
                     ==================================================== */
 
             budgetInput.addEventListener("input", function () {
               const item = selected.find(
-                (item) => item.service.uuid === serviceId,
+                (item) => item.service.service_type === service.service_type,
               );
 
               if (item) {
                 item.amount = Number(budgetInput.value || 0);
 
-                validateBudget(budgetInput, minimumAmount);
+                validateBudget(budgetInput, MIN_SERVICE_BUDGET);
 
                 updateSummary();
               }
@@ -764,14 +772,14 @@
                     ==================================================== */
 
             notesInput.addEventListener("input", function () {
-              const item = selected.find(
-                (item) => item.service.uuid === serviceId,
-              );
+  const item = selected.find(
+    (item) => item.service.service_type === service.service_type
+  );
 
-              if (item) {
-                item.user_notes = notesInput.value;
-              }
-            });
+  if (item) {
+    item.user_notes = notesInput.value;
+  }
+});
 
             servicesContainer.appendChild(col);
           });
@@ -794,54 +802,7 @@
         }
       }
 
-      /* ============================================================
-       HANDLE SERVICE SELECTION
-    ============================================================ */
 
-      function handleServiceSelection(service, checked, card, inputSection) {
-        const serviceId = service.uuid;
-
-        const minimumAmount = Number(service.minimum_amount || 0);
-
-        if (checked) {
-          card.classList.add("selected");
-
-          inputSection.style.display = "block";
-
-          const exists = selected.some(
-            (item) => item.service.uuid === serviceId,
-          );
-
-          if (!exists) {
-            selected.push({
-              service: service,
-
-              amount: minimumAmount,
-
-              user_notes: "",
-            });
-          }
-
-          /*
-             Automatically put minimum
-             amount in input as starting value.
-            */
-
-          const budgetInput = card.querySelector(".budget-input");
-
-          if (!budgetInput.value) {
-            budgetInput.value = minimumAmount;
-          }
-        } else {
-          card.classList.remove("selected");
-
-          inputSection.style.display = "none";
-
-          selected = selected.filter((item) => item.service.uuid !== serviceId);
-        }
-
-        updateSummary();
-      }
 
       /* ============================================================
        VALIDATE BUDGET
@@ -964,7 +925,7 @@
         let allValid = selected.length > 0;
 
         selected.forEach((item) => {
-          const minimum = Number(item.service.minimum_amount || 0);
+          const minimum = MIN_SERVICE_BUDGET;
 
           const amount = Number(item.amount || 0);
 
@@ -994,7 +955,7 @@
             ==================================================== */
 
         for (const item of selected) {
-          const minimumAmount = Number(item.service.minimum_amount || 0);
+          const minimumAmount = MIN_SERVICE_BUDGET;
 
           const amount = Number(item.amount || 0);
 

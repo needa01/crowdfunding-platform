@@ -97,6 +97,9 @@ def register_csr(request):
 def create_fundraiser_crowdfunding_campaign_view(request):
     return render(request, 'campaigns/crowdfunding/create-campaign.html')
 
+def edit_fundraiser_crowdfunding_campaign_view(request):
+    return render(request, 'campaigns/crowdfunding/edit-campaign.html')
+
 
 def create_ngo_crowdfunding_campaign_view(request):
     return render(request, 'campaigns/ngo-crowdfunding/create-campaign.html')

@@ -1,3 +1,4 @@
+from django.core.files.storage import default_storage
 from django.shortcuts import get_object_or_404, render
 from django.db.models import F, Prefetch
 from rest_framework import status
@@ -28,6 +29,7 @@ from campaigns.serializers import (
     MyCampaignListSerializer,
 )
 from crowdfunding.enums import (
+    BeneficiaryGroupType,
     BeneficiaryType,
     CampaignCause,
     CampaignPromotionServiceType,
@@ -785,28 +787,33 @@ def create_campaign_promotion_payment(request):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+
         # -----------------------------------------------------
         # VALIDATE AMOUNT
         # -----------------------------------------------------
 
         try:
             amount = Decimal(str(amount)).quantize(Decimal("0.01"))
-        except (InvalidOperation, TypeError, ValueError):
 
+        except (InvalidOperation, TypeError, ValueError):
             return Response(
                 {
                     "success": False,
-                    "message": (f"Invalid amount for service " f"{service_type}."),
+                    "message": f"Invalid amount for service {service_type}.",
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        if amount <= 0:
+        # Minimum budget per service
+        MIN_SERVICE_BUDGET = Decimal("3000.00")
+
+        if amount < MIN_SERVICE_BUDGET:
             return Response(
                 {
                     "success": False,
                     "message": (
-                        f"Amount for {service_type} " "must be greater than zero."
+                        f"Minimum budget for {service_type} "
+                        f"is ₹{MIN_SERVICE_BUDGET:.2f}."
                     ),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -1052,9 +1059,7 @@ def update_campaign(request, campaign_slug):
         "beneficiary_name",
         "beneficiary_relation",
         "beneficiary_mobile",
-        "beneficiary_age",
         "beneficiary_location",
-        "beneficiary_member_count",
         "hospital_name",
         "hospital_location",
         "ailment",
@@ -1063,39 +1068,25 @@ def update_campaign(request, campaign_slug):
     ]
 
     for field in fields:
-        if field in request.data:
-            setattr(
-                campaign,
-                field,
-                request.data.get(field),
-            )
 
-    # =========================================================
-    # 2. MEDICAL FIELDS
-    # =========================================================
+        if field not in request.data:
+            continue
 
-    if campaign.cause == CampaignCause.MEDICAL:
+        value = request.data.get(field)
 
-        campaign.hospital_name = request.data.get(
-            "hospital_name"
+        # Empty FormData values become NULL
+        if value == "":
+            value = None
+
+        setattr(
+            campaign,
+            field,
+            value,
         )
 
-        campaign.hospital_location = request.data.get(
-            "hospital_location"
-        )
-
-        campaign.ailment = request.data.get(
-            "ailment"
-        )
-
-    else:
-
-        campaign.hospital_name = None
-        campaign.hospital_location = None
-        campaign.ailment = None
 
     # =========================================================
-    # 3. INTEGER FIELDS
+    # 2. BENEFICIARY INTEGER FIELDS
     # =========================================================
 
     for field in [
@@ -1103,48 +1094,91 @@ def update_campaign(request, campaign_slug):
         "beneficiary_member_count",
     ]:
 
-        if field in request.data:
+        if field not in request.data:
+            continue
 
-            value = request.data.get(field)
+        value = request.data.get(field)
 
-            if value in ["", None]:
+        if value in ["", None]:
 
-                setattr(
-                    campaign,
-                    field,
-                    None,
+            value = None
+
+        else:
+
+            try:
+                value = int(value)
+
+            except (TypeError, ValueError):
+
+                return Response(
+                    {
+                        "success": False,
+                        "errors": {
+                            field: [
+                                f"{field} must be a valid integer."
+                            ]
+                        },
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            else:
+        setattr(
+            campaign,
+            field,
+            value,
+        )
 
-                try:
-                    setattr(
-                        campaign,
-                        field,
-                        int(value),
-                    )
 
-                except (TypeError, ValueError):
+    # =========================================================
+    # 3. NORMALIZE BENEFICIARY VALUES
+    # =========================================================
 
-                    return Response(
-                        {
-                            "success": False,
-                            "message": (
-                                f"{field} must be a valid integer."
-                            ),
-                        },
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
+    if campaign.beneficiary_type == BeneficiaryType.ME:
 
+        campaign.beneficiary_group_type = (
+            BeneficiaryGroupType.INDIVIDUAL
+        )
+
+        campaign.beneficiary_member_count = 1
+        campaign.beneficiary_age = None
+        campaign.beneficiary_relation = None
+
+    elif (
+        campaign.beneficiary_group_type
+        == BeneficiaryGroupType.INDIVIDUAL
+    ):
+
+        # Individual = exactly one beneficiary
+        campaign.beneficiary_member_count = 1
+
+    elif (
+        campaign.beneficiary_group_type
+        == BeneficiaryGroupType.GROUP
+    ):
+
+        # Group cannot have age
+        campaign.beneficiary_age = None
+
+        # Group cannot have relation
+        campaign.beneficiary_relation = None
     # =========================================================
     # 4. COVER PHOTO
     # =========================================================
 
     if "cover_photo" in request.FILES:
+        old_cover_photo = campaign.cover_photo
 
-        campaign.cover_photo = request.FILES[
-            "cover_photo"
-        ]
+        # Assign new photo
+        campaign.cover_photo = request.FILES["cover_photo"]
+        campaign.save(update_fields=["cover_photo", "updated_at"])
+
+        # Delete old physical file
+        if old_cover_photo and old_cover_photo.name:
+            try:
+                if default_storage.exists(old_cover_photo.name):
+                    default_storage.delete(old_cover_photo.name)
+            except Exception as e:
+                print("OLD COVER PHOTO DELETE ERROR:", e)
 
     # =========================================================
     # 5. UPDATE CAMPAIGN
@@ -1374,9 +1408,11 @@ def my_campaign_detail(request, campaign_slug):
     try:
 
         campaign = (
-            Campaign.objects.select_related(
+            Campaign.objects
+            .select_related(
                 "created_by",
                 "ngo",
+                "beneficiary_bank_account",
             )
             .prefetch_related(
                 Prefetch(
@@ -1384,7 +1420,9 @@ def my_campaign_detail(request, campaign_slug):
                     queryset=CampaignPromotionService.objects.all().order_by(
                         "-created_at"
                     ),
-                )
+                ),
+                "documents",
+                "verification_requests",
             )
             .get(
                 campaign_slug=campaign_slug,
@@ -1415,6 +1453,9 @@ def my_campaign_detail(request, campaign_slug):
             "data": serializer.data,
         }
     )
+
+
+
 
 
 @api_view(["GET"])

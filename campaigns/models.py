@@ -345,26 +345,34 @@ class Campaign(models.Model):
 
         if self.beneficiary_group_type == BeneficiaryGroupType.INDIVIDUAL:
 
-            # Individual beneficiary always has one member
+            # Individual beneficiary always has exactly 1 member
             self.beneficiary_member_count = 1
 
         elif self.beneficiary_group_type == BeneficiaryGroupType.GROUP:
 
+            # Group beneficiaries cannot have age
+            self.beneficiary_age = None
+
             if self.created_by.user_type == UserType.INDIVIDUAL_FUNDRAISER:
 
-                if not self.beneficiary_member_count:
+                if self.beneficiary_member_count is None:
                     raise ValidationError(
                         {
-                            "beneficiary_member_count": "Member count is required for group beneficiaries."
+                            "beneficiary_member_count": (
+                                "Member count is required for group beneficiaries."
+                            )
                         }
                     )
 
                 if self.beneficiary_member_count < 2:
                     raise ValidationError(
                         {
-                            "beneficiary_member_count": "Group beneficiaries must have at least 2 members."
+                            "beneficiary_member_count": (
+                                "Group beneficiaries must have at least 2 members."
+                            )
                         }
                     )
+
 
         today = timezone.localdate()
         minimum_start_date = today + datetime.timedelta(days=1)
@@ -585,32 +593,32 @@ class Campaign(models.Model):
     # =========================================================
 
     def save(self, *args, **kwargs):
-        
-        if self.beneficiary_type == BeneficiaryType.INDIVIDUAL:
-            self.beneficiary_group_type = BeneficiaryGroupType.INDIVIDUAL
-            self.beneficiary_member_count = 1
-        if self.beneficiary_type == BeneficiaryType.NGO or self.beneficiary_type == BeneficiaryType.OTHERS or self.beneficiary_type == BeneficiaryType.COMMUNITY or self.beneficiary_type == BeneficiaryType.INSTITUTION:
+        if self.beneficiary_type == BeneficiaryType.NGO  or self.beneficiary_type == BeneficiaryType.COMMUNITY or self.beneficiary_type == BeneficiaryType.INSTITUTION:
+
             self.beneficiary_group_type = BeneficiaryGroupType.GROUP
-
         # =====================================================
-        # INDIVIDUAL BENEFICIARY
+        # BENEFICIARY GROUP TYPE
         # =====================================================
 
-        if self.beneficiary_group_type == BeneficiaryGroupType.INDIVIDUAL:
+        if self.beneficiary_type == BeneficiaryType.ME:
+
+            # Me is always an individual beneficiary
+            self.beneficiary_group_type = (
+                BeneficiaryGroupType.INDIVIDUAL
+            )
+
             self.beneficiary_member_count = 1
 
-        # =====================================================
-        # GROUP BENEFICIARY
-        # =====================================================
+
+        elif self.beneficiary_group_type == BeneficiaryGroupType.INDIVIDUAL:
+
+            # Any individual beneficiary has exactly 1 member
+            self.beneficiary_member_count = 1
+
 
         elif self.beneficiary_group_type == BeneficiaryGroupType.GROUP:
 
-            # Age must ALWAYS be NULL for group beneficiaries.
-            #
-            # This is enforced here as well as in clean()
-            # so that stale age data cannot remain when
-            # changing an existing campaign from Individual
-            # to Group.
+            # Group beneficiaries cannot have age
             self.beneficiary_age = None
 
         # =====================================================

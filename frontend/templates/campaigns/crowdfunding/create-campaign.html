@@ -312,12 +312,7 @@
 
                 <div class="col-6">
                   <label>Goal Amount (₹)</label>
-                  <input
-  type="number"
-  step="1"
-  name="goal_amount"
-  required
-/>
+                  <input type="number" step="1" name="goal_amount" required />
                 </div>
 
                 <div class="col-6">
@@ -789,42 +784,60 @@
         );
 
         const beneficiaryName = form.beneficiary_name;
-
         const beneficiaryRelation = form.beneficiary_relation;
-
         const beneficiaryMobile = form.beneficiary_mobile;
-
         const beneficiaryLocation = form.beneficiary_location;
-
         const beneficiaryAge = form.beneficiary_age;
 
         function toggleBeneficiaryFields() {
-          if (beneficiaryType.value === "Me") {
-            beneficiaryGroup.value = "Individual";
+          const type = beneficiaryType.value;
 
+          // =====================================================
+          // ME
+          // =====================================================
+
+          if (type === "Me") {
+            // Group is always Individual
+            beneficiaryGroup.value = "Individual";
             beneficiaryGroup.disabled = true;
             beneficiaryGroup.required = false;
 
+            // Name
             beneficiaryName.value = "";
             beneficiaryName.disabled = true;
             beneficiaryName.required = false;
 
+            // Relationship
             beneficiaryRelation.value = "";
             beneficiaryRelation.disabled = true;
+            beneficiaryRelation.required = false;
 
+            // Mobile
             beneficiaryMobile.value = "";
             beneficiaryMobile.disabled = true;
+            beneficiaryMobile.required = false;
 
+            // Location
             beneficiaryLocation.value = "";
             beneficiaryLocation.disabled = true;
+            beneficiaryLocation.required = false;
 
+            // Age is allowed
+            beneficiaryAge.disabled = false;
+
+            // No group count
             beneficiaryCountSection.style.display = "none";
-
             beneficiaryMemberCount.value = "";
             beneficiaryMemberCount.required = false;
 
-            beneficiaryAge.disabled = false;
-          } else {
+            return;
+          }
+
+          // =====================================================
+          // RELATIVE
+          // =====================================================
+
+          if (type === "Relative") {
             beneficiaryGroup.disabled = false;
             beneficiaryGroup.required = true;
 
@@ -832,16 +845,105 @@
             beneficiaryName.required = true;
 
             beneficiaryRelation.disabled = false;
+            beneficiaryRelation.required = true;
 
             beneficiaryMobile.disabled = false;
+            beneficiaryMobile.required = false;
 
             beneficiaryLocation.disabled = false;
             beneficiaryLocation.required = true;
 
             beneficiaryAge.disabled = false;
 
+            // Allow group/individual selection
             toggleBeneficiaryCount();
+
+            return;
           }
+
+          // =====================================================
+          // FRIEND
+          // =====================================================
+
+          if (type === "Friend") {
+            beneficiaryGroup.disabled = false;
+            beneficiaryGroup.required = true;
+
+            beneficiaryName.disabled = false;
+            beneficiaryName.required = true;
+
+            // Friend has NO relationship
+            beneficiaryRelation.value = "";
+            beneficiaryRelation.disabled = true;
+            beneficiaryRelation.required = false;
+
+            beneficiaryMobile.disabled = false;
+            beneficiaryMobile.required = false;
+
+            beneficiaryLocation.disabled = false;
+            beneficiaryLocation.required = true;
+
+            beneficiaryAge.disabled = false;
+
+            // Allow group/individual selection
+            toggleBeneficiaryCount();
+
+            return;
+          }
+
+          // =====================================================
+          // OTHERS
+          // =====================================================
+
+          if (type === "Others") {
+            beneficiaryGroup.disabled = false;
+            beneficiaryGroup.required = true;
+
+            beneficiaryName.disabled = false;
+            beneficiaryName.required = true;
+
+            // Relationship is fixed to Others
+            beneficiaryRelation.value = "Others";
+            beneficiaryRelation.disabled = true;
+            beneficiaryRelation.required = false;
+
+            beneficiaryMobile.disabled = false;
+            beneficiaryMobile.required = false;
+
+            beneficiaryLocation.disabled = false;
+            beneficiaryLocation.required = true;
+
+            beneficiaryAge.disabled = false;
+
+            // Allow group/individual selection
+            toggleBeneficiaryCount();
+
+            return;
+          }
+
+          // =====================================================
+          // NO BENEFICIARY SELECTED
+          // =====================================================
+
+          beneficiaryGroup.disabled = false;
+          beneficiaryGroup.required = true;
+
+          beneficiaryName.disabled = false;
+          beneficiaryName.required = true;
+
+          beneficiaryRelation.value = "";
+          beneficiaryRelation.disabled = false;
+          beneficiaryRelation.required = false;
+
+          beneficiaryMobile.disabled = false;
+          beneficiaryMobile.required = false;
+
+          beneficiaryLocation.disabled = false;
+          beneficiaryLocation.required = true;
+
+          beneficiaryAge.disabled = false;
+
+          toggleBeneficiaryCount();
         }
 
         beneficiaryType.addEventListener("change", toggleBeneficiaryFields);
@@ -1269,13 +1371,38 @@
 
           formData.append("cause", form.cause.value);
 
-          formData.append("beneficiary_type", form.beneficiary_type.value);
+          // =================================================
+          // BENEFICIARY DATA
+          // =================================================
 
-          if (form.beneficiary_age.value) {
-            formData.append("beneficiary_age", form.beneficiary_age.value);
+          const beneficiaryTypeValue = form.beneficiary_type.value;
+
+          formData.append("beneficiary_type", beneficiaryTypeValue);
+
+          // =================================================
+          // ME
+          // =================================================
+
+          if (beneficiaryTypeValue === "Me") {
+            formData.append("beneficiary_group_type", "Individual");
+
+            formData.append("beneficiary_name", "");
+            formData.append("beneficiary_relation", "");
+            formData.append("beneficiary_mobile", "");
+            formData.append("beneficiary_location", "");
+            formData.append("beneficiary_member_count", "");
+
+            if (form.beneficiary_age.value) {
+              formData.append("beneficiary_age", form.beneficiary_age.value);
+            } else {
+              formData.append("beneficiary_age", "");
+            }
           }
 
-          if (form.beneficiary_type.value !== "Me") {
+          // =================================================
+          // RELATIVE / FRIEND / OTHERS
+          // =================================================
+          else {
             formData.append(
               "beneficiary_group_type",
               form.beneficiary_group_type.value,
@@ -1286,30 +1413,47 @@
               form.beneficiary_name.value.trim(),
             );
 
-            if (form.beneficiary_mobile.value) {
-              formData.append(
-                "beneficiary_mobile",
-                form.beneficiary_mobile.value,
-              );
-            }
+            formData.append(
+              "beneficiary_mobile",
+              form.beneficiary_mobile.value.trim() || "",
+            );
+
+            formData.append(
+              "beneficiary_age",
+              form.beneficiary_age.value || "",
+            );
 
             formData.append(
               "beneficiary_location",
-              form.beneficiary_location.value,
+              form.beneficiary_location.value.trim(),
             );
 
-            if (form.beneficiary_relation.value) {
+            // -----------------------------------------------
+            // RELATIONSHIP
+            // -----------------------------------------------
+
+            if (beneficiaryTypeValue === "Friend") {
+              formData.append("beneficiary_relation", "");
+            } else if (beneficiaryTypeValue === "Others") {
+              formData.append("beneficiary_relation", "Others");
+            } else if (beneficiaryTypeValue === "Relative") {
               formData.append(
                 "beneficiary_relation",
-                form.beneficiary_relation.value,
+                form.beneficiary_relation.value || "",
               );
             }
+
+            // -----------------------------------------------
+            // MEMBER COUNT
+            // -----------------------------------------------
 
             if (form.beneficiary_group_type.value === "Group") {
               formData.append(
                 "beneficiary_member_count",
                 form.beneficiary_member_count.value,
               );
+            } else {
+              formData.append("beneficiary_member_count", "");
             }
           }
 

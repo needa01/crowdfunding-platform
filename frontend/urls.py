@@ -32,9 +32,14 @@ urlpatterns = [
     path("campaign/promote/<slug:campaign_slug>", views.campaign_promotion_view, name="campaign_promotion_view"),
     # create campaign page for individual fundraiser and ngo
     path(
-        "fundraiser/create-campaign/",
+        "fundraiser/create-campaign",
         views.create_fundraiser_crowdfunding_campaign_view,
         name="create_fundraiser_campaign",
+    ),
+    path(
+        "my-campaign/edit",
+        views.edit_fundraiser_crowdfunding_campaign_view,
+        name="edit_fundraiser_campaign",
     ),
     path(
         "ngo/create-campaign/crowdfunding",

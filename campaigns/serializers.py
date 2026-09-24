@@ -1,6 +1,7 @@
 from django.utils import timezone
 from rest_framework import serializers
 
+from accounts.models import BankAccount
 from campaigns.models import Campaign, CampaignPromotionService
 from crowdfunding.enums import CampaignStatus
 from verification.models import Document, EntityVerificationRequest
@@ -179,8 +180,83 @@ class CampaignDocumentSerializer(serializers.ModelSerializer):
             return obj.created_at.strftime("%d %b %Y, %I:%M %p")
 
         return None
+    
 
 
+
+
+class MyCampaignDocumentSerializer(serializers.ModelSerializer):
+    document_url = serializers.SerializerMethodField()
+    document_type = serializers.CharField(read_only=True)
+    created_at = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Document
+
+        fields = [
+            "uuid",
+            "document_type",
+            "document_number",
+            "document_url",
+            "verification_status",
+            "verification_remarks",
+            "created_at",
+        ]
+
+    def get_document_url(self, obj):
+
+        request = self.context.get("request")
+
+        if obj.file_url:
+
+            if request:
+                return request.build_absolute_uri(
+                    obj.file_url.url
+                )
+
+            return obj.file_url.url
+
+        return None
+
+    def get_created_at(self, obj):
+
+        if obj.created_at:
+            return obj.created_at.strftime(
+                "%d %b %Y, %I:%M %p"
+            )
+
+        return None
+
+class   MyCampaignBankAccountSerializer(serializers.ModelSerializer):
+
+    cancelled_cheque = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BankAccount
+
+        fields = [
+            "uuid",
+            "account_holder_name",
+            "account_number",
+            "ifsc_code",
+            "bank_name",
+            "branch_name",
+            "cancelled_cheque",
+        ]
+
+    def get_cancelled_cheque(self, obj):
+
+        request = self.context.get("request")
+
+        if not obj.cancelled_cheque:
+            return None
+
+        if request:
+            return request.build_absolute_uri(
+                obj.cancelled_cheque.url
+            )
+
+        return obj.cancelled_cheque.url
 
 
 
@@ -473,8 +549,9 @@ class MyCampaignDetailSerializer(serializers.ModelSerializer):
     created_at = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()
 
+    bank_account = serializers.SerializerMethodField()
 
-    documents = CampaignDocumentSerializer(
+    documents = MyCampaignDocumentSerializer(
         many=True,
         read_only=True,
     )
@@ -519,10 +596,23 @@ class MyCampaignDetailSerializer(serializers.ModelSerializer):
             "updated_at",
             "created_by",
             "ngo",
+            "bank_account",
             "documents",
             "verification",
             "promotion_services",
         ]
+    
+    def get_bank_account(self, obj):
+
+        try:
+            bank_account = obj.beneficiary_bank_account
+        except BankAccount.DoesNotExist:
+            return None
+
+        return MyCampaignBankAccountSerializer(
+            bank_account,
+            context=self.context,
+        ).data
 
     def get_campaign_status(self, obj):
         if (

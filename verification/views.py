@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
-
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import status
 from rest_framework.decorators import api_view, parser_classes, permission_classes
@@ -890,7 +890,9 @@ def verify_campaign_bank_account(request):
 
     campaign_slug = request.data.get("campaign_slug")
     verification_status = request.data.get("verification_status")
-    verification_remarks = request.data.get("verification_remarks", "").strip()
+    verification_remarks = request.data.get(
+        "verification_remarks", ""
+    ).strip()
 
     # =========================================================
     # 1. VALIDATE INPUT
@@ -951,13 +953,15 @@ def verify_campaign_bank_account(request):
     # 4. GET CAMPAIGN BANK ACCOUNT
     # =========================================================
 
-    bank_account = BankAccount.objects.filter(campaign=campaign).first()
+    bank_account = BankAccount.objects.filter(
+        campaign=campaign
+    ).first()
 
     if not bank_account:
         return Response(
             {
                 "success": False,
-                "message": ("Beneficiary bank account not found " "for this campaign."),
+                "message": "Beneficiary bank account not found for this campaign.",
             },
             status=status.HTTP_404_NOT_FOUND,
         )
@@ -967,27 +971,32 @@ def verify_campaign_bank_account(request):
     # =========================================================
 
     bank_account.verification_status = verification_status
-    bank_account.verification_remarks = verification_remarks
-    bank_account.reviewed_by = request.user
-    bank_account.reviewed_at = timezone.now()
+    bank_account.remarks = verification_remarks
+    bank_account.verified_by = request.user
+    bank_account.verified_at = timezone.now()
 
     bank_account.save(
         update_fields=[
             "verification_status",
-            "verification_remarks",
-            "reviewed_by",
-            "reviewed_at",
+            "remarks",
+            "verified_by",
+            "verified_at",
+            "updated_at",
         ]
     )
 
     # =========================================================
-    # 6. RESPONSE
+    # 6. RESPONSE MESSAGE
     # =========================================================
 
     if verification_status == VerificationStatus.APPROVED:
         message = "Bank account approved successfully."
     else:
         message = "Bank account rejected successfully."
+
+    # =========================================================
+    # 7. RESPONSE
+    # =========================================================
 
     return Response(
         {
@@ -996,14 +1005,23 @@ def verify_campaign_bank_account(request):
             "data": {
                 "campaign_slug": campaign.campaign_slug,
                 "bank_account_uuid": str(bank_account.uuid),
-                "verification_status": (bank_account.verification_status.value),
-                "verification_remarks": (bank_account.verification_remarks),
-                "reviewed_by": (request.user.fullname),
-                "reviewed_at": bank_account.reviewed_at,
+                "verification_status": (
+                    bank_account.verification_status.value
+                ),
+                "verification_remarks": bank_account.remarks,
+                "verified_by": (
+                    bank_account.verified_by.fullname
+                    if bank_account.verified_by
+                    else None
+                ),
+                "verified_at": bank_account.verified_at,
             },
         },
         status=status.HTTP_200_OK,
     )
+
+
+
 
 
 @api_view(["POST"])

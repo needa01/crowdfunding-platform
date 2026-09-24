@@ -63,7 +63,8 @@ def document_upload_path(instance, filename):
             f"{user_type}/"
             f"{user.uuid}/"
             "campaigns/"
-            f"{campaign.uuid}/"
+            f"{campaign.campaign_slug}/"
+            "documents/"
             f"{filename}"
         )
 
@@ -147,7 +148,7 @@ def campaign_profile_upload_path(instance, filename):
         f"{user_type}/"
         f"{user.uuid}/"
         f"campaigns/"
-        f"{instance.uuid}/"
-        f"profile/"
+        f"{instance.campaign_slug}/"
+        f"cover/"
         f"{filename}"
     )
